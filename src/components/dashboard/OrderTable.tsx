@@ -2,7 +2,7 @@ import { Pedido, OrderStatus, Movimento } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Trash2, MoreHorizontal, Link as LinkIcon, Save, Database, ShieldCheck, Check, X, Printer, FileText } from "lucide-react";
+import { ExternalLink, Trash2, MoreHorizontal, Link as LinkIcon, Save, Database, ShieldCheck, Check, X, Printer, FileText, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MovementList } from "./MovementList";
 import { OrderAuditForm } from "./OrderAuditForm";
@@ -184,10 +184,8 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    // Define o título que será usado como nome do arquivo PDF
     document.title = `${order.id} ${order.empresa}`;
     window.print();
-    // Restaura o título original após abrir a janela de impressão
     document.title = originalTitle;
   };
 
