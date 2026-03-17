@@ -2,7 +2,7 @@ import { Pedido, OrderStatus, Movimento } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Trash2, MoreHorizontal, Link as LinkIcon, Save, Database, ShieldCheck, Check, X } from "lucide-react";
+import { ExternalLink, Trash2, MoreHorizontal, Link as LinkIcon, Save, Database, ShieldCheck, Check, X, Printer, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MovementList } from "./MovementList";
 import { OrderAuditForm } from "./OrderAuditForm";
@@ -19,7 +19,7 @@ interface OrderTableProps {
   onSelectionChange: (ids: string[]) => void;
   onUpdateOrder: (id: string, updates: Partial<Pedido>) => void;
   onDeleteOrder: (id: string) => void;
-  onAddMovement: (orderId: string, raw: string) => void;
+  onAddMovement: (orderId: string, movements: any[]) => void;
   onDeleteMovement: (orderId: string, moveId: string) => void;
 }
 
@@ -181,6 +181,15 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
     });
   };
 
+  const handlePrint = () => {
+    const originalTitle = document.title;
+    // Define o título que será usado como nome do arquivo PDF
+    document.title = `${order.id} ${order.empresa}`;
+    window.print();
+    // Restaura o título original após abrir a janela de impressão
+    document.title = originalTitle;
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -188,71 +197,158 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           <MoreHorizontal className="w-4 h-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-[2.5rem] border-none shadow-2xl p-8">
-        <DialogHeader className="border-b border-slate-100 pb-6">
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="text-slate-900 font-black uppercase text-xl tracking-tight">AUDITORIA DE PEDIDO {order.id}</span>
-              <StatusBadge status={order.status} />
-            </div>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-8">
-          <div className="space-y-8">
-            <div className="bg-slate-50/50 p-6 rounded-3xl space-y-6 border border-slate-100">
-              <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-widest">
-                <ShieldCheck className="w-4 h-4" /> Vincular Blockchain NXT
-              </h4>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hash do Pedido</label>
-                <Input 
-                  value={hash} 
-                  onChange={(e) => setHash(e.target.value)}
-                  placeholder="Ex: 0x885...NXT"
-                  className="font-mono text-xs bg-white border-slate-200 rounded-xl h-12"
-                />
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-[2.5rem] border-none shadow-2xl p-8 print:p-0 print:max-h-none print:overflow-visible print:shadow-none print:rounded-none">
+        {/* Layout Visual do Dashboard */}
+        <div className="print:hidden">
+          <DialogHeader className="border-b border-slate-100 pb-6">
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="text-slate-900 font-black uppercase text-xl tracking-tight">AUDITORIA DE PEDIDO {order.id}</span>
+                <StatusBadge status={order.status} />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">URL de Auditoria (Link Nxt)</label>
-                <Input 
-                  value={link} 
-                  onChange={(e) => setLink(e.target.value)}
-                  placeholder="https://nxt.explorer/tx/..."
-                  className="font-mono text-xs bg-white border-slate-200 rounded-xl h-12"
-                />
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-8">
+            <div className="space-y-8">
+              <div className="bg-slate-50/50 p-6 rounded-3xl space-y-6 border border-slate-100">
+                <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-widest">
+                  <ShieldCheck className="w-4 h-4" /> Vincular Blockchain NXT
+                </h4>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hash do Pedido</label>
+                  <Input 
+                    value={hash} 
+                    onChange={(e) => setHash(e.target.value)}
+                    placeholder="Ex: 0x885...NXT"
+                    className="font-mono text-xs bg-white border-slate-200 rounded-xl h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">URL de Auditoria (Link Nxt)</label>
+                  <Input 
+                    value={link} 
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="https://nxt.explorer/tx/..."
+                    className="font-mono text-xs bg-white border-slate-200 rounded-xl h-12"
+                  />
+                </div>
+                <Button onClick={handleSaveAudit} className="w-full gap-2 font-black uppercase text-[10px] h-12 rounded-2xl shadow-lg shadow-primary/10">
+                  <Save className="w-4 h-4" /> Salvar Auditoria de Hash
+                </Button>
               </div>
-              <Button onClick={handleSaveAudit} className="w-full gap-2 font-black uppercase text-[10px] h-12 rounded-2xl shadow-lg shadow-primary/10">
-                <Save className="w-4 h-4" /> Salvar Auditoria de Hash
-              </Button>
+
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
+                  <Database className="w-4 h-4" /> Importar Novos Rastreios
+                </h4>
+                <OrderAuditForm onAdd={(movements) => onAddMovement(order.id, movements)} />
+              </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h4 className="text-[10px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
-                <Database className="w-4 h-4" /> Importar Novos Rastreios
+                Movimentações Registradas <Badge variant="secondary" className="bg-slate-100 text-slate-600 rounded-full">{movimentos?.length || 0}</Badge>
               </h4>
-              <OrderAuditForm onAdd={(raw) => onAddMovement(order.id, raw)} />
+              <MovementList 
+                movements={movimentos || []} 
+                onDelete={(mid) => onDeleteMovement(order.id, mid)}
+              />
             </div>
           </div>
 
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
-              Movimentações Registradas <Badge variant="secondary" className="bg-slate-100 text-slate-600 rounded-full">{movimentos?.length || 0}</Badge>
-            </h4>
-            <MovementList 
-              movements={movimentos || []} 
-              onDelete={(mid) => onDeleteMovement(order.id, mid)}
-            />
+          <div className="flex justify-between items-center pt-8 border-t border-slate-100 mt-10">
+            <Button variant="ghost" className="text-[10px] font-bold uppercase text-rose-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl" onClick={() => onDeleteOrder(order.id)}>
+              <Trash2 className="w-4 h-4 mr-2" /> Remover Permanente
+            </Button>
+            <div className="flex gap-3">
+               <Button variant="outline" className="text-[10px] font-bold uppercase rounded-xl h-11 border-slate-200">Exportar XML</Button>
+               <Button onClick={handlePrint} className="text-[10px] font-black uppercase rounded-xl h-11 px-8 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
+                 <Printer className="w-4 h-4" /> Gerar Relatório Final
+               </Button>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-between items-center pt-8 border-t border-slate-100 mt-10">
-          <Button variant="ghost" className="text-[10px] font-bold uppercase text-rose-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl" onClick={() => onDeleteOrder(order.id)}>
-            <Trash2 className="w-4 h-4 mr-2" /> Remover Permanente
-          </Button>
-          <div className="flex gap-3">
-             <Button variant="outline" className="text-[10px] font-bold uppercase rounded-xl h-11 border-slate-200">Exportar XML</Button>
-             <Button className="text-[10px] font-black uppercase rounded-xl h-11 px-8 shadow-lg shadow-primary/20" disabled={!order.linkNxt}>Gerar Relatório Final</Button>
+        {/* Layout de Impressão (Exclusivo para print) */}
+        <div className="hidden print:block p-10 font-body text-slate-900">
+          <div className="flex items-center justify-between border-b-2 border-primary pb-6 mb-8">
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 uppercase">Relatório de Auditoria UCS</h1>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">NXT Ledger • LedgerTrust Verification</p>
+            </div>
+            <div className="text-right">
+              <span className="text-primary font-black text-xl">BMV</span>
+              <p className="text-[8px] font-bold text-slate-400 mt-1">EMITIDO EM {new Date().toLocaleDateString('pt-BR')}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 mb-10">
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black text-primary uppercase tracking-widest border-b border-slate-100 pb-1">Identificação do Ativo</h3>
+              <div className="grid grid-cols-1 gap-2">
+                <div><span className="text-[9px] font-bold text-slate-400 uppercase">ID do Pedido:</span> <span className="text-sm font-black text-slate-900 ml-2">{order.id}</span></div>
+                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Data do Registro:</span> <span className="text-sm font-bold text-slate-700 ml-2">{new Date(order.data).toLocaleString('pt-BR')}</span></div>
+                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Empresa:</span> <span className="text-sm font-black text-slate-900 ml-2 uppercase">{order.empresa}</span></div>
+                <div><span className="text-[9px] font-bold text-slate-400 uppercase">CNPJ:</span> <span className="text-sm font-mono text-slate-700 ml-2">{order.cnpj}</span></div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black text-primary uppercase tracking-widest border-b border-slate-100 pb-1">Detalhes de Volume</h3>
+              <div className="grid grid-cols-1 gap-2">
+                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Volume (UCS):</span> <span className="text-sm font-black text-emerald-600 ml-2">{order.quantidade.toLocaleString()} UNIDADES</span></div>
+                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Valor Total:</span> <span className="text-sm font-black text-slate-900 ml-2">{order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></div>
+                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Programa:</span> <span className="text-sm font-bold text-slate-700 ml-2 uppercase">{order.programa}</span></div>
+                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Status Auditoria:</span> <span className="text-xs font-black text-primary ml-2 uppercase tracking-tighter">VERIFICADO NXT LEDGER</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-10 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <ShieldCheck className="w-3 h-3" /> Certificação Blockchain
+            </h3>
+            <div className="grid grid-cols-1 gap-2">
+              <div><span className="text-[9px] font-bold text-slate-400 uppercase">Hash de Integridade:</span> <span className="text-xs font-mono text-slate-600 ml-2 break-all">{order.hashPedido || "NÃO VINCULADO"}</span></div>
+              <div><span className="text-[9px] font-bold text-slate-400 uppercase">Link de Verificação:</span> <span className="text-[10px] text-blue-600 underline ml-2">{order.linkNxt || "PENDENTE"}</span></div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest border-b-2 border-slate-100 pb-2">Rastreabilidade de Movimentações ({movimentos?.length || 0})</h3>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-[9px] font-black uppercase text-slate-400 py-2">Tipo</th>
+                  <th className="text-[9px] font-black uppercase text-slate-400 py-2">Origem do Ativo</th>
+                  <th className="text-[9px] font-black uppercase text-slate-400 py-2">Destinatário</th>
+                  <th className="text-[9px] font-black uppercase text-slate-400 py-2 text-right">Volume</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movimentos?.map((mov) => (
+                  <tr key={mov.id} className="border-b border-slate-50">
+                    <td className="text-[9px] font-black py-3 uppercase text-primary">{mov.tipo}</td>
+                    <td className="text-[9px] font-bold py-3 uppercase text-slate-700">{mov.origem}</td>
+                    <td className="text-[9px] font-medium py-3 uppercase text-slate-500">{mov.destino}</td>
+                    <td className="text-[10px] font-black py-3 text-right text-slate-900">{mov.quantidade.toLocaleString()} UCS</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-20 border-t pt-10 grid grid-cols-2 gap-20">
+            <div className="text-center">
+              <div className="border-b border-slate-300 mb-2"></div>
+              <p className="text-[8px] font-black uppercase text-slate-400">Assinatura do Auditor Responsável</p>
+            </div>
+            <div className="text-center flex flex-col items-center justify-center">
+              <div className="w-16 h-16 border-4 border-emerald-100 rounded-full flex items-center justify-center mb-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              </div>
+              <p className="text-[8px] font-black uppercase text-emerald-600 tracking-tighter italic">LedgerTrust Verified Integrity</p>
+            </div>
           </div>
         </div>
       </DialogContent>
