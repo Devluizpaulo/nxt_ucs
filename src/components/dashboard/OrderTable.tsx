@@ -2,7 +2,7 @@ import { Pedido, OrderStatus, Movimento } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Trash2, MoreHorizontal, Link as LinkIcon, Save, Database, ShieldCheck, Check, X, Printer, FileText, CheckCircle2, File } from "lucide-react";
+import { ExternalLink, Trash2, MoreHorizontal, Link as LinkIcon, Save, Database, ShieldCheck, Check, X, Printer, FileText, CheckCircle2, File, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { MovementList } from "./MovementList";
 import { OrderAuditForm } from "./OrderAuditForm";
@@ -283,7 +283,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
                  <Button variant="outline" className="text-[10px] font-bold uppercase rounded-xl h-11 border-slate-200">Exportar XML</Button>
                  {order.status === 'ok' && (
                    <Button onClick={handlePrint} className="text-[10px] font-black uppercase rounded-xl h-11 px-8 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
-                     <FileText className="w-4 h-4" /> Gerar Certificado PDF
+                     <Download className="w-4 h-4" /> DOWNLOAD DO CERTIFICADO PDF
                    </Button>
                  )}
               </div>
@@ -408,7 +408,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
                 onClick={handlePrint} 
                 className="gap-3 font-black uppercase text-[11px] h-14 px-12 rounded-2xl shadow-2xl shadow-primary/30 bg-primary hover:bg-primary/90 transition-all active:scale-95"
               >
-                <Printer className="w-5 h-5" /> Salvar Certificado como PDF
+                <Download className="w-5 h-5" /> DOWNLOAD DO CERTIFICADO PDF
               </Button>
             </div>
           )}
