@@ -1,6 +1,7 @@
 export type OrderStatus = 'pendente' | 'ok' | 'erro';
 export type MovementType = 'gov' | 'cliente' | 'outro';
 export type OrderCategory = 'selo' | 'Saas_Tesouro_Verde' | 'Saas_BMV';
+export type EntityStatus = 'disponivel' | 'bloqueado' | 'inapto';
 
 export interface Movimento {
   id: string;
@@ -32,5 +33,15 @@ export interface Pedido {
   auditado: boolean;
   status: OrderStatus;
   categoria: OrderCategory;
+  createdAt: string;
+}
+
+export interface EntidadeSaldo {
+  id: string;
+  nome: string;
+  documento: string; // CPF ou CNPJ
+  uf: string;
+  quantidade: number; // Saldo UCS
+  status: EntityStatus;
   createdAt: string;
 }
