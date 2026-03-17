@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Trash2, MoreHorizontal, Link as LinkIcon, Save, Database, ShieldCheck, Check, X, Printer, FileText, CheckCircle2, File } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { MovementList } from "./MovementList";
 import { OrderAuditForm } from "./OrderAuditForm";
 import { Badge } from "@/components/ui/badge";
@@ -216,17 +216,18 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-[2.5rem] border-none shadow-2xl p-8 print:p-0 print:max-h-none print:overflow-visible print:shadow-none print:rounded-none">
         
+        {/* Adicionado para conformidade com Radix UI / Shadcn */}
+        <DialogHeader className={variant === 'pdf' ? 'sr-only' : 'border-b border-slate-100 pb-6'}>
+          <DialogTitle>
+            {variant === 'pdf' ? `Certificado de Rastreabilidade - ${order.id}` : `Auditoria de Pedido - ${order.id}`}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Detalhes completos e rastreabilidade do pedido em blockchain.
+          </DialogDescription>
+        </DialogHeader>
+
         {variant === "default" && (
           <div className="print:hidden">
-            <DialogHeader className="border-b border-slate-100 pb-6">
-              <DialogTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-slate-900 font-black uppercase text-xl tracking-tight">AUDITORIA DE PEDIDO {order.id}</span>
-                  <StatusBadge status={order.status} />
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-8">
               <div className="space-y-8">
                 <div className="bg-slate-50/50 p-6 rounded-3xl space-y-6 border border-slate-100">
