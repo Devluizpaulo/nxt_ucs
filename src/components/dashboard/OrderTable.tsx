@@ -324,7 +324,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
               <h3 className="text-[10px] font-black uppercase border-b border-slate-200 pb-1 text-slate-400 tracking-widest">Volume e Integridade</h3>
               <div className="grid grid-cols-1 gap-2 text-[11px]">
                 <p><strong>Quantidade Total de UCS APOSENTADAS:</strong> <span className="font-bold">{order.quantidade}</span></p>
-                <p><strong>Valor Auditado:</strong> {order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                <p><strong>Valor Auditado:</strong> <span className="font-bold">{order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></p>
                 <p><strong>Estado (UF):</strong> {order.uf}</p>
                 <p>
                   <strong>Status Blockchain:</strong>{" "}
