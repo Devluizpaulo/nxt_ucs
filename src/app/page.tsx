@@ -29,6 +29,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function Dashboard() {
   const firestore = useFirestore();
@@ -49,16 +51,25 @@ export default function Dashboard() {
     setSelectedIds([]);
   }, [activeTab]);
 
-  const handleAddOrder = async (order: Omit<Pedido, 'createdAt'>) => {
+  const handleAddOrder = (order: Omit<Pedido, 'createdAt'>) => {
     if (!firestore) return;
     const docRef = doc(firestore, "pedidos", order.id);
-    await setDoc(docRef, {
+    const data = {
       ...order,
       createdAt: new Date().toISOString()
+    };
+
+    setDoc(docRef, data).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'create',
+        requestResourceData: data
+      }));
     });
+
     toast({
       title: "Registro criado",
-      description: `O pedido ${order.id} foi adicionado ao banco de dados.`
+      description: `O pedido ${order.id} foi adicionado com sucesso.`
     });
   };
 
@@ -98,25 +109,49 @@ export default function Dashboard() {
     });
   };
 
-  const handleUpdateOrder = async (id: string, updates: Partial<Pedido>) => {
+  const handleUpdateOrder = (id: string, updates: Partial<Pedido>) => {
     if (!firestore) return;
     const docRef = doc(firestore, "pedidos", id);
-    updateDoc(docRef, updates);
+    
+    updateDoc(docRef, updates).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'update',
+        requestResourceData: updates
+      }));
+    });
+
+    toast({
+      title: "Dados atualizados",
+      description: `As informações do pedido ${id} foram salvas.`
+    });
   };
 
-  const handleDeleteOrder = async (id: string) => {
+  const handleDeleteOrder = (id: string) => {
     if (!firestore) return;
     const docRef = doc(firestore, "pedidos", id);
-    deleteDoc(docRef);
+    
+    deleteDoc(docRef).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'delete'
+      }));
+    });
+
+    toast({
+      variant: "destructive",
+      title: "Pedido removido",
+      description: `O registro ${id} foi excluído do banco de dados.`
+    });
   };
 
-  const handleAddMovement = async (orderId: string, movements: any[]) => {
+  const handleAddMovement = (orderId: string, movements: any[]) => {
     if (!firestore) return;
     const movementsRef = collection(firestore, "pedidos", orderId, "movimentos");
 
     for (const mov of movements) {
       const newMoveRef = doc(movementsRef);
-      setDoc(newMoveRef, {
+      const data = {
         id: newMoveRef.id,
         pedidoId: orderId,
         raw: mov.raw,
@@ -128,16 +163,24 @@ export default function Dashboard() {
         duplicado: false,
         validado: true,
         createdAt: new Date().toISOString()
+      };
+
+      setDoc(newMoveRef, data).catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: newMoveRef.path,
+          operation: 'create',
+          requestResourceData: data
+        }));
       });
     }
     
     toast({
-      title: "Rastreabilidade Atualizada",
-      description: `${movements.length} novos movimentos vinculados ao pedido ${orderId}.`
+      title: "Rastreabilidade Gravada",
+      description: `${movements.length} movimentos vinculados ao pedido ${orderId}.`
     });
   };
 
-  const handleDeleteMovement = async (orderId: string, moveId: string) => {
+  const handleDeleteMovement = (orderId: string, moveId: string) => {
     if (!firestore) return;
     const docRef = doc(firestore, "pedidos", orderId, "movimentos", moveId);
     deleteDoc(docRef);

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,7 +21,7 @@ export function AddOrderDialog({ onAdd }: { onAdd: (order: any) => void }) {
     quantidade: "",
     taxa: "0",
     valorTotal: "",
-    categoria: "selo"
+    categoria: "selo" as OrderCategory
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -115,8 +116,8 @@ export function AddOrderDialog({ onAdd }: { onAdd: (order: any) => void }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="selo">Selo Tesouro Verde</SelectItem>
-                <SelectItem value="certificado_sas">SaaS BMV</SelectItem>
-                <SelectItem value="sas_dmv">SAS DMV</SelectItem>
+                <SelectItem value="Saas_Tesouro_Verde">Saas Tesouro Verde</SelectItem>
+                <SelectItem value="Saas_BMV">SaaS BMV</SelectItem>
               </SelectContent>
             </Select>
           </div>
