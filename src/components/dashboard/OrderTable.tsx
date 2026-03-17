@@ -282,22 +282,22 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
                <Button variant="outline" className="text-[10px] font-bold uppercase rounded-xl h-11 border-slate-200">Exportar XML</Button>
                {order.status === 'ok' && (
                  <Button onClick={handlePrint} className="text-[10px] font-black uppercase rounded-xl h-11 px-8 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white flex items-center gap-2 animate-in fade-in zoom-in">
-                   <Printer className="w-4 h-4" /> Gerar Relatório Final
+                   <FileText className="w-4 h-4" /> Gerar Certificado PDF
                  </Button>
                )}
             </div>
           </div>
         </div>
 
-        {/* Layout de Impressão (Exclusivo para print) */}
-        <div className="hidden print:block p-10 font-body text-slate-900">
-          <div className="flex items-center justify-between border-b-2 border-primary pb-6 mb-8">
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 uppercase">Relatório de Auditoria UCS</h1>
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">NXT Ledger • LedgerTrust Verification</p>
+        {/* Layout de Auditoria (Exclusivo para Gerar PDF) */}
+        <div className="hidden print:block p-12 font-body text-slate-900 bg-white">
+          <div className="flex items-center justify-between border-b-4 border-primary pb-8 mb-10">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Certificado de Auditoria UCS</h1>
+              <p className="text-xs text-primary font-black uppercase tracking-[0.2em]">NXT Ledger • LedgerTrust Verification System</p>
             </div>
             <div className="text-right">
-              <div className="relative w-24 h-12 ml-auto mb-1">
+              <div className="relative w-32 h-16 ml-auto mb-2">
                 <Image 
                   src="/image/logo_amarelo.png" 
                   alt="Logo BMV" 
@@ -306,76 +306,117 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
                   priority
                 />
               </div>
-              <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">Emitido em {new Date().toLocaleDateString('pt-BR')}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Emissão: {new Date().toLocaleDateString('pt-BR')}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 mb-10">
-            <div className="space-y-4">
-              <h3 className="text-[10px] font-black text-primary uppercase tracking-widest border-b border-slate-100 pb-1">Identificação do Ativo</h3>
-              <div className="grid grid-cols-1 gap-2">
-                <div><span className="text-[9px] font-bold text-slate-400 uppercase">ID do Pedido:</span> <span className="text-sm font-black text-slate-900 ml-2">{order.id}</span></div>
-                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Data do Registro:</span> <span className="text-sm font-bold text-slate-700 ml-2">{new Date(order.data).toLocaleString('pt-BR')}</span></div>
-                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Empresa:</span> <span className="text-sm font-black text-slate-900 ml-2 uppercase">{order.empresa}</span></div>
-                <div><span className="text-[9px] font-bold text-slate-400 uppercase">CNPJ:</span> <span className="text-sm font-mono text-slate-700 ml-2">{order.cnpj}</span></div>
+          <div className="grid grid-cols-2 gap-12 mb-12">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-[11px] font-black text-primary uppercase tracking-[0.15em] border-b-2 border-slate-100 pb-2 mb-4">Identificação do Ativo</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Protocolo de Pedido</span><span className="text-lg font-black text-slate-900">{order.id}</span></div>
+                  <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Data de Registro Ledger</span><span className="text-sm font-bold text-slate-700">{new Date(order.data).toLocaleString('pt-BR')}</span></div>
+                  <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Detentor / Razão Social</span><span className="text-sm font-black text-slate-900 uppercase leading-tight">{order.empresa}</span></div>
+                  <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">CNPJ Registrado</span><span className="text-sm font-mono font-bold text-slate-700">{order.cnpj}</span></div>
+                </div>
               </div>
             </div>
-            <div className="space-y-4">
-              <h3 className="text-[10px] font-black text-primary uppercase tracking-widest border-b border-slate-100 pb-1">Detalhes de Volume</h3>
-              <div className="grid grid-cols-1 gap-2">
-                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Volume (UCS):</span> <span className="text-sm font-black text-emerald-600 ml-2">{order.quantidade.toLocaleString()} UNIDADES</span></div>
-                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Valor Total:</span> <span className="text-sm font-black text-slate-900 ml-2">{order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></div>
-                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Programa:</span> <span className="text-sm font-bold text-slate-700 ml-2 uppercase">{order.programa}</span></div>
-                <div><span className="text-[9px] font-bold text-slate-400 uppercase">Status Auditoria:</span> <span className="text-xs font-black text-primary ml-2 uppercase tracking-tighter">VERIFICADO NXT LEDGER</span></div>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-[11px] font-black text-primary uppercase tracking-[0.15em] border-b-2 border-slate-100 pb-2 mb-4">Metadados de Volume</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Volume Total Auditado</span><span className="text-lg font-black text-emerald-600">{order.quantidade.toLocaleString()} UNIDADES (UCS)</span></div>
+                  <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Valor de Lastro</span><span className="text-sm font-black text-slate-900">{order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></div>
+                  <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Programa de Sustentabilidade</span><span className="text-sm font-bold text-slate-700 uppercase leading-tight">{order.programa}</span></div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">Status de Verificação</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">AUTENTICADO PELA REDE NXT</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mb-10 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <ShieldCheck className="w-3 h-3" /> Certificação Blockchain
+          <div className="mb-12 p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <ShieldCheck className="w-20 h-20 text-slate-900" />
+            </div>
+            <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-primary" /> Certificação Digital Blockchain
             </h3>
-            <div className="grid grid-cols-1 gap-2">
-              <div><span className="text-[9px] font-bold text-slate-400 uppercase">Hash de Integridade:</span> <span className="text-xs font-mono text-slate-600 ml-2 break-all">{order.hashPedido || "NÃO VINCULADO"}</span></div>
-              <div><span className="text-[9px] font-bold text-slate-400 uppercase">Link de Verificação:</span> <span className="text-[10px] text-blue-600 underline ml-2">{order.linkNxt || "PENDENTE"}</span></div>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">Hash Único de Integridade (Proof of Reservation)</span>
+                <span className="text-[11px] font-mono font-black text-slate-600 break-all bg-white p-3 rounded-xl border border-slate-200">{order.hashPedido || "NÃO VINCULADO"}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">Link Público de Auditoria</span>
+                <span className="text-[10px] text-blue-600 font-bold underline bg-white px-3 py-2 rounded-xl border border-slate-200 truncate">{order.linkNxt || "PENDENTE"}</span>
+              </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest border-b-2 border-slate-100 pb-2">Rastreabilidade de Movimentações ({movimentos?.length || 0})</h3>
+            <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.15em] border-b-2 border-slate-100 pb-2 flex items-center justify-between">
+              <span>Trilha de Rastreabilidade de Movimentações</span>
+              <span className="text-[9px] font-bold text-slate-400 italic">Total de {movimentos?.length || 0} operações detectadas</span>
+            </h3>
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-[9px] font-black uppercase text-slate-400 py-2">Tipo</th>
-                  <th className="text-[9px] font-black uppercase text-slate-400 py-2">Origem do Ativo</th>
-                  <th className="text-[9px] font-black uppercase text-slate-400 py-2">Destinatário</th>
-                  <th className="text-[9px] font-black uppercase text-slate-400 py-2 text-right">Volume</th>
+                <tr className="border-b-2 border-slate-200">
+                  <th className="text-[9px] font-black uppercase text-slate-400 py-3">Tipo de Fluxo</th>
+                  <th className="text-[9px] font-black uppercase text-slate-400 py-3">Origem do Ativo</th>
+                  <th className="text-[9px] font-black uppercase text-slate-400 py-3">Destinatário Final</th>
+                  <th className="text-[9px] font-black uppercase text-slate-400 py-3 text-right">Volume Alocado</th>
                 </tr>
               </thead>
               <tbody>
-                {movimentos?.map((mov) => (
-                  <tr key={mov.id} className="border-b border-slate-50">
-                    <td className="text-[9px] font-black py-3 uppercase text-primary">{mov.tipo}</td>
-                    <td className="text-[9px] font-bold py-3 uppercase text-slate-700">{mov.origem}</td>
-                    <td className="text-[9px] font-medium py-3 uppercase text-slate-500">{mov.destino}</td>
-                    <td className="text-[10px] font-black py-3 text-right text-slate-900">{mov.quantidade.toLocaleString()} UCS</td>
+                {movimentos?.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-10 text-center text-[10px] font-bold text-slate-300 uppercase">Nenhuma movimentação de rastreio vinculada</td>
                   </tr>
-                ))}
+                ) : (
+                  movimentos?.map((mov) => (
+                    <tr key={mov.id} className="border-b border-slate-50">
+                      <td className="py-4">
+                        <span className={`text-[8px] font-black px-2 py-1 rounded-md uppercase ${mov.tipo === 'gov' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
+                          {mov.tipo}
+                        </span>
+                      </td>
+                      <td className="text-[9px] font-bold py-4 uppercase text-slate-700 leading-tight max-w-[180px]">{mov.origem}</td>
+                      <td className="text-[9px] font-medium py-4 uppercase text-slate-500 leading-tight max-w-[180px]">{mov.destino}</td>
+                      <td className="text-[11px] font-black py-4 text-right text-slate-900">{mov.quantidade.toLocaleString()} UCS</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
-          <div className="mt-20 border-t pt-10 grid grid-cols-2 gap-20">
+          <div className="mt-20 border-t-2 border-slate-100 pt-12 grid grid-cols-2 gap-24">
             <div className="text-center">
-              <div className="border-b border-slate-300 mb-2"></div>
-              <p className="text-[8px] font-black uppercase text-slate-400">Assinatura do Auditor Responsável</p>
+              <div className="border-b-2 border-slate-300 mb-3 mx-auto w-48"></div>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Auditor Responsável</p>
+              <p className="text-[8px] font-bold text-slate-300 uppercase mt-1">Selo de Verificação LedgerTrust</p>
             </div>
             <div className="text-center flex flex-col items-center justify-center">
-              <div className="w-16 h-16 border-4 border-emerald-100 rounded-full flex items-center justify-center mb-2">
-                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              <div className="w-20 h-20 border-4 border-emerald-50 rounded-full flex items-center justify-center mb-3 bg-emerald-50/20">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
               </div>
-              <p className="text-[8px] font-black uppercase text-emerald-600 tracking-tighter italic">LedgerTrust Verified Integrity</p>
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-black uppercase text-emerald-600 tracking-tighter">LEDGERTRUST VERIFIED</p>
+                <p className="text-[8px] font-bold text-emerald-400 italic">Audit ID: {order.id.replace('#', '')}-{Date.now().toString().slice(-6)}</p>
+              </div>
             </div>
+          </div>
+          
+          <div className="mt-16 text-center">
+            <p className="text-[8px] text-slate-300 font-medium uppercase tracking-[0.3em]">Este documento é uma representação digital auditável de registros em Blockchain.</p>
           </div>
         </div>
       </DialogContent>
