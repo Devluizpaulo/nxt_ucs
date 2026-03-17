@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react";
@@ -17,7 +18,7 @@ import { AuditOverview } from "@/components/dashboard/AuditOverview";
 import { AddOrderDialog } from "@/components/dashboard/AddOrderDialog";
 import { BulkImportDialog } from "@/components/dashboard/BulkImportDialog";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, doc, updateDoc, deleteDoc, addDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, updateDoc, deleteDoc, setDoc, writeBatch } from "firebase/firestore";
 import { Pedido, OrderCategory } from "@/lib/types";
 import {
   Tooltip,
@@ -41,10 +42,14 @@ export default function Dashboard() {
 
   const handleAddOrder = async (order: Omit<Pedido, 'createdAt'>) => {
     if (!firestore) return;
-    const colRef = collection(firestore, "pedidos");
-    addDoc(colRef, {
+    const docRef = doc(firestore, "pedidos", order.id);
+    await setDoc(docRef, {
       ...order,
       createdAt: new Date().toISOString()
+    });
+    toast({
+      title: "Registro criado",
+      description: `O pedido ${order.id} foi adicionado ao banco de dados.`
     });
   };
 
@@ -54,14 +59,16 @@ export default function Dashboard() {
     const colRef = collection(firestore, "pedidos");
 
     bulkOrders.forEach(order => {
-      const newDocRef = doc(colRef);
+      // Usamos o ID da planilha como ID do documento para evitar duplicidade e divergência
+      const docId = order.id.toString();
+      const newDocRef = doc(colRef, docId);
       batch.set(newDocRef, order);
     });
 
     await batch.commit();
     toast({
       title: "Importação concluída",
-      description: `${bulkOrders.length} registros foram adicionados com sucesso.`
+      description: `${bulkOrders.length} registros foram sincronizados com sucesso.`
     });
   };
 
@@ -101,7 +108,10 @@ export default function Dashboard() {
     const movementsRef = collection(firestore, "pedidos", orderId, "movimentos");
 
     for (const line of lines) {
-      addDoc(movementsRef, {
+      // Para movimentos, mantemos ID aleatório pois um pedido tem vários
+      const newMoveRef = doc(movementsRef);
+      setDoc(newMoveRef, {
+        id: newMoveRef.id,
         pedidoId: orderId,
         raw: line,
         hashMovimento: `NXT-${Math.random().toString(36).substr(2, 12).toUpperCase()}`,
