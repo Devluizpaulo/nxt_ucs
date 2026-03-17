@@ -1,4 +1,3 @@
-
 import { Pedido, OrderStatus, Movimento } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "./StatusBadge";
@@ -198,7 +197,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = `${order.id} ${order.empresa}`;
+    document.title = `${order.id}_${order.empresa.replace(/\s+/g, '_')}`;
     window.print();
     document.title = originalTitle;
   };
@@ -218,7 +217,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-[2.5rem] border-none shadow-2xl p-8 print:p-0 print:max-h-none print:overflow-visible print:shadow-none print:rounded-none">
         
-        <DialogHeader className={variant === 'pdf' ? 'sr-only' : 'border-b border-slate-100 pb-6'}>
+        <DialogHeader className={variant === 'pdf' ? 'sr-only' : 'border-b border-slate-100 pb-6 print:hidden'}>
           <DialogTitle>
             {variant === 'pdf' ? `Certificado de Rastreabilidade - ${order.id}` : `Auditoria de Pedido - ${order.id}`}
           </DialogTitle>
@@ -293,7 +292,8 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           </div>
         )}
 
-        <div className={`${variant === 'default' ? 'hidden print:block' : 'block'} p-12 font-body text-slate-900 bg-white min-h-screen flex flex-col`}>
+        {/* Bloco Unificado para Impressão - Visível apenas quando solicitado ou no modo PDF */}
+        <div className={`printable-content ${variant === 'default' ? 'hidden print:block' : 'block'} p-12 font-body text-slate-900 bg-white min-h-screen flex flex-col`}>
           <div className="flex justify-between items-start mb-12 border-b-2 border-slate-900 pb-8">
             <div className="relative w-40 h-20">
               <Image 
@@ -311,7 +311,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-12 mb-10">
+          <div className="grid grid-cols-2 gap-12 mb-10 print-no-break">
             <div className="space-y-4">
               <h3 className="text-[10px] font-black uppercase border-b border-slate-200 pb-1 text-slate-400 tracking-widest">Identificação do Ativo</h3>
               <div className="grid grid-cols-1 gap-2 text-[11px]">
@@ -341,7 +341,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
             </div>
           </div>
 
-          <div className="space-y-6 mb-10 flex-1">
+          <div className="space-y-6 mb-10 flex-1 print-no-break">
             <h3 className="text-[10px] font-black uppercase border-b-2 border-slate-900 pb-1 text-slate-900 tracking-widest">Histórico Detalhado de Movimentações (Rastreio de UCs)</h3>
             <div className="rounded-lg border border-slate-200 overflow-hidden">
               <Table>
@@ -372,7 +372,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
             </div>
           </div>
 
-          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4 mb-12">
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4 mb-12 print-no-break">
             <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Validação em Blockchain NXT</h3>
             <div className="space-y-3">
               <div>
@@ -388,8 +388,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
             </div>
           </div>
 
-          {/* Carimbo Digital e Rodapé de Assinatura */}
-          <div className="mt-auto pt-10 flex justify-between items-end border-t border-slate-200">
+          <div className="mt-auto pt-10 flex justify-between items-end border-t border-slate-200 print-no-break">
              <div className="text-center flex flex-col items-center justify-center">
                 <div className="w-16 h-16 border-4 border-emerald-100 rounded-full flex items-center justify-center mb-2">
                    <CheckCircle2 className="w-8 h-8 text-emerald-500" />
@@ -403,7 +402,6 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
              </div>
           </div>
 
-          {/* Botão de Download (Escondido na Impressão) */}
           {variant === "pdf" && (
             <div className="mt-12 pt-8 flex justify-end print:hidden">
               <Button 

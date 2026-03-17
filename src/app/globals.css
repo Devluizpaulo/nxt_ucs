@@ -35,3 +35,28 @@
     @apply bg-background text-foreground font-body antialiased;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-content, .printable-content * {
+    visibility: visible;
+  }
+  .printable-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    visibility: visible !important;
+  }
+  @page {
+    margin: 0;
+    size: auto;
+  }
+  .print-no-break {
+    break-inside: avoid;
+  }
+}

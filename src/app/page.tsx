@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -199,7 +198,7 @@ export default function Dashboard() {
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex min-h-screen bg-[#F8FAFC]">
-        <aside className="w-20 bg-white border-r flex flex-col items-center py-8 gap-10 sticky top-0 h-screen">
+        <aside className="w-20 bg-white border-r flex flex-col items-center py-8 gap-10 sticky top-0 h-screen print:hidden">
           <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-emerald-100">
             <span className="text-primary font-black text-xs">BMV</span>
           </div>
@@ -244,7 +243,7 @@ export default function Dashboard() {
         </aside>
 
         <main className="flex-1 flex flex-col">
-          <header className="h-20 bg-white/50 backdrop-blur-md px-8 flex items-center justify-between border-b border-slate-200 sticky top-0 z-10">
+          <header className="h-20 bg-white/50 backdrop-blur-md px-8 flex items-center justify-between border-b border-slate-200 sticky top-0 z-10 print:hidden">
             <div>
               <h1 className="text-xl font-medium text-slate-600">Portal de Auditoria <span className="font-bold text-slate-900">NXT Ledger</span></h1>
             </div>
@@ -257,9 +256,9 @@ export default function Dashboard() {
             </div>
           </header>
 
-          <div className="p-8 space-y-8 overflow-y-auto">
+          <div className="p-8 space-y-8 overflow-y-auto print:p-0 print:overflow-visible">
             {isLoading || !user ? (
-              <div className="flex items-center justify-center h-64">
+              <div className="flex items-center justify-center h-64 print:hidden">
                 <div className="text-center space-y-4">
                   <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                   <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Sincronizando com Blockchain...</p>
@@ -267,11 +266,13 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                <AuditOverview orders={orders} />
+                <div className="print:hidden">
+                  <AuditOverview orders={orders} />
+                </div>
 
                 <div className="space-y-6">
                   <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as OrderCategory)} className="w-full">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-6 print:hidden">
                       <TabsList className="bg-slate-100/50 p-1 border rounded-full h-12">
                         <TabsTrigger value="selo" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-[10px] font-bold uppercase tracking-tighter">Selo Tesouro Verde</TabsTrigger>
                         <TabsTrigger value="Saas_Tesouro_Verde" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-[10px] font-bold uppercase tracking-tighter">Saas Tesouro Verde</TabsTrigger>
@@ -303,7 +304,7 @@ export default function Dashboard() {
                       />
 
                       {totalPages > 1 && (
-                        <div className="flex items-center justify-between bg-white px-8 py-4 rounded-[2rem] border border-slate-200 shadow-sm">
+                        <div className="flex items-center justify-between bg-white px-8 py-4 rounded-[2rem] border border-slate-200 shadow-sm print:hidden">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                             Mostrando {Math.min(filteredOrders.length, itemsPerPage)} de {filteredOrders.length} registros
                           </p>
