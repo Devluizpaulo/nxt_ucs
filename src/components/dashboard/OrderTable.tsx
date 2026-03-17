@@ -307,8 +307,8 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           "printable-content",
           variant === 'pdf' ? "block" : "hidden print:block"
         )}>
-          <div className="flex justify-between items-center mb-6 border-b-4 border-slate-900 pb-6 print-no-break">
-            <div className="relative w-44 h-20">
+          <div className="flex justify-between items-center mb-4 border-b-2 border-slate-900 pb-4 print-no-break">
+            <div className="relative w-36 h-16">
               <Image 
                 src="/image/logo_amarelo.png" 
                 alt="BMV LedgerTrust" 
@@ -318,25 +318,25 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
               />
             </div>
             <div className="text-right flex flex-col items-end">
-              <h1 className="text-2xl font-black uppercase tracking-tighter text-slate-900 leading-none">Certificado de Rastreabilidade</h1>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">Protocolo de Auditoria: #{order.id}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR')}</p>
+              <h1 className="text-xl font-black uppercase tracking-tighter text-slate-900 leading-none">Certificado de Rastreabilidade</h1>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Protocolo de Auditoria: #{order.id}</p>
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR')}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-10 mb-8 print-no-break">
-            <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-8 mb-6 print-no-break">
+            <div className="space-y-4">
               <div className="border-b border-slate-200 pb-1">
-                <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Identificação do Ativo</h3>
+                <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Identificação do Ativo</h3>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest block mb-1">Pedido ID:</span>
-                  <div className="bg-emerald-50 px-4 py-2 rounded-lg text-2xl font-black text-primary border border-emerald-100 inline-block tracking-tight">
+                  <span className="text-slate-400 font-bold uppercase text-[8px] tracking-widest block mb-0.5">Pedido ID:</span>
+                  <div className="bg-emerald-50 px-3 py-1.5 rounded-lg text-xl font-black text-primary border border-emerald-100 inline-block tracking-tight">
                     ##{order.id}
                   </div>
                 </div>
-                <div className="text-[12px] space-y-2">
+                <div className="text-[10px] space-y-1">
                   <p><strong>Data de Registro:</strong> {new Date(order.data).toLocaleDateString('pt-BR')}</p>
                   <p className="leading-tight"><strong>Empresa/Origem:</strong> {order.empresa}</p>
                   <p><strong>CNPJ:</strong> <span className="font-mono text-primary font-bold">{order.cnpj}</span></p>
@@ -345,27 +345,27 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="border-b border-slate-200 pb-1">
-                <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Auditoria Digital</h3>
+                <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Auditoria Digital</h3>
               </div>
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-3">
-                  <p className="text-[13px] font-bold">Quantidade UCS:</p>
-                  <p className="text-2xl font-black text-slate-900 leading-none">{order.quantidade}</p>
-                  <p className="text-[12px] font-bold">Valor Auditado:</p>
-                  <p className="text-lg font-black text-slate-900">{order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+              <div className="flex gap-3">
+                <div className="flex-1 space-y-2">
+                  <p className="text-[11px] font-bold">Quantidade UCS:</p>
+                  <p className="text-xl font-black text-slate-900 leading-none">{order.quantidade}</p>
+                  <p className="text-[10px] font-bold">Valor Auditado:</p>
+                  <p className="text-base font-black text-slate-900">{order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                   
-                  <div className="pt-2">
-                    <a href={order.linkNxt} className="text-[10px] text-primary font-black uppercase underline break-all block">
+                  <div className="pt-1">
+                    <a href={order.linkNxt} target="_blank" rel="noopener noreferrer" className="text-[8px] text-primary font-black uppercase underline break-all block">
                       Validar na Blockchain
                     </a>
                   </div>
                 </div>
                 {qrCodeUrl && (
-                  <div className="w-24 h-24 border p-1 rounded-lg shrink-0 bg-white">
+                  <div className="w-20 h-20 border p-1 rounded-lg shrink-0 bg-white">
                     <img src={qrCodeUrl} alt="QR Code Auditoria" className="w-full h-full" />
-                    <p className="text-[6px] text-center font-bold mt-1 text-slate-400">ESCANEIE PARA VALIDAR</p>
+                    <p className="text-[5px] text-center font-bold mt-1 text-slate-400">ESCANEIE PARA VALIDAR</p>
                   </div>
                 )}
               </div>
@@ -373,30 +373,30 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           </div>
 
           <div className="flex-1 overflow-hidden print-no-break">
-            <h3 className="text-[11px] font-black uppercase border-b-2 border-slate-900 pb-1 text-slate-900 tracking-widest mb-4">Histórico de Rastreabilidade (Ledger Records)</h3>
+            <h3 className="text-[9px] font-black uppercase border-b-2 border-slate-900 pb-1 text-slate-900 tracking-widest mb-3">Histórico de Rastreabilidade (Ledger Records)</h3>
             <div className="rounded-xl border border-slate-200 overflow-hidden">
               <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow className="border-b border-slate-200">
-                    <TableHead className="text-[10px] font-black uppercase text-slate-400 h-9">Categoria</TableHead>
-                    <TableHead className="text-[10px] font-black uppercase text-slate-400 h-9">Origem do Ativo</TableHead>
-                    <TableHead className="text-[10px] font-black uppercase text-slate-400 h-9">Destino</TableHead>
-                    <TableHead className="text-[10px] font-black uppercase text-slate-400 h-9 text-right">Volume (UCS)</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8">Categoria</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8">Origem do Ativo</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8">Destino</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8 text-right">Volume (UCS)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {movimentos?.slice(0, 18).map((mov) => (
+                  {movimentos?.slice(0, 15).map((mov) => (
                     <TableRow key={mov.id} className="border-b border-slate-100">
-                      <TableCell className="py-2.5 text-[10px] font-bold uppercase text-slate-600">{mov.tipo}</TableCell>
-                      <TableCell className="py-2.5 text-[10px] leading-tight max-w-[150px] truncate">{mov.origem}</TableCell>
-                      <TableCell className="py-2.5 text-[10px] leading-tight max-w-[150px] truncate">{mov.destino}</TableCell>
-                      <TableCell className="py-2.5 text-right font-mono text-[11px] font-black text-slate-900">{mov.quantidade}</TableCell>
+                      <TableCell className="py-2 text-[9px] font-bold uppercase text-slate-600">{mov.tipo}</TableCell>
+                      <TableCell className="py-2 text-[9px] leading-tight max-w-[140px] truncate">{mov.origem}</TableCell>
+                      <TableCell className="py-2 text-[9px] leading-tight max-w-[140px] truncate">{mov.destino}</TableCell>
+                      <TableCell className="py-2 text-right font-mono text-[10px] font-black text-slate-900">{mov.quantidade}</TableCell>
                     </TableRow>
                   ))}
-                  {movimentos && movimentos.length > 18 && (
+                  {movimentos && movimentos.length > 15 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-2 text-[9px] font-bold text-slate-400 uppercase italic">
-                        + {movimentos.length - 18} registros adicionais validados no Ledger
+                      <TableCell colSpan={4} className="text-center py-1.5 text-[8px] font-bold text-slate-400 uppercase italic">
+                        + {movimentos.length - 15} registros adicionais validados no Ledger
                       </TableCell>
                     </TableRow>
                   )}
@@ -405,25 +405,25 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
             </div>
           </div>
 
-          <div className="mt-8 pt-8 flex justify-between items-end border-t-2 border-slate-200 print-no-break">
+          <div className="mt-6 pt-6 flex justify-between items-end border-t-2 border-slate-200 print-no-break">
              <div className="text-center flex flex-col items-center">
-                <div className="w-14 h-14 border-2 border-emerald-100 rounded-full flex items-center justify-center mb-2 bg-emerald-50">
-                   <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                <div className="w-12 h-12 border-2 border-emerald-100 rounded-full flex items-center justify-center mb-1 bg-emerald-50">
+                   <CheckCircle2 className="w-6 h-6 text-emerald-500" />
                 </div>
-                <p className="text-[10px] font-black uppercase text-emerald-600 tracking-tighter italic">Integridade Verificada</p>
+                <p className="text-[8px] font-black uppercase text-emerald-600 tracking-tighter italic">Integridade Verificada</p>
              </div>
              <div className="text-right">
-                <div className="w-64 border-b-2 border-slate-900 mb-2"></div>
-                <p className="text-[11px] font-black uppercase text-slate-900 tracking-widest">Auditor de Conformidade BMV</p>
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Documento Assinado Digitalmente</p>
+                <div className="w-56 border-b-2 border-slate-900 mb-1.5"></div>
+                <p className="text-[9px] font-black uppercase text-slate-900 tracking-widest">Auditor de Conformidade BMV</p>
+                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Documento Assinado Digitalmente</p>
              </div>
           </div>
 
           {variant === "pdf" && (
-            <div className="mt-8 flex justify-end print:hidden">
+            <div className="mt-6 flex justify-end print:hidden">
               <Button 
                 onClick={handlePrint} 
-                className="gap-3 font-black uppercase text-xs h-14 px-12 rounded-2xl shadow-2xl shadow-primary/30 bg-primary hover:bg-primary/90 transition-all active:scale-95"
+                className="gap-3 font-black uppercase text-xs h-12 px-10 rounded-xl shadow-2xl shadow-primary/30 bg-primary hover:bg-primary/90 transition-all active:scale-95"
               >
                 <Download className="w-5 h-5" /> DOWNLOAD DO CERTIFICADO PDF
               </Button>
