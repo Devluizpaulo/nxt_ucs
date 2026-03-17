@@ -168,38 +168,38 @@ export default function Dashboard() {
               <>
                 <AuditOverview orders={orders} />
 
-                {/* Métricas Rápidas */}
+                {/* Métricas Rápidas Refinadas */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="border-none shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                  <Card className="border-none shadow-sm rounded-3xl">
+                    <CardContent className="p-8">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
                           <TrendingUp className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-tight">Cotação UCS (Mercado)</h3>
+                        <h3 className="font-bold text-slate-700 text-base">Cotação UCS (Mercado)</h3>
                       </div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-black text-slate-900">R$ 177,10</span>
-                        <span className="text-slate-400 text-xs font-medium">/UCS</span>
+                        <span className="text-4xl font-black text-slate-900">R$ 177,10</span>
+                        <span className="text-slate-400 text-sm font-medium">/UCS</span>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-none shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <Card className="border-none shadow-sm rounded-3xl">
+                    <CardContent className="p-8">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                           <LinkIcon className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-tight">Cobertura NXT</h3>
+                        <h3 className="font-bold text-slate-700 text-base">Cobertura NXT</h3>
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900">
+                        <span className="text-4xl font-black text-slate-900">
                           {((orders.filter(o => o.auditado).length / (orders.length || 1)) * 100).toFixed(0)}%
                         </span>
-                        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">REGISTROS VÁLIDOS</span>
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">REGISTROS VÁLIDOS</span>
                       </div>
-                      <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="mt-6 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                          <div 
                           className="h-full bg-primary transition-all duration-1000" 
                           style={{ width: `${(orders.filter(o => o.auditado).length / (orders.length || 1)) * 100}%` }}
@@ -208,19 +208,19 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border-none shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
+                  <Card className="border-none shadow-sm rounded-3xl">
+                    <CardContent className="p-8">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center text-rose-600">
                           <AlertCircle className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-tight">Ação Necessária</h3>
+                        <h3 className="font-bold text-slate-700 text-base">Ação Necessária</h3>
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-rose-600">
+                        <span className="text-4xl font-black text-rose-600">
                           {orders.filter(o => !o.auditado).length}
                         </span>
-                        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">PEDIDOS PENDENTES</span>
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">PEDIDOS PENDENTES</span>
                       </div>
                     </CardContent>
                   </Card>
