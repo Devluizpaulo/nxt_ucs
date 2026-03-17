@@ -1,9 +1,8 @@
-
 import { Movimento } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Trash2, AlertTriangle, ShieldCheck, ArrowRightLeft } from "lucide-react";
 
 interface MovementListProps {
   movements: Movimento[];
@@ -13,53 +12,57 @@ interface MovementListProps {
 export function MovementList({ movements, onDelete }: MovementListProps) {
   if (movements.length === 0) {
     return (
-      <div className="py-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-        Nenhum movimento registrado para este pedido.
+      <div className="py-12 text-center border-2 border-dashed rounded-xl bg-muted/10 flex flex-col items-center gap-3">
+        <ArrowRightLeft className="w-10 h-10 text-muted-foreground/30" />
+        <div className="space-y-1">
+          <p className="font-bold text-sm uppercase text-muted-foreground">Nenhuma movimentação registrada</p>
+          <p className="text-xs text-muted-foreground/60">Aguardando importação de extratos ou registros manuais.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border bg-muted/30">
+    <div className="rounded-xl border bg-card/30 overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent border-b">
-            <TableHead className="font-headline">Origem</TableHead>
-            <TableHead className="font-headline">Destino</TableHead>
-            <TableHead className="font-headline">Quantidade</TableHead>
-            <TableHead className="font-headline">Hash do Movimento</TableHead>
-            <TableHead className="font-headline">Status</TableHead>
+          <TableRow className="hover:bg-transparent border-b bg-muted/20">
+            <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Origem do Ativo</TableHead>
+            <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Destinatário</TableHead>
+            <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Volume</TableHead>
+            <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Hash da Operação</TableHead>
+            <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Integridade</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {movements.map((mov) => (
-            <TableRow key={mov.id} className="group">
-              <TableCell className="font-medium text-xs">{mov.origem}</TableCell>
-              <TableCell className="text-xs">{mov.destino}</TableCell>
-              <TableCell className="font-mono text-xs">{mov.quantidade.toLocaleString()}</TableCell>
-              <TableCell className="font-mono text-xs text-muted-foreground">{mov.hashMovimento}</TableCell>
+            <TableRow key={mov.id} className="group border-b border-border/20 last:border-0 hover:bg-muted/10">
+              <TableCell className="font-bold text-[10px] uppercase text-foreground/80">{mov.origem}</TableCell>
+              <TableCell className="text-[10px] uppercase font-medium text-muted-foreground">{mov.destino}</TableCell>
+              <TableCell className="font-mono text-[10px] font-black">{mov.quantidade.toLocaleString()} UCS</TableCell>
+              <TableCell className="font-mono text-[9px] text-primary/70">{mov.hashMovimento}</TableCell>
               <TableCell>
                 {mov.duplicado ? (
-                  <Badge variant="destructive" className="flex items-center gap-1 text-[10px] py-0">
-                    <AlertTriangle className="w-3 h-3" /> Duplicado
+                  <Badge variant="destructive" className="flex items-center gap-1 text-[8px] py-0 px-1 font-bold">
+                    <AlertTriangle className="w-2.5 h-2.5" /> DUPLICADO
                   </Badge>
                 ) : mov.validado ? (
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/50 flex items-center gap-1 text-[10px] py-0">
-                    <ShieldCheck className="w-3 h-3" /> Válido
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/50 flex items-center gap-1 text-[8px] py-0 px-1 font-bold">
+                    <ShieldCheck className="w-2.5 h-2.5" /> VALIDADO
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="text-[10px] py-0">Validando</Badge>
+                  <Badge variant="outline" className="text-[8px] py-0 px-1 font-bold animate-pulse">PROCESSANDO</Badge>
                 )}
               </TableCell>
               <TableCell>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  className="h-7 w-7 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
                   onClick={() => onDelete(mov.id)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </TableCell>
             </TableRow>

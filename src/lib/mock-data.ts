@@ -4,7 +4,7 @@ export const MOCK_PEDIDOS: Pedido[] = [
   {
     id: '#885',
     data: '2025-07-14T20:34:42',
-    empresa: 'SUA MAQUETE DESENHO TECNICO LTDA',
+    empresa: 'SUA MAQUETE DESENHO TECNICO LTDA SUA MAQUETE DESENHO TECNICO LTDA',
     cnpj: '19.775.922/0001-07',
     programa: 'Maricá (Mumbuca Verde)',
     uf: 'RJ',
@@ -30,7 +30,7 @@ export const MOCK_PEDIDOS: Pedido[] = [
     valorTotal: 191.68,
     hashPedido: 'AB',
     auditado: false,
-    status: 'pendente',
+    status: 'erro',
     createdAt: new Date().toISOString(),
   },
   {
@@ -48,7 +48,63 @@ export const MOCK_PEDIDOS: Pedido[] = [
     auditado: false,
     status: 'ok',
     createdAt: new Date().toISOString(),
+  },
+  {
+    id: '#881',
+    data: '2025-07-10T11:01:20',
+    empresa: 'Orixx do Brasil Ltda Orixx',
+    cnpj: '56.386.313/0001-84',
+    programa: 'Amapa (SEFAZ - Beneficios Fiscais)',
+    uf: 'AP',
+    do: true,
+    quantidade: 1,
+    taxa: 0,
+    valorTotal: 191.68,
+    hashPedido: 'AB',
+    auditado: false,
+    status: 'erro',
+    createdAt: new Date().toISOString(),
   }
 ];
 
-export const MOCK_MOVIMENTOS: Movimento[] = [];
+export const MOCK_MOVIMENTOS: Movimento[] = [
+  {
+    id: 'MOV-001',
+    pedidoId: '#885',
+    raw: 'Origin: Governo Federal | Dest: Maricá | Qtd: 3 UCS | Hash: NXT-885-ALPHA',
+    hashMovimento: 'NXT-885-ALPHA',
+    tipo: 'gov',
+    origem: 'Governo Federal / MMA',
+    destino: 'Prefeitura de Maricá',
+    quantidade: 3,
+    duplicado: false,
+    validado: true,
+    createdAt: '2025-07-14T20:35:00',
+  },
+  {
+    id: 'MOV-002',
+    pedidoId: '#885',
+    raw: 'Origin: Maricá | Dest: SUA MAQUETE | Qtd: 3 UCS | Hash: NXT-885-BETA',
+    hashMovimento: 'NXT-885-BETA',
+    tipo: 'cliente',
+    origem: 'Prefeitura de Maricá',
+    destino: 'SUA MAQUETE DESENHO TECNICO LTDA',
+    quantidade: 3,
+    duplicado: false,
+    validado: true,
+    createdAt: '2025-07-14T20:40:00',
+  },
+  {
+    id: 'MOV-003',
+    pedidoId: '#883',
+    raw: 'Origin: SEFAZ AP | Dest: DELVAL | Hash: NXT-883-DUP',
+    hashMovimento: 'NXT-883-DUP',
+    tipo: 'gov',
+    origem: 'SEFAZ - Amapá',
+    destino: 'DELVAL COMERCIAL LTDDA DELVAL',
+    quantidade: 1,
+    duplicado: true,
+    validado: false,
+    createdAt: '2025-07-11T13:30:00',
+  }
+];
