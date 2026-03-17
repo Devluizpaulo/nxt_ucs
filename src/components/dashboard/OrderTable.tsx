@@ -197,7 +197,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = `${order.id}_${order.empresa.replace(/\s+/g, '_')}`;
+    document.title = `Certificado_${order.id}_${order.empresa.replace(/\s+/g, '_')}`;
     window.print();
     document.title = originalTitle;
   };
@@ -206,8 +206,8 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
     <Dialog>
       <DialogTrigger asChild>
         {variant === "pdf" ? (
-          <Button variant="ghost" size="icon" title="Gerar Certificado de Rastreabilidade" className="h-8 w-8 text-primary hover:bg-emerald-50 rounded-lg animate-in fade-in zoom-in border border-emerald-100">
-            <File className="w-4 h-4 fill-emerald-500/10" />
+          <Button variant="ghost" size="icon" title="Download do Certificado PDF" className="h-8 w-8 text-primary hover:bg-emerald-50 rounded-lg animate-in fade-in zoom-in border border-emerald-100">
+            <Download className="w-4 h-4 fill-emerald-500/10" />
           </Button>
         ) : (
           <Button variant="ghost" size="icon" title="Editar Auditoria" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg">
@@ -292,18 +292,17 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           </div>
         )}
 
-        <div className={`printable-content ${variant === 'default' ? 'hidden print:block' : 'block'} p-12 font-body text-slate-900 bg-white min-h-screen flex flex-col`}>
+        <div className={`printable-content ${variant === 'default' ? 'hidden' : 'block'} print:block p-12 font-body text-slate-900 bg-white min-h-screen flex flex-col`}>
           <div className="flex justify-between items-start mb-12 border-b-2 border-slate-900 pb-8">
-            <div className="relative w-40 h-20">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center shadow-sm border border-emerald-100">
-                  <span className="text-primary font-black text-xs">BMV</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-lg font-black text-slate-900 leading-none">LedgerTrust</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Auditoria Digital</span>
-                </div>
-              </div>
+            <div className="relative w-48 h-24">
+              <Image 
+                src="/image/logo_amarelo.png" 
+                alt="BMV LedgerTrust" 
+                width={192} 
+                height={96} 
+                className="object-contain"
+                priority
+              />
             </div>
             <div className="text-right space-y-1">
               <h1 className="text-xl font-black uppercase tracking-tighter text-slate-900">Certificado de Rastreabilidade</h1>
