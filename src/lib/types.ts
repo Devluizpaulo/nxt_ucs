@@ -38,10 +38,24 @@ export interface Pedido {
 
 export interface EntidadeSaldo {
   id: string;
-  nome: string;
-  documento: string; // CPF ou CNPJ
+  nome: string; // Usuário
+  documento: string; // Documento
   uf: string;
-  quantidade: number; // Saldo UCS
+  originacao: number;
+  debito: number;
+  aposentadas: number;
+  bloqueadas: number;
+  aquisicao: number;
+  transferenciaImei: number;
+  estornoImei: number;
+  saldoAjustarImei: number;
+  saldoLegado: number;
+  cprs: string;
+  bmtca: string;
+  statusBmtca: string;
+  desmate: string;
+  saldoFinal: number; // SALDO FINAL (ATUAL)
+  valorAjustar: number; // VALOR A AJUSTAR
   status: EntityStatus;
   createdAt: string;
 }
