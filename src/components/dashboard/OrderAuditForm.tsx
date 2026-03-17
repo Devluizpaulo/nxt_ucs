@@ -15,55 +15,53 @@ export function OrderAuditForm({ onAdd }: OrderAuditFormProps) {
   const [raw, setRaw] = useState("");
   const [previewData, setPreviewData] = useState<any[]>([]);
 
-  // Função para parse de movimentações com campos complexos
+  // Função para parse de movimentações com campos complexos baseados no novo padrão de 12 colunas
   const parseMovements = (text: string) => {
     if (!text.trim()) return [];
     
-    // Divide por quebras de linha mas tenta agrupar registros se estiverem espalhados
-    // Se houver tabs (\t), tratamos como linha de planilha. Se não, tentamos parse por blocos.
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    const rows = text.split('\n').filter(r => r.trim());
     const results: any[] = [];
 
-    // Lógica para dados tabulares (Excel/Sheets)
+    // Lógica para dados tabulares (Excel/Sheets) - Padrão de 12 colunas detectado
     if (text.includes('\t')) {
-      const rows = text.split('\n').filter(r => r.trim());
-      const startIdx = rows[0]?.toLowerCase().includes('tipo') ? 1 : 0;
+      const startIdx = (rows[0]?.toLowerCase().includes('id') || rows[0]?.toLowerCase().includes('dist')) ? 1 : 0;
 
       for (let i = startIdx; i < rows.length; i++) {
         const parts = rows[i].split('\t');
-        if (parts.length < 5) continue;
+        if (parts.length < 10) continue;
 
-        const tipoRaw = parts[0]?.toLowerCase() || "";
-        const id = parts[1] || "";
-        const origem = parts[6] || parts[5] || "N/A"; // Usuário Origem
-        const destino = parts[8] || parts[7] || "N/A"; // Usuário Destino
-        const qtdStr = parts[10] || parts[parts.length - 1] || "0";
-        const quantidade = parseInt(qtdStr.replace(/[^\d]/g, '')) || 0;
+        // Mapeamento baseado na estrutura fornecida:
+        // 0: ID | 1: Dist | 2: DataIn | 3: DataEnd | 4: Origem(Tipo) | 5: Categoria | 6: NomeOrigem | 7: Destino(Tipo) | 8: Categoria | 9: NomeDestino | 10: Saldos | 11: Quantidade
+        const id = parts[0]?.trim() || "";
+        const tipoOrigem = parts[4]?.toLowerCase() || "";
+        const nomeOrigem = parts[6]?.trim() || "N/A";
+        const nomeDestino = parts[9]?.trim() || "N/A";
+        const qtdStr = parts[11]?.replace(/[^\d]/g, '') || "0";
+        const quantidade = parseInt(qtdStr) || 0;
 
         results.push({
-          tipo: tipoRaw.includes('gov') ? 'gov' : (tipoRaw.includes('trading') ? 'cliente' : 'outro'),
-          hashMovimento: `ID-${id}`,
-          origem: origem.replace(/"/g, '').split('\n')[0],
-          destino: destino.replace(/"/g, '').split('\n')[0],
+          tipo: tipoOrigem.includes('gov') ? 'gov' : (tipoOrigem.includes('trading') ? 'cliente' : 'outro'),
+          hashMovimento: id ? `ID-${id}` : `REF-${Math.random().toString(36).substr(2, 9)}`,
+          origem: nomeOrigem,
+          destino: nomeDestino,
           quantidade,
           raw: rows[i]
         });
       }
     } else {
-      // Fallback para parse linear se os dados vierem em blocos de texto
-      // (Útil para o formato "vertical" enviado no exemplo)
-      // Aqui agrupamos a cada N linhas ou procuramos padrões
+      // Fallback para parse linear (Vertical)
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
       for (let i = 0; i < lines.length; i++) {
-        if (lines[i].match(/^\d{5,}/)) { // Detecta o Tipo/ID começando com números longos
+        if (lines[i].match(/^\d{5,}/)) { // Detecta ID numérico longo
           results.push({
             tipo: lines[i+4]?.toLowerCase().includes('gov') ? 'gov' : 'cliente',
-            hashMovimento: `ID-${lines[i+1]}`,
+            hashMovimento: `ID-${lines[i]}`,
             origem: lines[i+6] || "N/A",
-            destino: lines[i+8] || "N/A",
-            quantidade: parseInt(lines[i+12]) || 1,
-            raw: lines.slice(i, i+13).join(' | ')
+            destino: lines[i+9] || "N/A",
+            quantidade: parseInt(lines[i+11]) || 1,
+            raw: lines.slice(i, i+12).join(' | ')
           });
-          i += 12; // Pula o bloco processado
+          i += 11;
         }
       }
     }
@@ -100,14 +98,13 @@ export function OrderAuditForm({ onAdd }: OrderAuditFormProps) {
           
           <Textarea
             id="movement-raw"
-            placeholder="Tipo	ID	Dist.	Data Inicio	Data Fim	Origem	Usuário Origem..."
+            placeholder="ID	Dist.	Data Inicio	Data Fim	Origem	Usuário	Origem	Destino	Usuário	Destino	Saldos	Quantidade"
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
             className="min-h-[120px] font-mono text-[9px] bg-slate-50 border-slate-200 focus:ring-primary rounded-xl resize-none shadow-inner"
           />
         </div>
 
-        {/* Máscara de Visualização */}
         <div className="space-y-3">
           <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
             <TableIcon className="w-3 h-3" /> Prévia do Mapeamento
