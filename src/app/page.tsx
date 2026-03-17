@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -17,7 +18,7 @@ import { AddOrderDialog } from "@/components/dashboard/AddOrderDialog";
 import { BulkImportDialog } from "@/components/dashboard/BulkImportDialog";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, updateDoc, deleteDoc, setDoc, writeBatch, query, orderBy } from "firebase/firestore";
-import { Pedido, OrderCategory, Movimento } from "@/lib/types";
+import { Pedido, OrderCategory } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -194,7 +195,7 @@ export default function Dashboard() {
       <main className="flex-1 flex flex-col">
         <header className="h-20 bg-white/50 backdrop-blur-md px-8 flex items-center justify-between border-b border-slate-200 sticky top-0 z-10 print:hidden">
           <div>
-            <h1 className="text-xl font-medium text-slate-600">Portal de Auditoria <span className="font-bold text-slate-900">NXT Ledger</span></h1>
+            <h1 className="text-xl font-medium text-slate-600">Portal de Auditoria <span className="font-bold text-slate-900">Sistema Legado</span></h1>
           </div>
           <div className="flex items-center gap-6">
             <div className="relative w-64">
@@ -210,7 +211,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-center h-64 print:hidden">
               <div className="text-center space-y-4">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Sincronizando com Blockchain...</p>
+                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Sincronizando com Banco de Dados...</p>
               </div>
             </div>
           ) : (
