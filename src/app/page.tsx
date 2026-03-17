@@ -202,8 +202,8 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-6">
                       <TabsList className="bg-slate-100/50 p-1 border rounded-full h-12">
                         <TabsTrigger value="selo" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-[10px] font-bold uppercase tracking-tighter">Selo Tesouro Verde</TabsTrigger>
-                        <TabsTrigger value="certificado_sas" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-[10px] font-bold uppercase tracking-tighter">SaaS BMV</TabsTrigger>
-                        <TabsTrigger value="sas_dmv" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-[10px] font-bold uppercase tracking-tighter">SAS DMV</TabsTrigger>
+                        <TabsTrigger value="Saas_Tesouro_Verde" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-[10px] font-bold uppercase tracking-tighter">Saas Tesouro Verde</TabsTrigger>
+                        <TabsTrigger value="Saas_BMV" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-[10px] font-bold uppercase tracking-tighter">SaaS BMV</TabsTrigger>
                       </TabsList>
                       <div className="flex gap-3">
                          {selectedIds.length > 0 && (
@@ -230,9 +230,9 @@ export default function Dashboard() {
                         onDeleteMovement={handleDeleteMovement}
                       />
                     </TabsContent>
-                    <TabsContent value="certificado_sas" className="mt-0">
+                    <TabsContent value="Saas_Tesouro_Verde" className="mt-0">
                       <OrderTable 
-                        orders={orders.filter(o => o.categoria === 'certificado_sas')} 
+                        orders={orders.filter(o => o.categoria === 'Saas_Tesouro_Verde')} 
                         selectedIds={selectedIds}
                         onSelectionChange={setSelectedIds}
                         onUpdateOrder={handleUpdateOrder}
@@ -241,9 +241,9 @@ export default function Dashboard() {
                         onDeleteMovement={handleDeleteMovement}
                       />
                     </TabsContent>
-                    <TabsContent value="sas_dmv" className="mt-0">
+                    <TabsContent value="Saas_BMV" className="mt-0">
                       <OrderTable 
-                        orders={orders.filter(o => o.categoria === 'sas_dmv')} 
+                        orders={orders.filter(o => o.categoria === 'Saas_BMV')} 
                         selectedIds={selectedIds}
                         onSelectionChange={setSelectedIds}
                         onUpdateOrder={handleUpdateOrder}

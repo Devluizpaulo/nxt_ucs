@@ -1,6 +1,6 @@
 export type OrderStatus = 'pendente' | 'ok' | 'erro';
 export type MovementType = 'gov' | 'cliente' | 'outro';
-export type OrderCategory = 'selo' | 'certificado_sas' | 'sas_dmv';
+export type OrderCategory = 'selo' | 'Saas_Tesouro_Verde' | 'Saas_BMV';
 
 export interface Movimento {
   id: string;

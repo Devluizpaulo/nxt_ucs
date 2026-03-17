@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Layers, AlertCircle, Check } from "lucide-react";
+import { Layers, AlertCircle } from "lucide-react";
 import { OrderCategory } from "@/lib/types";
-import { parse } from "date-fns";
 
 interface BulkImportDialogProps {
   onImport: (orders: any[]) => void;
@@ -19,33 +18,70 @@ export function BulkImportDialog({ onImport, category }: BulkImportDialogProps) 
   const getCategoryName = (cat: OrderCategory) => {
     switch(cat) {
       case 'selo': return 'Selo Tesouro Verde';
-      case 'certificado_sas': return 'SaaS BMV';
-      case 'sas_dmv': return 'SAS DMV';
+      case 'Saas_Tesouro_Verde': return 'Saas Tesouro Verde';
+      case 'Saas_BMV': return 'SaaS BMV';
       default: return cat;
     }
   }
 
+  // Função robusta para parse de TSV respeitando aspas e quebras de linha internas
+  const parseTSV = (text: string) => {
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          currentField += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === '\t' && !inQuotes) {
+        currentRow.push(currentField);
+        currentField = '';
+      } else if ((char === '\n' || char === '\r') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') i++;
+        currentRow.push(currentField);
+        if (currentRow.some(f => f.trim())) rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+      } else {
+        currentField += char;
+      }
+    }
+    
+    if (currentField || currentRow.length > 0) {
+      currentRow.push(currentField);
+      if (currentRow.some(f => f.trim())) rows.push(currentRow);
+    }
+    return rows;
+  };
+
   const handleImport = async () => {
     setIsProcessing(true);
-    const lines = raw.split('\n').filter(l => l.trim());
+    const parsedRows = parseTSV(raw);
     const parsedOrders: any[] = [];
 
-    // Skip the header if it looks like one
-    const startIdx = lines[0]?.toLowerCase().includes('pedido') ? 1 : 0;
+    // Ignorar cabeçalho se existir
+    const startIdx = parsedRows[0]?.[0]?.toLowerCase().includes('pedido') ? 1 : 0;
 
-    for (let i = startIdx; i < lines.length; i++) {
-      const line = lines[i];
-      const parts = line.split('\t');
+    for (let i = startIdx; i < parsedRows.length; i++) {
+      const parts = parsedRows[i];
       if (parts.length < 5) continue;
 
       const id = parts[0].trim();
       const dataStr = parts[1].trim();
-      const originRaw = parts[2].replace(/"/g, '').trim();
+      const originRaw = parts[2].trim();
       const programa = parts[3]?.trim() || "";
       const uf = parts[4]?.trim() || "";
       const doFlag = parts[5]?.trim().toLowerCase() === 'sim' || parts[5]?.trim().toLowerCase() === 's';
       
-      // Quantidade might have " UCS" text
       const quantidadeStr = parts[6]?.replace(/[^\d]/g, '') || "0";
       const quantidade = parseInt(quantidadeStr);
       
@@ -57,18 +93,15 @@ export function BulkImportDialog({ onImport, category }: BulkImportDialogProps) 
       const taxa = parseBRL(parts[7]);
       const total = parseBRL(parts[8]);
 
-      // Split company and CNPJ from originRaw
-      // Usually format: "NAME NAME\n00.000.000/0001-00"
+      // Extração inteligente de Empresa e CNPJ
       const originLines = originRaw.split(/\n/);
       const empresa = originLines[0]?.trim() || originRaw;
       const cnpj = originLines.length > 1 ? originLines[originLines.length - 1]?.trim() : "";
 
       let isoDate = new Date().toISOString();
       try {
-        // Handle format dd/MM/yyyy HH:mm:ss or dd/MM/yyyy
         const datePart = dataStr.split(' ')[0];
         const timePart = dataStr.split(' ')[1] || "00:00:00";
-        
         const [day, month, year] = datePart.split('/').map(Number);
         const [hour, min, sec] = timePart.split(':').map(Number);
         
@@ -79,7 +112,7 @@ export function BulkImportDialog({ onImport, category }: BulkImportDialogProps) 
           }
         }
       } catch (e) {
-        console.error("Erro ao converter data:", dataStr);
+        console.error("Erro data:", dataStr);
       }
 
       parsedOrders.push({
@@ -129,12 +162,12 @@ export function BulkImportDialog({ onImport, category }: BulkImportDialogProps) 
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Estrutura Esperada (Colunas TAB):</p>
             <p className="text-[9px] text-primary font-mono bg-white p-2 rounded-lg border border-slate-200 mb-3">
-              Pedido | Data | Origem (Nome + CNPJ) | PARC/PROG | UF | D.O | Quantidade | Taxa | Total
+              Pedido | Data | Origem (Empresa + CNPJ) | PARC/PROG | UF | D.O | Quantidade | Taxa | Total
             </p>
             <ul className="text-[9px] text-slate-400 space-y-1 font-medium uppercase">
-              <li>• Copie as linhas da sua planilha e cole abaixo.</li>
-              <li>• O sistema identifica automaticamente nomes de empresas e CNPJs em campos multilinhas.</li>
-              <li>• Valores em R$ e quantidades com "UCS" são limpos automaticamente.</li>
+              <li>• Suporta nomes de empresas e CNPJs com quebra de linha.</li>
+              <li>• Detecta automaticamente o formato de data brasileiro (DD/MM/AAAA).</li>
+              <li>• Valores financeiros são limpos e convertidos automaticamente.</li>
             </ul>
           </div>
 
@@ -149,7 +182,7 @@ export function BulkImportDialog({ onImport, category }: BulkImportDialogProps) 
             <div className="flex items-center gap-3 text-amber-600 bg-amber-50 px-4 py-3 rounded-xl border border-amber-100 flex-1">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <p className="text-[9px] font-bold uppercase leading-tight">
-                Atenção: Serão processadas {raw.split('\n').filter(l => l.trim()).length} linhas.
+                Certifique-se de que as colunas estão separadas por TAB (copiando diretamente do Excel/Sheets).
               </p>
             </div>
             <Button 
