@@ -216,7 +216,6 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-[2.5rem] border-none shadow-2xl p-8 print:p-0 print:max-h-none print:overflow-visible print:shadow-none print:rounded-none">
         
-        {/* VIEW DE AUDITORIA (Painel de Edição) - SÓ APARECE NO MODO DEFAULT */}
         {variant === "default" && (
           <div className="print:hidden">
             <DialogHeader className="border-b border-slate-100 pb-6">
@@ -292,7 +291,6 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           </div>
         )}
 
-        {/* VIEW DO CERTIFICADO (Preview do PDF) - APARECE NO MODO PDF OU NA IMPRESSÃO */}
         <div className={`${variant === 'default' ? 'hidden print:block' : 'block'} p-12 font-body text-slate-900 bg-white min-h-screen`}>
           <div className="flex justify-between items-start mb-12 border-b-2 border-slate-900 pb-8">
             <div className="relative w-40 h-20">
@@ -325,7 +323,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
             <div className="space-y-4">
               <h3 className="text-[10px] font-black uppercase border-b border-slate-200 pb-1 text-slate-400 tracking-widest">Volume e Integridade</h3>
               <div className="grid grid-cols-1 gap-2 text-[11px]">
-                <p><strong>Quantidade Total:</strong> <span className="font-bold">{order.quantidade} UCS (Unidade de Crédito de Sustentabilidade)</span></p>
+                <p><strong>Quantidade Total de UCS APOSENTADAS:</strong> <span className="font-bold">{order.quantidade}</span></p>
                 <p><strong>Valor Auditado:</strong> {order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                 <p><strong>Estado (UF):</strong> {order.uf}</p>
                 <p>
@@ -399,7 +397,6 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
              </div>
           </div>
 
-          {/* Botão de salvar o PDF quando visualizado na tela */}
           {variant === "pdf" && (
             <div className="mt-10 pt-8 border-t border-slate-100 flex justify-end print:hidden">
               <Button onClick={handlePrint} className="gap-2 font-black uppercase text-[10px] h-12 px-10 rounded-xl shadow-xl shadow-primary/20">
