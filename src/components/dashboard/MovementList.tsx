@@ -1,3 +1,4 @@
+
 import { Movimento } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,7 @@ export function MovementList({ movements, onDelete }: MovementListProps) {
             <TableHead className="font-headline">Origem</TableHead>
             <TableHead className="font-headline">Destino</TableHead>
             <TableHead className="font-headline">Quantidade</TableHead>
-            <TableHead className="font-headline">Hash Movimento</TableHead>
+            <TableHead className="font-headline">Hash do Movimento</TableHead>
             <TableHead className="font-headline">Status</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>

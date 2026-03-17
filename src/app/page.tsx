@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -22,7 +23,7 @@ export default function AuditDashboard() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const { toast } = useToast();
 
-  // Initialize data with movements nested
+  // Inicializa dados com movimentos aninhados
   useEffect(() => {
     const initialized = MOCK_PEDIDOS.map(p => ({
       ...p,
@@ -41,11 +42,10 @@ export default function AuditDashboard() {
   };
 
   const handleAddMovement = (orderId: string, raw: string) => {
-    // Basic logic for mock purposes:
-    // 1. Generate a "hash" from raw
+    // Lógica básica para fins de demonstração:
     const newHash = `HM-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
     
-    // Check for global duplicates
+    // Verificação de duplicatas globais
     const allMovs = pedidos.flatMap(p => p.movimentos || []);
     const isDuplicate = allMovs.some(m => m.hashMovimento === newHash);
 
@@ -67,7 +67,6 @@ export default function AuditDashboard() {
       if (p.id === orderId) {
         const updatedMovs = [...(p.movimentos || []), newMov];
         
-        // Logical check for parent status
         let newStatus: OrderStatus = 'ok';
         if (updatedMovs.some(m => m.duplicado)) {
           newStatus = 'erro';
@@ -129,8 +128,8 @@ export default function AuditDashboard() {
               <Shield className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-black font-headline tracking-tighter">LEDGERTRUST <span className="text-primary">AUDIT</span></h1>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Traceability & Integrity System</p>
+              <h1 className="text-2xl font-black font-headline tracking-tighter">LEDGERTRUST <span className="text-primary">AUDITORIA</span></h1>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Sistema de Rastreabilidade & Integridade</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -193,7 +192,7 @@ export default function AuditDashboard() {
               Certificação de Integridade Blockchain
             </h3>
             <p className="text-xs text-muted-foreground max-w-2xl">
-              Este sistema atua como camada de validação NXT antes da migração para a rede Polca. 
+              Este sistema atua como camada de validação NXT antes da migração para a rede Polkadot. 
               Ações de migração são bloqueadas automaticamente para pedidos com status inconsistente.
             </p>
           </div>
