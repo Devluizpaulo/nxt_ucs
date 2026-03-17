@@ -28,9 +28,9 @@ export interface Pedido {
   taxa: number;
   valorTotal: number;
   hashPedido: string;
+  linkNxt: string;
   auditado: boolean;
   status: OrderStatus;
   categoria: OrderCategory;
   createdAt: string;
-  movimentos?: Movimento[];
 }

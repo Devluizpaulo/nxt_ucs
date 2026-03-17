@@ -22,49 +22,54 @@ interface OrderTableProps {
 
 export function OrderTable({ orders, onUpdateOrder, onDeleteOrder, onAddMovement, onDeleteMovement }: OrderTableProps) {
   return (
-    <div className="rounded-xl border bg-card/50 overflow-hidden shadow-sm">
+    <div className="rounded-[2.5rem] border border-slate-200 bg-white overflow-hidden shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-            <TableHead className="w-[100px] text-[10px] font-bold uppercase tracking-wider">ID Pedido</TableHead>
-            <TableHead className="text-[10px] font-bold uppercase tracking-wider">Data / Hora</TableHead>
-            <TableHead className="text-[10px] font-bold uppercase tracking-wider">Empresa / CNPJ</TableHead>
-            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right">Quantidade</TableHead>
-            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right">Total (R$)</TableHead>
-            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-center">NXT Link</TableHead>
-            <TableHead className="w-[120px] text-[10px] font-bold uppercase tracking-wider text-right">Ações</TableHead>
+          <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
+            <TableHead className="w-[120px] text-[10px] font-black uppercase tracking-widest text-slate-400 pl-8 h-14">ID Pedido</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-14">Data / Hora</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-14">Empresa / CNPJ</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right h-14">Quantidade</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right h-14">Total (R$)</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center h-14">NXT Link</TableHead>
+            <TableHead className="w-[100px] text-[10px] font-black uppercase tracking-widest text-slate-400 text-right pr-8 h-14">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id} className="group hover:bg-muted/20">
-              <TableCell className="font-mono font-bold text-sm text-primary">{order.id}</TableCell>
-              <TableCell className="text-[11px] text-muted-foreground">
-                <div className="font-medium text-foreground">{new Date(order.data).toLocaleDateString('pt-BR')}</div>
-                <div>{new Date(order.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+          {orders.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="h-48 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                Nenhum pedido registrado nesta categoria
               </TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-bold text-[11px] uppercase truncate max-w-[200px]">{order.empresa}</span>
-                  <span className="text-[10px] text-muted-foreground font-mono">{order.cnpj}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-right font-mono text-xs font-semibold">{order.quantidade} UCS</TableCell>
-              <TableCell className="text-right font-mono font-black text-sm text-accent">
-                {order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </TableCell>
-              <TableCell className="text-center">
-                {order.linkNxt ? (
-                  <a href={order.linkNxt} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
-                    <LinkIcon className="w-4 h-4 mx-auto" />
-                  </a>
-                ) : (
-                  <Badge variant="outline" className="text-[8px] border-rose-200 text-rose-500 uppercase px-1">Ausente</Badge>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <StatusBadge status={order.status} />
+            </TableRow>
+          ) : (
+            orders.map((order) => (
+              <TableRow key={order.id} className="group hover:bg-slate-50/80 transition-colors border-b border-slate-50 last:border-0">
+                <TableCell className="font-mono font-bold text-sm text-primary pl-8">{order.id}</TableCell>
+                <TableCell className="text-[11px] text-slate-500">
+                  <div className="font-bold text-slate-900">{new Date(order.data).toLocaleDateString('pt-BR')}</div>
+                  <div className="text-[10px]">{new Date(order.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[11px] uppercase truncate max-w-[200px] text-slate-900">{order.empresa}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{order.cnpj}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right font-mono text-xs font-black text-slate-900">{order.quantidade} UCS</TableCell>
+                <TableCell className="text-right font-mono font-black text-sm text-primary">
+                  {order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </TableCell>
+                <TableCell className="text-center">
+                  {order.linkNxt ? (
+                    <a href={order.linkNxt} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+                      <LinkIcon className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <Badge variant="outline" className="text-[8px] border-rose-100 bg-rose-50 text-rose-500 uppercase px-1.5 py-0.5 font-bold tracking-tighter">Ausente</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-right pr-8">
                   <OrderDetailsDialog 
                     order={order} 
                     onUpdateOrder={onUpdateOrder}
@@ -72,10 +77,10 @@ export function OrderTable({ orders, onUpdateOrder, onDeleteOrder, onAddMovement
                     onAddMovement={onAddMovement}
                     onDeleteMovement={onDeleteMovement}
                   />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>
@@ -106,60 +111,60 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-          <MoreHorizontal className="w-4 h-4" />
+        <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl">
+          <MoreHorizontal className="w-5 h-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b pb-4">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-[2.5rem] border-none shadow-2xl p-8">
+        <DialogHeader className="border-b border-slate-100 pb-6">
           <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-primary font-black uppercase tracking-tighter">AUDITORIA DE PEDIDO {order.id}</span>
+            <div className="flex items-center gap-4">
+              <span className="text-slate-900 font-black uppercase text-xl tracking-tight">AUDITORIA DE PEDIDO {order.id}</span>
               <StatusBadge status={order.status} />
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-          <div className="space-y-6">
-            <div className="bg-muted/30 p-4 rounded-xl space-y-4 border border-dashed border-primary/20">
-              <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2">
-                <ShieldCheck className="w-3.5 h-3.5" /> Vincular Blockchain NXT
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-8">
+          <div className="space-y-8">
+            <div className="bg-slate-50/50 p-6 rounded-3xl space-y-6 border border-slate-100">
+              <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-widest">
+                <ShieldCheck className="w-4 h-4" /> Vincular Blockchain NXT
               </h4>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Hash do Pedido</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hash do Pedido</label>
                 <Input 
                   value={hash} 
                   onChange={(e) => setHash(e.target.value)}
                   placeholder="Ex: 0x885...NXT"
-                  className="font-mono text-xs bg-white"
+                  className="font-mono text-xs bg-white border-slate-200 rounded-xl h-12"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">URL de Auditoria (Link Nxt)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">URL de Auditoria (Link Nxt)</label>
                 <Input 
                   value={link} 
                   onChange={(e) => setLink(e.target.value)}
                   placeholder="https://nxt.explorer/tx/..."
-                  className="font-mono text-xs bg-white"
+                  className="font-mono text-xs bg-white border-slate-200 rounded-xl h-12"
                 />
               </div>
-              <Button onClick={handleSaveAudit} size="sm" className="w-full gap-2 font-black uppercase text-[10px]">
-                <Save className="w-3.5 h-3.5" /> Salvar Auditoria de Hash
+              <Button onClick={handleSaveAudit} className="w-full gap-2 font-black uppercase text-[10px] h-12 rounded-2xl shadow-lg shadow-primary/10">
+                <Save className="w-4 h-4" /> Salvar Auditoria de Hash
               </Button>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase flex items-center gap-2">
-                <Database className="w-3.5 h-3.5" /> Importar Novos Rastreios
+              <h4 className="text-[10px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
+                <Database className="w-4 h-4" /> Importar Novos Rastreios
               </h4>
               <OrderAuditForm onAdd={(raw) => onAddMovement(order.id, raw)} />
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-black uppercase flex items-center gap-2">
-              Movimentações Registradas <Badge variant="secondary">{movimentos?.length || 0}</Badge>
+          <div className="space-y-6">
+            <h4 className="text-[10px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
+              Movimentações Registradas <Badge variant="secondary" className="bg-slate-100 text-slate-600 rounded-full">{movimentos?.length || 0}</Badge>
             </h4>
             <MovementList 
               movements={movimentos || []} 
@@ -168,13 +173,13 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           </div>
         </div>
 
-        <div className="flex justify-between items-center pt-6 border-t mt-8">
-          <Button variant="destructive" size="sm" onClick={() => onDeleteOrder(order.id)} className="text-[10px] font-bold uppercase">
-            <Trash2 className="w-3.5 h-3.5 mr-2" /> Remover Permanente
+        <div className="flex justify-between items-center pt-8 border-t border-slate-100 mt-10">
+          <Button variant="ghost" className="text-[10px] font-bold uppercase text-rose-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl" onClick={() => onDeleteOrder(order.id)}>
+            <Trash2 className="w-4 h-4 mr-2" /> Remover Permanente
           </Button>
-          <div className="flex gap-2">
-             <Button variant="outline" size="sm" className="text-[10px] font-bold uppercase">Exportar XML</Button>
-             <Button size="sm" className="text-[10px] font-bold uppercase" disabled={!order.linkNxt}>Gerar Relatório Final</Button>
+          <div className="flex gap-3">
+             <Button variant="outline" className="text-[10px] font-bold uppercase rounded-xl h-11 border-slate-200">Exportar XML</Button>
+             <Button className="text-[10px] font-black uppercase rounded-xl h-11 px-8 shadow-lg shadow-primary/20" disabled={!order.linkNxt}>Gerar Relatório Final</Button>
           </div>
         </div>
       </DialogContent>

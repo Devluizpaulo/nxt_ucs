@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react";
@@ -20,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderTable } from "@/components/dashboard/OrderTable";
 import { AuditOverview } from "@/components/dashboard/AuditOverview";
+import { AddOrderDialog } from "@/components/dashboard/AddOrderDialog";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
 import { Pedido, Movimento } from "@/lib/types";
@@ -39,6 +39,15 @@ export default function Dashboard() {
   }, [firestore]);
 
   const { data: pedidos, isLoading } = useCollection<Pedido>(pedidosQuery);
+
+  const handleAddOrder = async (order: Omit<Pedido, 'createdAt'>) => {
+    if (!firestore) return;
+    const colRef = collection(firestore, "pedidos");
+    addDoc(colRef, {
+      ...order,
+      createdAt: new Date().toISOString()
+    });
+  };
 
   const handleUpdateOrder = async (id: string, updates: Partial<Pedido>) => {
     if (!firestore) return;
@@ -86,9 +95,8 @@ export default function Dashboard() {
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex min-h-screen bg-[#F8FAFC]">
-        {/* Sidebar Lateral Estilizada */}
+        {/* Sidebar Lateral */}
         <aside className="w-20 bg-white border-r flex flex-col items-center py-8 gap-10 sticky top-0 h-screen">
-          {/* Logo BMV */}
           <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-emerald-100">
             <span className="text-primary font-black text-xs">BMV</span>
           </div>
@@ -155,7 +163,6 @@ export default function Dashboard() {
             </div>
           </header>
 
-          {/* Conteúdo Principal */}
           <div className="p-8 space-y-8 overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
@@ -168,74 +175,16 @@ export default function Dashboard() {
               <>
                 <AuditOverview orders={orders} />
 
-                {/* Métricas Rápidas Refinadas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="border-none shadow-sm rounded-3xl">
-                    <CardContent className="p-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
-                          <TrendingUp className="w-5 h-5" />
-                        </div>
-                        <h3 className="font-bold text-slate-700 text-base">Cotação UCS (Mercado)</h3>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-slate-900">R$ 177,10</span>
-                        <span className="text-slate-400 text-sm font-medium">/UCS</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-none shadow-sm rounded-3xl">
-                    <CardContent className="p-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                          <LinkIcon className="w-5 h-5" />
-                        </div>
-                        <h3 className="font-bold text-slate-700 text-base">Cobertura NXT</h3>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-black text-slate-900">
-                          {((orders.filter(o => o.auditado).length / (orders.length || 1)) * 100).toFixed(0)}%
-                        </span>
-                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">REGISTROS VÁLIDOS</span>
-                      </div>
-                      <div className="mt-6 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                         <div 
-                          className="h-full bg-primary transition-all duration-1000" 
-                          style={{ width: `${(orders.filter(o => o.auditado).length / (orders.length || 1)) * 100}%` }}
-                         />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-none shadow-sm rounded-3xl">
-                    <CardContent className="p-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center text-rose-600">
-                          <AlertCircle className="w-5 h-5" />
-                        </div>
-                        <h3 className="font-bold text-slate-700 text-base">Ação Necessária</h3>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-black text-rose-600">
-                          {orders.filter(o => !o.auditado).length}
-                        </span>
-                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">PEDIDOS PENDENTES</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Tabelas de Auditoria */}
                 <div className="space-y-6">
                   <Tabs defaultValue="selo" className="w-full">
                     <div className="flex items-center justify-between mb-6">
-                      <TabsList className="bg-slate-100/50 p-1 border">
-                        <TabsTrigger value="selo" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 text-xs font-bold uppercase">Selo Tesouro Verde</TabsTrigger>
-                        <TabsTrigger value="certificado_sas" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 text-xs font-bold uppercase">Certificado SAS</TabsTrigger>
-                        <TabsTrigger value="sas_dmv" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 text-xs font-bold uppercase">SAS DMV</TabsTrigger>
+                      <TabsList className="bg-slate-100/50 p-1 border rounded-full h-12">
+                        <TabsTrigger value="selo" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-xs font-bold uppercase">Selo Tesouro Verde</TabsTrigger>
+                        <TabsTrigger value="certificado_sas" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-xs font-bold uppercase">Certificado SAS</TabsTrigger>
+                        <TabsTrigger value="sas_dmv" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-8 rounded-full text-xs font-bold uppercase">SAS DMV</TabsTrigger>
                       </TabsList>
                       <div className="flex gap-3">
+                         <AddOrderDialog onAdd={handleAddOrder} />
                          <Button variant="outline" size="sm" className="gap-2 text-[10px] font-bold uppercase tracking-widest border-slate-200">
                            <FileText className="w-3.5 h-3.5" /> Exportar Dados
                          </Button>
