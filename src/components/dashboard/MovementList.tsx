@@ -27,10 +27,9 @@ export function MovementList({ movements, onDelete }: MovementListProps) {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b bg-muted/20">
+            <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Categoria</TableHead>
             <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Origem do Ativo</TableHead>
-            <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Destinatário</TableHead>
             <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Volume</TableHead>
-            <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Hash da Operação</TableHead>
             <TableHead className="font-headline text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Integridade</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
@@ -38,10 +37,16 @@ export function MovementList({ movements, onDelete }: MovementListProps) {
         <TableBody>
           {movements.map((mov) => (
             <TableRow key={mov.id} className="group border-b border-border/20 last:border-0 hover:bg-muted/10">
-              <TableCell className="font-bold text-[10px] uppercase text-foreground/80">{mov.origem}</TableCell>
-              <TableCell className="text-[10px] uppercase font-medium text-muted-foreground">{mov.destino}</TableCell>
+              <TableCell className="font-bold text-[9px] uppercase text-foreground/60">
+                <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">{mov.tipo}</span>
+              </TableCell>
+              <TableCell className="text-[10px] font-bold text-foreground/80">
+                <div className="flex flex-col">
+                  <span>{mov.origem}</span>
+                  <span className="text-[8px] text-muted-foreground font-normal">para {mov.destino}</span>
+                </div>
+              </TableCell>
               <TableCell className="font-mono text-[10px] font-black">{mov.quantidade.toLocaleString()} UCS</TableCell>
-              <TableCell className="font-mono text-[9px] text-primary/70">{mov.hashMovimento}</TableCell>
               <TableCell>
                 {mov.duplicado ? (
                   <Badge variant="destructive" className="flex items-center gap-1 text-[8px] py-0 px-1 font-bold">

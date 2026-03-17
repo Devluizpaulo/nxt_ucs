@@ -292,14 +292,14 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           </div>
         )}
 
-        {/* Bloco Unificado para Impressão - Visível apenas quando solicitado ou no modo PDF */}
         <div className={`printable-content ${variant === 'default' ? 'hidden print:block' : 'block'} p-12 font-body text-slate-900 bg-white min-h-screen flex flex-col`}>
           <div className="flex justify-between items-start mb-12 border-b-2 border-slate-900 pb-8">
             <div className="relative w-40 h-20">
               <Image 
-                src="/image/logo_amarelo.png" 
+                src="https://picsum.photos/seed/bmv/600/400" 
                 alt="Logo BMV" 
-                fill
+                width={160}
+                height={80}
                 className="object-contain"
                 priority
               />
@@ -347,7 +347,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
               <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow>
-                    <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8">Tipo</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8">Categoria</TableHead>
                     <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8">Origem do Ativo</TableHead>
                     <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8">Destinatário Final</TableHead>
                     <TableHead className="text-[9px] font-black uppercase text-slate-400 h-8 text-right">Volume (UCS)</TableHead>
