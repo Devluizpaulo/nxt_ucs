@@ -200,80 +200,94 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           <DialogDescription>Detalhamento técnico de rastreabilidade e conferência blockchain.</DialogDescription>
         </DialogHeader>
 
-        {/* CONTEÚDO IMPRIMÍVEL (CERTIFICADO DE RASTREABILIDADE - AJUSTADO CONFORME REFERÊNCIA) */}
+        {/* CONTEÚDO IMPRIMÍVEL (CERTIFICADO DE RASTREABILIDADE - DESIGN ORIGINAL) */}
         <div className="printable-certificate hidden print:block">
-          <div className="flex justify-between items-start mb-8">
-            <h1 className="text-[28px] font-black text-slate-900 tracking-tight uppercase">Certificado de Rastreabilidade</h1>
+          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8 mb-10">
+            <div>
+               <h1 className="text-[42px] font-black text-primary leading-none tracking-tighter">bmv</h1>
+               <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2 text-slate-400">LedgerTrust Auditoria de Conformidade</p>
+            </div>
             <div className="text-right">
-              <p className="text-[10px] font-bold text-slate-900 uppercase tracking-tight">Protocolo de Auditoria: #{order.id}</p>
-              <p className="text-[9px] text-slate-400 font-medium">{new Date().toLocaleString('pt-BR')}</p>
+              <h2 className="text-[20px] font-black uppercase tracking-tight text-slate-900">Certificado de Rastreabilidade</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Protocolo: {order.id}</p>
+              <p className="text-[9px] text-slate-400 font-mono mt-0.5">{new Date().toLocaleString('pt-BR')}</p>
             </div>
           </div>
 
-          <div className="w-full h-0.5 bg-slate-900 mb-8" />
+          <div className="grid grid-cols-2 gap-16 mb-12">
+            <div className="space-y-6">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">Informações do Ativo</h3>
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <p className="text-[13px] font-black text-slate-900 uppercase">{order.empresa}</p>
+                  <p className="text-[11px] font-bold text-slate-400 font-mono">{order.cnpj}</p>
+                  <div className="mt-4 pt-4 border-t border-slate-50">
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Programa:</p>
+                    <p className="text-[11px] font-bold text-slate-900">{order.programa} - {order.uf}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <div className="mb-12 relative">
-            <h2 className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-8">Auditoria Digital</h2>
-            
-            <div className="flex justify-between items-start">
-              <div className="space-y-8">
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight mb-1">Quantidade UCS:</p>
-                  <p className="text-[36px] font-black text-slate-900 leading-none">{order.quantidade.toLocaleString('pt-BR')}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight mb-1">Valor Auditado:</p>
-                  <p className="text-[24px] font-black text-slate-900 leading-none">
-                    {order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </p>
-                </div>
-                <div className="max-w-[400px]">
-                  <p className="text-[9px] text-blue-600 font-medium underline break-all leading-tight">
-                    {order.linkNxt || 'https://app.tesouroverde.global/certificate/validation-pending'}
-                  </p>
-                </div>
-              </div>
-              <div className="w-32 h-32 bg-slate-50 rounded-2xl flex items-center justify-center opacity-10">
-                <QrCode className="w-20 h-20 text-slate-900" />
-              </div>
+            <div className="space-y-6">
+               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">Dados Auditados (UCS)</h3>
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Volume</p>
+                    <p className="text-[16px] font-black text-slate-900">{order.quantidade.toLocaleString('pt-BR')}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Valor Total</p>
+                    <p className="text-[16px] font-black text-primary">{order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                  </div>
+               </div>
+               <div className="p-5 border-2 border-primary/20 rounded-2xl bg-primary/5 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Hash Blockchain</p>
+                    <p className="text-[10px] font-mono text-slate-600 mt-1 truncate max-w-[150px]">{order.hashPedido || 'Pendente de Sincronização'}</p>
+                  </div>
+                  <QrCode className="w-12 h-12 text-slate-200" />
+               </div>
             </div>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-6">Ledger Records</h2>
-            <div className="border-t border-slate-100">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="py-3 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Destino</th>
-                    <th className="py-3 text-[10px] font-bold text-slate-400 uppercase tracking-tight text-right">Volume (UCS)</th>
+          <div className="space-y-8">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">Rastreabilidade Ledger (Blockchain)</h3>
+            <table className="w-full text-left text-[10px]">
+              <thead className="bg-slate-50">
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500">Origem</th>
+                  <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500">Destino</th>
+                  <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500 text-right">Volume (UCS)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movimentos && movimentos.length > 0 ? movimentos.map((mov, i) => (
+                  <tr key={i} className="border-b border-slate-100 last:border-0">
+                    <td className="px-4 py-4 text-slate-900 font-bold uppercase">{mov.origem}</td>
+                    <td className="px-4 py-4 text-slate-600 uppercase">{mov.destino}</td>
+                    <td className="px-4 py-4 text-right font-black text-slate-900">{mov.quantidade.toLocaleString('pt-BR')}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {movimentos && movimentos.length > 0 ? movimentos.map((mov, i) => (
-                    <tr key={i} className="border-b border-slate-50 last:border-0">
-                      <td className="py-4">
-                        <p className="text-[11px] font-bold text-slate-900 uppercase leading-tight">{mov.destino}</p>
-                        <p className="text-[9px] text-slate-400 font-medium">ORIGEM: {mov.origem}</p>
-                      </td>
-                      <td className="py-4 text-right">
-                        <p className="text-[11px] font-black text-slate-900">{mov.quantidade.toLocaleString('pt-BR')}</p>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={2} className="py-12 text-center text-slate-300 font-bold uppercase text-[10px] tracking-widest italic">Nenhum registro de movimentação encontrado</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                )) : (
+                  <tr>
+                    <td colSpan={3} className="py-12 text-center text-slate-300 font-bold uppercase text-[10px] tracking-widest italic">Nenhum registro de rastreabilidade encontrado para este pedido</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
-          <div className="mt-auto pt-32">
-            <div className="w-64 h-px bg-slate-900 mb-3" />
-            <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight">Auditor de Conformidade BMV</p>
-            <p className="text-[9px] font-medium text-slate-400 uppercase tracking-tight">Documento Assinado Digitalmente</p>
+          <div className="mt-auto pt-20 flex justify-between items-end">
+            <div className="flex items-center gap-3">
+               <ShieldCheck className="w-8 h-8 text-primary" />
+               <p className="text-[10px] font-black uppercase tracking-widest text-primary">Autenticidade Verificada</p>
+            </div>
+            <div className="text-right space-y-4">
+               <div className="w-64 border-t border-slate-900 pt-2">
+                 <p className="text-[10px] font-black uppercase text-slate-900">Responsável Técnico BMV</p>
+                 <p className="text-[8px] font-bold text-slate-400 uppercase">Documento Gerado pelo Sistema LedgerTrust</p>
+               </div>
+            </div>
           </div>
         </div>
 
@@ -416,3 +430,4 @@ function StatBox({ label, value, isNegative, isHighlight, isAccent, isCurrency, 
     </div>
   );
 }
+
