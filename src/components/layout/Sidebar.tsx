@@ -1,4 +1,3 @@
-
 "use client"
 
 import { 
@@ -92,9 +91,16 @@ export function Sidebar() {
 
       {/* Footer Actions */}
       <div className="flex flex-col gap-4 mt-auto">
-        <Button variant="ghost" size="icon" className="w-14 h-14 rounded-2xl text-slate-200 hover:text-slate-400">
-          <Settings className="w-5 h-5" />
-        </Button>
+        <Link href="/settings">
+          <div className={cn(
+            "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 cursor-pointer",
+            pathname === "/settings" 
+              ? "bg-accent text-white shadow-xl shadow-accent/30" 
+              : "bg-slate-50 text-slate-300 hover:text-accent hover:bg-blue-50"
+          )}>
+            <Settings className="w-5 h-5" />
+          </div>
+        </Link>
 
         <Button 
           variant="ghost" 

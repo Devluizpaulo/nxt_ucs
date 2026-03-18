@@ -3,6 +3,18 @@ export type MovementType = 'gov' | 'cliente' | 'outro';
 export type OrderCategory = 'selo' | 'Saas_Tesouro_Verde' | 'Saas_BMV';
 export type EntityStatus = 'disponivel' | 'bloqueado' | 'inapto';
 export type AuditoriaStatus = 'Pendente' | 'Não Pago' | 'Pago';
+export type UserRole = 'admin' | 'auditor' | 'viewer';
+export type UserStatus = 'ativo' | 'suspenso' | 'pendente';
+
+export interface AppUser {
+  id: string;
+  nome: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  ultimoAcesso: string;
+  createdAt: string;
+}
 
 export interface Movimento {
   id: string;
