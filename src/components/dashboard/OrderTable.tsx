@@ -12,12 +12,7 @@ import {
   Database, 
   ShieldCheck, 
   Check, 
-  X, 
-  Download,
   Printer,
-  ArrowRightLeft,
-  Calculator,
-  FileText,
   QrCode as QrCodeIcon
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
@@ -204,91 +199,99 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
         </DialogHeader>
 
         {/* CERTIFICADO DE RASTREABILIDADE A4 */}
-        <div className="printable-certificate hidden print:block bg-white text-slate-900 p-10">
+        <div className="printable-certificate hidden print:block bg-white text-slate-900 p-0 font-body">
           {/* LOGO E HEADER */}
-          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
-            <div className="flex items-center gap-2">
-               <Image src="/image/logo_amarelo.png" alt="BMV Logo" width={80} height={80} className="object-contain" />
-               <span className="text-[36px] font-black text-amber-500 leading-none">bmv</span>
+          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-10">
+            <div className="flex items-center gap-0">
+               <div className="relative w-20 h-20">
+                 <Image src="/image/logo_amarelo.png" alt="BMV Logo" fill className="object-contain" />
+               </div>
+               <span className="text-[40px] font-black text-amber-500 leading-none -ml-2">bmv</span>
             </div>
             <div className="text-right">
               <h2 className="text-[18px] font-black uppercase tracking-tight leading-tight">CERTIFICADO DE RASTREABILIDADE</h2>
-              <p className="text-[10px] font-black uppercase text-slate-900 tracking-widest mt-1">PROTOCOLO DE AUDITORIA: ##{order.id}</p>
-              <p className="text-[9px] text-slate-400 font-medium mt-0.5">{new Date().toLocaleString("pt-BR")}</p>
+              <p className="text-[11px] font-black uppercase text-slate-900 tracking-widest mt-1.5">PROTOCOLO DE AUDITORIA: ##{order.id}</p>
+              <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">{new Date().toLocaleString("pt-BR")}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-12 mt-8">
+          <div className="grid grid-cols-2 gap-16 mb-12">
             {/* IDENTIFICAÇÃO DO ATIVO */}
-            <div className="space-y-4">
-              <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.15em]">IDENTIFICAÇÃO DO ATIVO</h3>
-              <div className="space-y-4">
-                <p className="text-[24px] font-black text-[#10B981]">##{order.id}</p>
-                <div className="text-[10px] space-y-2 font-medium">
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">DATA:</strong> {new Date(order.data).toLocaleDateString()}</p>
-                  <p className="leading-tight"><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">EMPRESA:</strong> {order.empresa}</p>
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">CNPJ:</strong> {order.cnpj}</p>
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">PROGRAMA:</strong> {order.programa} ({order.uf})</p>
+            <div className="space-y-6">
+              <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.2em]">IDENTIFICAÇÃO DO ATIVO</h3>
+              <div className="space-y-5">
+                <p className="text-[32px] font-black text-[#10B981] leading-none tracking-tighter">##{order.id}</p>
+                <div className="text-[11px] space-y-2.5 font-bold uppercase tracking-tight">
+                  <p><strong className="text-slate-400 font-black mr-2">DATA DO PROTOCOLO:</strong> {new Date(order.data).toLocaleDateString()}</p>
+                  <p className="leading-tight"><strong className="text-slate-400 font-black mr-2">ENTIDADE ADQUIRENTE:</strong> {order.empresa}</p>
+                  <p><strong className="text-slate-400 font-black mr-2">REGISTRO CNPJ:</strong> {order.cnpj}</p>
+                  <p><strong className="text-slate-400 font-black mr-2">PROJETO DE ORIGEM:</strong> {order.programa} ({order.uf})</p>
                 </div>
               </div>
             </div>
 
             {/* AUDITORIA DIGITAL */}
-            <div className="space-y-4">
-              <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.15em]">AUDITORIA DIGITAL</h3>
-              <div className="flex justify-between items-start gap-4">
-                <div className="text-[10px] space-y-3 font-medium flex-1">
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">QUANTIDADE UCS APOSENTADAS:</strong> {order.quantidade}</p>
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">VALOR DO PEDIDO:</strong> {order.valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
+            <div className="space-y-6">
+              <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.2em]">AUDITORIA DIGITAL</h3>
+              <div className="flex justify-between items-start gap-6">
+                <div className="text-[11px] space-y-4 font-bold uppercase flex-1">
+                  <div>
+                    <p className="text-slate-400 font-black text-[9px] mb-1">VOLUME DE UCS APOSENTADAS</p>
+                    <p className="text-2xl font-black text-slate-900">{order.quantidade.toLocaleString('pt-BR')}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 font-black text-[9px] mb-1">VALOR TOTAL AUDITADO</p>
+                    <p className="text-2xl font-black text-slate-900">{order.valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
+                  </div>
                   {link && (
-                    <p className="mt-4 leading-relaxed">
-                      <strong className="font-black uppercase text-[9px] text-slate-400 block mb-1">Blockchain Hash Explorer:</strong>
-                      <span className="text-[8px] text-blue-600 underline font-mono break-all">{link}</span>
-                    </p>
+                    <div className="pt-2">
+                      <p className="text-slate-400 font-black text-[9px] mb-1">BLOCKCHAIN EXPLORER</p>
+                      <span className="text-[9px] text-blue-600 underline font-mono break-all normal-case">{link}</span>
+                    </div>
                   )}
                 </div>
 
                 {/* QR CODE BOX */}
-                <div className="flex flex-col items-center gap-1.5 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 shrink-0">
+                <div className="flex flex-col items-center gap-2 bg-slate-50 p-4 rounded-3xl border border-slate-100 shrink-0 shadow-sm">
                   {qrCodeUrl ? (
-                    <img src={qrCodeUrl} alt="QR Code" className="w-24 h-24 bg-white" />
+                    <img src={qrCodeUrl} alt="QR Code" className="w-24 h-24 bg-white p-1 rounded-lg" />
                   ) : (
-                    <div className="w-24 h-24 bg-slate-100 flex items-center justify-center rounded-lg border-2 border-dashed border-slate-200">
-                      <QrCodeIcon className="w-8 h-8 text-slate-300" />
+                    <div className="w-24 h-24 bg-white flex items-center justify-center rounded-lg border-2 border-dashed border-slate-200">
+                      <QrCodeIcon className="w-8 h-8 text-slate-200" />
                     </div>
                   )}
-                  <p className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">VALIDAÇÃO DIGITAL</p>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">VALIDAÇÃO TÉCNICA</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* HISTÓRICO DE RASTREABILIDADE */}
-          <div className="mt-12 space-y-4">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.15em]">HISTÓRICO DE RASTREABILIDADE (LEDGER RECORDS)</h3>
-            <div className="border border-slate-100 rounded-[1.25rem] overflow-hidden">
-              <table className="w-full text-[9px] text-left">
+          <div className="mt-12 space-y-5">
+            <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.2em]">HISTÓRICO DE RASTREABILIDADE (LEDGER RECORDS)</h3>
+            <div className="border-2 border-slate-100 rounded-[2rem] overflow-hidden">
+              <table className="w-full text-[10px] text-left">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-5 py-3.5 font-black uppercase text-slate-400">CATEGORIA</th>
-                    <th className="px-5 py-3.5 font-black uppercase text-slate-400">ORIGEM</th>
-                    <th className="px-5 py-3.5 font-black uppercase text-slate-400">DESTINO</th>
-                    <th className="px-5 py-3.5 font-black uppercase text-slate-400 text-right">VOLUME (UCS)</th>
+                    <th className="px-6 py-4 font-black uppercase text-slate-400 tracking-widest">CATEGORIA</th>
+                    <th className="px-6 py-4 font-black uppercase text-slate-400 tracking-widest">ORIGEM DO ATIVO</th>
+                    <th className="px-6 py-4 font-black uppercase text-slate-400 tracking-widest">DESTINO FINAL</th>
+                    <th className="px-6 py-4 font-black uppercase text-slate-400 tracking-widest text-right">VOLUME</th>
                   </tr>
                 </thead>
-                <tbody className="font-medium">
+                <tbody className="font-bold uppercase">
                   {movimentos && movimentos.length > 0 ? (
                     movimentos.map((mov, i) => (
-                      <tr key={i} className="border-t border-slate-50">
-                        <td className="px-5 py-3 uppercase text-slate-600 font-bold">{mov.tipo || "CLIENTE"}</td>
-                        <td className="px-5 py-3 text-slate-500 font-medium truncate max-w-[180px]">{mov.origem}</td>
-                        <td className="px-5 py-3 uppercase text-slate-900 font-black">{mov.destino}</td>
-                        <td className="px-5 py-3 text-right font-black text-slate-900">{mov.quantidade}</td>
+                      <tr key={i} className="border-t border-slate-100">
+                        <td className="px-6 py-4 text-slate-600 font-black">{mov.tipo || "CLIENTE"}</td>
+                        <td className="px-6 py-4 text-slate-500 truncate max-w-[200px]">{mov.origem}</td>
+                        <td className="px-6 py-4 text-slate-900 font-black">{mov.destino}</td>
+                        <td className="px-6 py-4 text-right font-black text-slate-900">{mov.quantidade} UCS</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="px-5 py-10 text-center text-slate-400 italic">Nenhum registro de rastreabilidade encontrado para este protocolo.</td>
+                      <td colSpan={4} className="px-6 py-12 text-center text-slate-300 italic lowercase">Nenhum registro de rastreabilidade vinculado a este protocolo.</td>
                     </tr>
                   )}
                 </tbody>
@@ -298,19 +301,19 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
 
           {/* FOOTER DO CERTIFICADO */}
           <div className="mt-24 flex justify-between items-end">
-            <div className="text-[11px] text-[#10B981] font-black flex items-center gap-2.5 uppercase tracking-tight">
-              <Check className="w-4 h-4 stroke-[4px]" /> INTEGRIDADE VERIFICADA
+            <div className="text-[12px] text-[#10B981] font-black flex items-center gap-3 uppercase tracking-tight">
+              <Check className="w-5 h-5 stroke-[4px]" /> INTEGRIDADE VERIFICADA PELO LEDGER
             </div>
             <div className="text-right">
-              <div className="border-t-2 border-slate-900 w-72 pt-3.5">
-                <p className="text-[11px] font-black uppercase text-slate-900 tracking-tight">AUDITOR DE CONFORMIDADE BMV</p>
-                <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">DOCUMENTO ASSINADO DIGITALMENTE</p>
+              <div className="border-t-2 border-slate-900 w-80 pt-4">
+                <p className="text-[12px] font-black uppercase text-slate-900 tracking-tight">AUDITOR DE CONFORMIDADE BMV</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">DOCUMENTO GERADO DIGITALMENTE PELO SISTEMA LEDGERTRUST</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* CONSOLE UI - INTERFACE DE AUDITORIA */}
+        {/* CONSOLE UI - INTERFACE DE AUDITORIA (HIDDEN EM PRINT) */}
         <div className="bg-[#0B0F1A] p-6 shrink-0 text-white relative print:hidden">
           <div className="flex justify-between items-start mb-6">
             <div className="space-y-1">
@@ -349,37 +352,37 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           <div className="p-10 space-y-14">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                <div className="space-y-8">
-                  <div className="bg-slate-50/50 p-8 rounded-[2rem] space-y-6 border border-slate-100">
-                    <h4 className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-[0.2em]">
+                  <div className="bg-slate-50/50 p-8 rounded-[2.5rem] space-y-8 border border-slate-100">
+                    <h4 className="text-[11px] font-black uppercase text-primary flex items-center gap-2 tracking-[0.2em]">
                       <LinkIcon className="w-4 h-4" /> VÍNCULO BLOCKCHAIN NXT
                     </h4>
-                    <div className="space-y-6">
-                      <div className="space-y-2">
+                    <div className="space-y-8">
+                      <div className="space-y-3">
                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Hash do Pedido</label>
                         <Input 
                           value={hash} 
                           onChange={(e) => setHash(e.target.value)}
                           placeholder="0x885...NXT"
-                          className="font-mono text-[13px] bg-white border-slate-200 rounded-[1.25rem] h-14 px-6 focus:ring-primary shadow-sm"
+                          className="font-mono text-[13px] bg-white border-slate-200 rounded-[1.25rem] h-14 px-8 focus:ring-primary shadow-sm"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">URL Explorer</label>
                         <Input 
                           value={link} 
                           onChange={(e) => setLink(e.target.value)}
                           placeholder="https://app.tesouroverde.global/#/certificate/..."
-                          className="font-mono text-[13px] bg-white border-slate-200 rounded-[1.25rem] h-14 px-6 focus:ring-primary shadow-sm"
+                          className="font-mono text-[13px] bg-white border-slate-200 rounded-[1.25rem] h-14 px-8 focus:ring-primary shadow-sm"
                         />
                       </div>
-                      <Button onClick={handleSaveAudit} className="w-full h-14 rounded-[1.25rem] bg-primary hover:bg-primary/90 text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-[0.98]">
+                      <Button onClick={handleSaveAudit} className="w-full h-16 rounded-[1.25rem] bg-[#10B981] hover:bg-[#0D9488] text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-emerald-100 transition-all active:scale-[0.98]">
                         Sincronizar Hash de Auditoria
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
+                    <h4 className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
                       <Database className="w-4 h-4" /> Importar Novos Rastreios
                     </h4>
                     <OrderAuditForm onAdd={(movements) => onAddMovement(order.id, movements)} />
@@ -387,7 +390,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
                </div>
 
                <div className="space-y-6">
-                  <h4 className="text-[10px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
+                  <h4 className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-2 tracking-widest">
                     Movimentações Registradas <Badge variant="secondary" className="bg-slate-100 text-slate-600 rounded-full">{movimentos?.length || 0}</Badge>
                   </h4>
                   <MovementList 
@@ -407,7 +410,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
             <Button variant="outline" onClick={handlePrint} className="h-14 px-10 rounded-2xl border-slate-200 bg-slate-50/50 font-black uppercase text-[11px] tracking-widest text-slate-700 hover:bg-white transition-all shadow-sm">
               <Printer className="w-4 h-4 mr-2" /> Gerar Certificado PDF
             </Button>
-            <Button onClick={handleSaveAudit} className="h-14 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-[0.98]">
+            <Button onClick={handleSaveAudit} className="h-14 px-12 rounded-2xl bg-[#734DCC] hover:bg-[#633fb9] text-white font-black uppercase text-[11px] tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-[0.98]">
               <Save className="w-4 h-4 mr-2" /> Finalizar Auditoria
             </Button>
           </div>

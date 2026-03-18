@@ -23,6 +23,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: 'Raleway', sans-serif;
   }
 }
 
@@ -34,7 +35,7 @@
   /* 📄 TAMANHO REAL */
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 15mm;
   }
 
   /* 🎯 RESET */
@@ -42,7 +43,7 @@
     margin: 0;
     padding: 0;
     background: white !important;
-    font-family: "Raleway", Arial, sans-serif;
+    font-family: "Raleway", Arial, sans-serif !important;
     font-size: 11px;
     line-height: 1.4;
   }
@@ -68,9 +69,9 @@
     position: relative;
     display: block !important;
     width: 100%;
-    max-width: 186mm;
+    max-width: 180mm;
     margin: 0 auto;
-    padding: 0;
+    padding: 0 !important;
     background: white !important;
     color: black !important;
     box-sizing: border-box;
@@ -103,16 +104,16 @@
     top: 35%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 80px;
+    font-size: 70px;
     font-weight: 900;
     color: rgba(0, 0, 0, 0.03);
     white-space: nowrap;
     pointer-events: none;
     z-index: 0;
+    font-family: 'Raleway', sans-serif;
   }
 
-  /* 🧠 PROTEÇÃO FINAL CONTRA QUEBRA */
-  h1, h2, h3, p {
-    page-break-inside: avoid;
+  h1, h2, h3, p, span, strong {
+    font-family: 'Raleway', sans-serif !important;
   }
 }
