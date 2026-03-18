@@ -36,7 +36,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
     <>
       <div className="rounded-[2.5rem] border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
         <ScrollArea className="w-full">
-          <Table className="min-w-[1800px]">
+          <Table className="min-w-[2000px]">
             <TableHeader>
               <TableRow className="bg-slate-50/50 h-16 border-b border-slate-100">
                 <TableHead className="w-[60px] pl-8">
@@ -54,7 +54,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Bloqueado</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Aquisição</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Ajuste IMEI</TableHead>
-                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right bg-amber-50">Legado (REF)</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right bg-amber-50">Saldo Legado (REF)</TableHead>
                 <TableHead className="text-[11px] font-black uppercase tracking-widest text-primary text-right bg-emerald-50">Saldo Auditado</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</TableHead>
               </TableRow>
@@ -77,7 +77,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                       />
                     </TableCell>
                     <TableCell 
-                      className="font-black text-[11px] uppercase text-slate-900 max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors flex items-center gap-2"
+                      className="font-black text-[11px] uppercase text-slate-900 max-w-[250px] truncate cursor-pointer hover:text-primary transition-colors flex items-center gap-2"
                       onClick={() => setEditingEntity(item)}
                     >
                       {item.nome} <Search className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100" />

@@ -48,7 +48,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const totalDebitoImei = sumField(formData.tabelaImei, 'valorDebito');
     const ajusteImei = Math.max(0, totalDebitoImei - totalCreditoImei);
 
-    const legadoTotal = sumTable(formData.tabelaLegado);
+    const legadoTotal = (formData.tabelaLegado || []).reduce((acc, row) => acc + ((row.disponivel || 0) + (row.reservado || 0)), 0);
     const totalAposentado = sumField(formData.tabelaLegado, 'aposentado');
     const totalBloqueado = sumField(formData.tabelaLegado, 'bloqueado');
     
@@ -87,6 +87,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     };
 
     lines.forEach((line, index) => {
+      // Parser heurístico: pega o valor numérico da última coluna preenchida
       const parts = line.split(/[\t]{1,}/).map(p => p.trim()).filter(p => p !== "");
       if (parts.length === 0) return;
 
@@ -169,7 +170,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-[1250px] h-[95vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[2.5rem] print:bg-white print:max-h-none print:h-auto print:rounded-none print:shadow-none"
+        className="max-w-[1350px] h-[95vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[2.5rem] print:bg-white print:max-h-none print:h-auto print:rounded-none print:shadow-none"
         onPointerDownOutside={(e) => { if (activePasteField) e.preventDefault(); }}
         onInteractOutside={(e) => { if (activePasteField) e.preventDefault(); }}
       >
@@ -225,53 +226,52 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         )}
 
-        {/* HEADER ALTA FIDELIDADE (CONFORME IMAGEM) */}
-        <div className="bg-[#0F172A] px-12 py-12 shrink-0 print:bg-white print:text-slate-900 print:px-0 print:py-8 print:border-b-2 print:border-slate-900">
-          <div className="flex items-center gap-2 mb-10 print:hidden">
+        {/* HEADER BMV PREMIUM (HIGH FIDELITY) */}
+        <div className="bg-[#0F172A] px-16 py-16 shrink-0 print:bg-white print:text-slate-900 print:px-0 print:py-8 print:border-b-2 print:border-slate-900">
+          <div className="flex items-center gap-2 mb-12 print:hidden">
             <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
               <ShieldCheck className="w-3.5 h-3.5 text-primary" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Auditoria de Rastreabilidade BMV</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Sistema LedgerTrust BMV</span>
           </div>
 
           <div className="flex justify-between items-end">
-            <div className="space-y-6">
-              <h2 className="text-6xl font-black text-white tracking-tighter leading-[0.9] uppercase max-w-[500px] print:text-slate-900 print:text-4xl">
+            <div className="space-y-10">
+              <h2 className="text-[7rem] font-black text-white tracking-tighter leading-[0.8] uppercase max-w-[800px] print:text-slate-900 print:text-4xl">
                 {entity.nome}
               </h2>
-              <div className="flex gap-12">
+              <div className="flex gap-16">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Documento</span>
-                  <span className="text-lg font-mono font-bold text-slate-300 tracking-tighter print:text-slate-600">{entity.documento}</span>
+                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Documento</span>
+                  <span className="text-2xl font-bold text-slate-300 tracking-tighter print:text-slate-600">{entity.documento}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">UF</span>
-                  <span className="text-lg font-bold text-slate-300 print:text-slate-600">{entity.uf || "MT"}</span>
+                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">UF</span>
+                  <span className="text-2xl font-bold text-slate-300 print:text-slate-600">{entity.uf || "MT"}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex gap-16 text-right items-end">
               <div className="flex flex-col items-end">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-4 block">Saldo Legado (REF)</span>
+                <span className="text-[12px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Legado (REF)</span>
                 <div className="flex items-baseline justify-end gap-2 text-[#F59E0B]">
-                  <span className="text-6xl font-black tracking-tighter leading-none">{(formData.saldoLegadoTotal || 0).toLocaleString('pt-BR')}</span>
+                  <span className="text-[5.5rem] font-black tracking-tighter leading-none">{(formData.saldoLegadoTotal || 0).toLocaleString('pt-BR')}</span>
                   <span className="text-xl font-black opacity-30">UCS</span>
                 </div>
               </div>
               <div className="flex flex-col items-end">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-4 block">Ajuste IMEI (PENDÊNCIA)</span>
+                <span className="text-[12px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Ajuste IMEI</span>
                 <div className="flex items-baseline justify-end gap-2 text-[#818CF8]">
-                  <span className="text-6xl font-black tracking-tighter leading-none">{(formData.saldoAjustarImei || 0).toLocaleString('pt-BR')}</span>
+                  <span className="text-[5.5rem] font-black tracking-tighter leading-none">{(formData.saldoAjustarImei || 0).toLocaleString('pt-BR')}</span>
                 </div>
               </div>
               <div className="flex flex-col items-end">
-                <div className="bg-primary/10 px-3 py-1 rounded mb-3">
-                   <span className="text-[11px] font-black text-primary uppercase tracking-widest block">Saldo Auditado</span>
+                <div className="bg-primary/10 px-4 py-1.5 rounded mb-4">
+                   <span className="text-[12px] font-black text-primary uppercase tracking-[0.2em]">Saldo Auditado</span>
                 </div>
                 <div className="flex items-baseline justify-end gap-4 text-primary">
-                  <span className="text-[8rem] font-black tracking-tighter leading-[0.7]">{(formData.saldoFinalAtual || 0).toLocaleString('pt-BR')}</span>
-                  <span className="text-3xl font-black opacity-20">UCS</span>
+                  <span className="text-[11rem] font-black tracking-tighter leading-[0.6]">{(formData.saldoFinalAtual || 0).toLocaleString('pt-BR')}</span>
                 </div>
               </div>
             </div>
@@ -279,7 +279,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
         </div>
 
         <ScrollArea className="flex-1 print:overflow-visible bg-[#F8FAFC]">
-          <div className="p-12 space-y-16 print:p-0 print:space-y-10 print:mt-10">
+          <div className="p-16 space-y-20 print:p-0 print:space-y-10 print:mt-10">
             <SectionTechnical 
               title="Originação de Ativos"
               icon={TrendingUp}
@@ -353,16 +353,16 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </ScrollArea>
 
-        <div className="p-8 border-t border-slate-100 bg-white flex justify-between items-center shrink-0 print:hidden">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-8">
+        <div className="p-10 border-t border-slate-100 bg-white flex justify-between items-center shrink-0 print:hidden">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[11px] font-black uppercase text-slate-400 tracking-widest px-10">
             Descartar Alterações
           </Button>
-          <div className="flex gap-4">
-            <Button onClick={handlePrint} variant="outline" className="h-12 px-8 rounded-xl border-slate-200 font-black uppercase text-[10px] tracking-widest text-slate-600 gap-2 hover:bg-slate-50">
-              <Printer className="w-4 h-4" /> Imprimir Relatório Auditado
+          <div className="flex gap-6">
+            <Button onClick={handlePrint} variant="outline" className="h-14 px-10 rounded-2xl border-slate-200 font-black uppercase text-[11px] tracking-widest text-slate-600 gap-3 hover:bg-slate-50">
+              <Printer className="w-5 h-5" /> Imprimir Relatório Auditado
             </Button>
-            <Button onClick={() => { onUpdate(entity.id, formData); onOpenChange(false); }} className="h-12 px-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 gap-3">
-              <Save className="w-5 h-5" /> Gravar no Ledger Permanente
+            <Button onClick={() => { onUpdate(entity.id, formData); onOpenChange(false); }} className="h-14 px-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-primary/20 gap-4">
+              <Save className="w-6 h-6" /> Gravar no Ledger Permanente
             </Button>
           </div>
         </div>
@@ -378,18 +378,18 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
     : currentTotal;
 
   return (
-    <div className="space-y-6 print:space-y-4 print:break-inside-avoid">
+    <div className="space-y-8 print:space-y-4 print:break-inside-avoid">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className={cn("w-1.5 h-10 rounded-full", 
+        <div className="flex items-center gap-6">
+          <div className={cn("w-2 h-12 rounded-full", 
             color === "amber" ? "bg-amber-500" : 
             color === "rose" ? "bg-rose-500" : 
             color === "indigo" ? "bg-indigo-500" : "bg-primary"
           )} />
           <div>
-            <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-900 leading-none mb-1">{title}</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase">
-              {title.toLowerCase().includes('imei') ? 'Pendência de Estorno: ' : 'Consolidado: '} 
+            <h3 className="text-[16px] font-black uppercase tracking-[0.15em] text-slate-900 leading-none mb-2">{title}</h3>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              {title.toLowerCase().includes('imei') ? 'Pendência de Estorno: ' : 'Consolidado da Seção: '} 
               <span className={cn("font-black", (displayTotal < 0 || color === 'rose') ? "text-rose-500" : (color === 'indigo' ? "text-indigo-600" : "text-emerald-600"))}>
                 {Math.abs(displayTotal).toLocaleString('pt-BR')} UCS
               </span>
@@ -397,23 +397,23 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
           </div>
         </div>
 
-        <Button onClick={onImport} variant="outline" className="h-11 px-8 rounded-2xl border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-widest gap-2 hover:bg-slate-50 shadow-sm transition-all print:hidden">
-          <Calculator className="w-4 h-4" /> Colagem Técnica
+        <Button onClick={onImport} variant="outline" className="h-12 px-10 rounded-[1.25rem] border-slate-200 text-slate-600 font-black uppercase text-[11px] tracking-widest gap-3 hover:bg-slate-50 shadow-sm transition-all print:hidden">
+          <Calculator className="w-5 h-5" /> Colagem Técnica
         </Button>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden min-h-[100px] flex flex-col">
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden min-h-[120px] flex flex-col">
         {data.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-12 opacity-30 gap-3">
-            <Database className="w-8 h-8 text-slate-200" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sem registros vinculados</p>
+          <div className="flex-1 flex flex-col items-center justify-center py-16 opacity-30 gap-4">
+            <Database className="w-10 h-10 text-slate-200" />
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Sem registros vinculados</p>
           </div>
         ) : (
           <Table>
             <TableHeader className="bg-slate-50/50 sticky top-0">
-              <TableRow className="h-14 border-b border-slate-100">
+              <TableRow className="h-16 border-b border-slate-100">
                 {columns.map((col: any) => (
-                  <TableHead key={col.label} className={cn("text-[10px] font-black uppercase tracking-widest text-slate-400 px-8", col.align === 'right' && "text-right")}>
+                  <TableHead key={col.label} className={cn("text-[11px] font-black uppercase tracking-widest text-slate-400 px-10", col.align === 'right' && "text-right")}>
                     {col.label}
                   </TableHead>
                 ))}
@@ -428,13 +428,13 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
                   <TableRow 
                     key={i} 
                     className={cn(
-                      "border-b border-slate-50 last:border-0 h-14 hover:bg-slate-50/30 transition-colors",
-                      isTransfer && "bg-indigo-50/40 border-l-4 border-l-indigo-400"
+                      "border-b border-slate-50 last:border-0 h-16 hover:bg-slate-50/30 transition-colors",
+                      isTransfer && "bg-indigo-50/40 border-l-[6px] border-l-indigo-400"
                     )}
                   >
                     {columns.map((col: any) => (
                       <TableCell key={col.label} className={cn(
-                        "px-8 text-[11px] font-bold text-slate-600 tracking-tight",
+                        "px-10 text-[12px] font-bold text-slate-600 tracking-tight",
                         col.align === 'right' && "text-right",
                         col.variant === 'emerald' && "text-emerald-600",
                         col.variant === 'rose' && "text-rose-500",
@@ -442,7 +442,7 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
                       )}>
                         {col.variant === 'status' ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase">{row[col.key] || 'Processado'}</span>
+                            <span className="text-[11px] font-black uppercase">{row[col.key] || 'Processado'}</span>
                           </div>
                         ) : (
                           typeof row[col.key] === 'number' ? Math.abs(row[col.key]).toLocaleString('pt-BR') : row[col.key]
