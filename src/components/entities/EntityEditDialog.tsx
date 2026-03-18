@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -50,8 +49,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const orig = sumVal(formData.tabelaOriginacao);
     const mov = sumVal(formData.tabelaMovimentacao);
     const aq = sumVal(formData.tabelaAquisicao);
+    const imei = sumVal(formData.tabelaImei);
     
-    // Legado = Disponível + Reservado
+    // Legado consolidado (Tratado como REF - Valor de Referência)
     const legDisp = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.disponivel || 0), 0);
     const legRes = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.reservado || 0), 0);
     const legadoTotal = legDisp + legRes;
@@ -59,13 +59,18 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const aposentado = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.aposentado || 0), 0);
     const bloqueado = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.bloqueado || 0), 0);
 
-    // EQUAÇÃO BMV: Saldo = Originação + Movimentação - Aquisição + Legado
-    const final = orig + mov - aq + legadoTotal;
+    /**
+     * EQUAÇÃO DE AUDITORIA BMV:
+     * Saldo Final = Originação + Movimentação (débitos) - Aquisição (retiradas)
+     * IMEI = Neutro (Conferência)
+     * Legado = Valor de Referência (REF) - Não soma no saldo final auditado
+     */
+    const final = orig + mov - aq;
     
     const movPercentage = orig !== 0 ? ((Math.abs(mov) / Math.abs(orig)) * 100).toFixed(1) : "0.0";
 
     return { 
-      orig, mov, aq, legadoTotal, aposentado, bloqueado, final, movPercentage 
+      orig, mov, aq, imei, legadoTotal, aposentado, bloqueado, final, movPercentage 
     };
   }, [formData]);
 
@@ -139,22 +144,22 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             <StatBox label="APOSENTADO" value={totals.aposentado} />
             <StatBox label="BLOQUEADO" value={totals.bloqueado} isNegative />
             <StatBox label="AQUISIÇÃO" value={totals.aq} isNegative />
-            <StatBox label="AJUSTE IMEI" value={entity.saldoAjustarImei || 0} isAccent />
-            <StatBox label="LEGADO" value={totals.legadoTotal} isAccent />
+            <StatBox label="AJUSTE IMEI" value={totals.imei} isAccent />
+            <StatBox label="SALDO LEGADO" value={totals.legadoTotal} isReference />
             <StatBox label="DISPONÍVEL" value={totals.final} isHighlight />
           </div>
         </div>
 
         <ScrollArea className="flex-1 bg-white">
           <div className="p-10 space-y-20">
-            {/* SESSÃO 01 */}
+            {/* SESSÃO 01 - ORIGINAÇÃO */}
             <Section 
               title="LANÇAMENTOS DE ORIGINAÇÃO" 
               data={formData.tabelaOriginacao || []} 
               icon={Database}
             />
 
-            {/* SESSÃO 02 - MOVIMENTAÇÕES / RETIRADAS (ESPECÍFICA) */}
+            {/* SESSÃO 02 - MOVIMENTAÇÕES / RETIRADAS */}
             <div className="space-y-6">
               <div className="flex justify-between items-center border-b border-slate-100 pb-5">
                 <div className="flex items-center gap-4">
@@ -169,26 +174,30 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                 </Button>
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm min-h-[150px] flex flex-col">
-                {(formData.tabelaMovimentacao || []).length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center py-16 opacity-20 gap-4">
-                    <Layers className="w-12 h-12 text-slate-400" />
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Aguardando inserção técnica de dados...</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader className="bg-slate-50/50">
-                      <TableRow className="border-b border-slate-100">
-                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Referência</TableHead>
-                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data</TableHead>
-                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Destino/Histórico</TableHead>
-                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Volume (UCS)</TableHead>
-                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center pr-8">Status Auditoria</TableHead>
+              <div className="rounded-[1.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm min-h-[150px]">
+                <Table>
+                  <TableHeader className="bg-slate-50/50">
+                    <TableRow className="border-b border-slate-100">
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Referência</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Destino/Histórico</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Volume (UCS)</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center pr-8">Status Auditoria</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(formData.tabelaMovimentacao || []).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="py-16 text-center opacity-30">
+                          <div className="flex flex-col items-center gap-4">
+                            <Layers className="w-12 h-12 text-slate-400" />
+                            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Aguardando inserção técnica de dados...</p>
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {formData.tabelaMovimentacao?.map((row, i) => {
-                        const isTransfer = row.destino?.toLowerCase().includes('transferência') || row.destino?.toLowerCase().includes('cliente');
+                    ) : (
+                      formData.tabelaMovimentacao?.map((row, i) => {
+                        const isTransfer = row.destino?.toLowerCase().includes('transferência') || row.destino?.toLowerCase().includes('cliente') || row.destino?.toLowerCase().includes('investment') || row.destino?.toLowerCase().includes('trading');
                         return (
                           <TableRow key={i} className={cn(
                             "border-b border-slate-50 last:border-0 group transition-colors",
@@ -199,7 +208,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                             <TableCell className="py-4">
                               <div className="flex flex-col gap-1">
                                 <span className="text-[10px] font-bold text-slate-700 truncate max-w-[300px]">{row.destino || row.tipo || '-'}</span>
-                                {isTransfer && <Badge className="w-fit bg-indigo-100 text-indigo-600 border-indigo-200 text-[7px] font-black h-4 px-1">TRANSFERÊNCIA ENTRE CLIENTES</Badge>}
+                                {isTransfer && <Badge className="w-fit bg-indigo-100 text-indigo-600 border-indigo-200 text-[7px] font-black h-4 px-1">TRANSFERÊNCIA / DÉBITO</Badge>}
                               </div>
                             </TableCell>
                             <TableCell className="py-4 text-right font-mono font-black pr-4 text-rose-500">
@@ -207,7 +216,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                             </TableCell>
                             <TableCell className="text-center pr-8">
                               <Select 
-                                value={row.statusAuditoria || "pendente"} 
+                                value={row.statusAuditoria || "pago"} 
                                 onValueChange={(val) => handleUpdateRowStatus('tabelaMovimentacao', i, val)}
                               >
                                 <SelectTrigger className={cn(
@@ -229,32 +238,80 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                             </TableCell>
                           </TableRow>
                         );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
+                      })
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </div>
 
-            {/* SESSÃO 03 */}
+            {/* SESSÃO 03 - AJUSTES IMEI */}
             <Section 
               title="AJUSTES IMEI (CONFERÊNCIA NEUTRA)" 
               data={formData.tabelaImei || []} 
               icon={Calculator}
             />
-            {/* SESSÃO 04 */}
+
+            {/* SESSÃO 04 - AQUISIÇÕES */}
             <Section 
               title="AQUISIÇÕES (DEDUÇÃO DO SALDO)" 
               data={formData.tabelaAquisicao || []} 
               icon={FileText}
             />
-            {/* SESSÃO 05 */}
-            <Section 
-              title="SALDO LEGADO (DISPONÍVEL + RESERVADO)" 
-              data={formData.tabelaLegado || []} 
-              icon={LinkIcon}
-              isLegado
-            />
+
+            {/* SESSÃO 05 - SALDO LEGADO CONSOLIDADO (REF) */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-1.5 h-8 bg-amber-500 rounded-full" />
+                  <div className="flex flex-col">
+                    <h3 className="text-[12px] font-black uppercase tracking-widest text-slate-900">SALDO LEGADO CONSOLIDADO</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">CONSOLIDADO: <span className="text-emerald-600 font-black">{totals.legadoTotal.toLocaleString()} UCS</span></p>
+                  </div>
+                </div>
+                <Button variant="outline" className="h-12 px-6 rounded-2xl border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 gap-2 hover:bg-slate-50 shadow-sm">
+                  <Calculator className="w-3.5 h-3.5" /> COLAGEM VIA CALCULADORA
+                </Button>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
+                <Table>
+                  <TableHeader className="bg-slate-50/50">
+                    <TableRow className="border-b border-slate-100">
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-12">Atualização</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plataforma</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Disponível</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Reservado</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right pr-8">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(formData.tabelaLegado || []).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-16 opacity-30">
+                          <div className="flex flex-col items-center gap-2">
+                            <Layers className="w-8 h-8 text-slate-300" />
+                            <p className="text-[10px] font-bold uppercase tracking-widest">Aguardando inserção técnica de dados...</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      formData.tabelaLegado?.map((row, i) => (
+                        <TableRow key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                          <TableCell className="py-5 text-[11px] font-bold text-slate-600">{row.data}</TableCell>
+                          <TableCell className="py-5 text-[10px] font-black uppercase text-slate-500">{row.plataforma || 'N/A'}</TableCell>
+                          <TableCell className="text-right font-mono font-bold text-slate-600">{row.disponivel?.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-right font-mono font-bold text-slate-400">{row.reservado?.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-right font-mono font-black text-emerald-600 pr-8">
+                            {((row.disponivel || 0) + (row.reservado || 0)).toLocaleString('pt-BR')}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           </div>
         </ScrollArea>
 
@@ -265,7 +322,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </Button>
           
           <div className="flex gap-4">
-            <Button variant="outline" onClick={handlePrint} className="h-14 px-10 rounded-2xl border-slate-200 bg-slate-50/50 font-black uppercase text-[11px] tracking-widest text-slate-700 hover:bg-white">
+            <Button variant="outline" onClick={handlePrint} className="h-14 px-10 rounded-2xl border-slate-200 bg-slate-50/50 font-black uppercase text-[11px] tracking-widest text-slate-700 hover:bg-white transition-all">
               <Printer className="w-4 h-4 mr-2" /> Gerar Relatório PDF
             </Button>
             <Button onClick={handleSave} className="h-14 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-[0.98]">
@@ -278,11 +335,19 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   );
 }
 
-function StatBox({ label, value, isNegative, isHighlight, isAccent, percentage }: any) {
+function StatBox({ label, value, isNegative, isHighlight, isAccent, isReference, percentage }: any) {
   return (
-    <div className="bg-[#161B2E] border border-white/5 rounded-2xl p-5 flex flex-col justify-between h-[100px] hover:bg-[#1C2237] transition-all group relative">
+    <div className={cn(
+      "border rounded-2xl p-5 flex flex-col justify-between h-[100px] transition-all group relative",
+      isReference ? "bg-amber-500/10 border-amber-500/20" : "bg-[#161B2E] border-white/5 hover:bg-[#1C2237]"
+    )}>
       <div className="flex justify-between items-start w-full">
-        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">{label}</p>
+        <p className={cn(
+          "text-[9px] font-black uppercase tracking-widest leading-none",
+          isReference ? "text-amber-500" : "text-slate-500"
+        )}>
+          {label} {isReference && "(REF)"}
+        </p>
         {percentage !== undefined && (
           <span className={cn(
             "text-[8px] font-black px-1.5 py-0.5 rounded-md",
@@ -294,7 +359,10 @@ function StatBox({ label, value, isNegative, isHighlight, isAccent, percentage }
       </div>
       <p className={cn(
         "text-[20px] font-black font-mono leading-none tracking-tight",
-        value < 0 ? "text-rose-500" : isHighlight ? "text-emerald-400" : isAccent ? "text-primary" : "text-white"
+        isNegative ? "text-rose-500" : 
+        isHighlight ? "text-emerald-400" : 
+        isAccent ? "text-primary" : 
+        isReference ? "text-amber-500" : "text-white"
       )}>
         {value === 0 ? "0" : value.toLocaleString('pt-BR')}
       </p>
@@ -302,7 +370,7 @@ function StatBox({ label, value, isNegative, isHighlight, isAccent, percentage }
   );
 }
 
-function Section({ title, data, icon: Icon, isLegado }: any) {
+function Section({ title, data, icon: Icon }: any) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center border-b border-slate-100 pb-5">
@@ -320,26 +388,14 @@ function Section({ title, data, icon: Icon, isLegado }: any) {
             <TableRow className="border-b border-slate-100">
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Referência</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data</TableHead>
-              {isLegado ? (
-                <>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plataforma</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Disponível</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Reservado</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Aposentado</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right pr-8">Bloqueado</TableHead>
-                </>
-              ) : (
-                <>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Destino/Histórico</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right pr-8">Volume (UCS)</TableHead>
-                </>
-              )}
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Destino/Histórico</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right pr-8">Volume (UCS)</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isLegado ? 7 : 4} className="text-center py-16 opacity-30">
+                <TableCell colSpan={4} className="text-center py-16 opacity-30">
                   <div className="flex flex-col items-center gap-2">
                     <Layers className="w-8 h-8 text-slate-300" />
                     <p className="text-[10px] font-bold uppercase tracking-widest">Aguardando inserção técnica de dados...</p>
@@ -351,25 +407,13 @@ function Section({ title, data, icon: Icon, isLegado }: any) {
                 <TableRow key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                   <TableCell className="py-4 text-[11px] font-bold text-slate-600 font-mono">{row.dist || row.id || '-'}</TableCell>
                   <TableCell className="py-4 text-[11px] text-slate-400">{row.data}</TableCell>
-                  {isLegado ? (
-                    <>
-                      <TableCell className="py-4 text-[10px] font-black uppercase text-slate-500">{row.plataforma || 'N/A'}</TableCell>
-                      <TableCell className="text-right font-mono font-black">{row.disponivel?.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-right font-mono font-black">{row.reservado?.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-right font-mono font-black text-emerald-500">{row.aposentado?.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-right font-mono font-black text-rose-500 pr-8">{row.bloqueado?.toLocaleString('pt-BR')}</TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell className="py-4 text-[10px] text-slate-600 truncate max-w-[300px]">{row.destino || row.tipo || '-'}</TableCell>
-                      <TableCell className={cn(
-                        "py-4 text-right font-mono font-black pr-8",
-                        row.valor < 0 ? "text-rose-500" : "text-slate-900"
-                      )}>
-                        {row.valor?.toLocaleString('pt-BR')}
-                      </TableCell>
-                    </>
-                  )}
+                  <TableCell className="py-4 text-[10px] text-slate-600 truncate max-w-[300px]">{row.destino || row.tipo || '-'}</TableCell>
+                  <TableCell className={cn(
+                    "py-4 text-right font-mono font-black pr-8",
+                    (row.valor || row.quantidade) < 0 ? "text-rose-500" : "text-slate-900"
+                  )}>
+                    {(row.valor || row.quantidade)?.toLocaleString('pt-BR')}
+                  </TableCell>
                 </TableRow>
               ))
             )}
