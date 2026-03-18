@@ -53,6 +53,20 @@
       "schema": "Pedido",
       "description": "Coleção de pedidos de crédito"
     },
+    "/pedidos/{pedidoId}/movimentos/{movId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "tipo": { "type": "string" },
+          "origem": { "type": "string" },
+          "destino": { "type": "string" },
+          "quantidade": { "type": "number" },
+          "validado": { "type": "boolean" }
+        }
+      },
+      "description": "Rastreabilidade de movimentos do pedido"
+    },
     "/produtores/{produtorId}": {
       "schema": "EntidadeSaldo",
       "description": "Saldos de produtores rurais"

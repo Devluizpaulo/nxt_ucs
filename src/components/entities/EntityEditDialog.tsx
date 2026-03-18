@@ -3,14 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { EntidadeSaldo, RegistroTabela, AuditoriaStatus } from "@/lib/types";
+import { EntidadeSaldo, RegistroTabela } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, ShieldCheck, Calculator, Link as LinkIcon, CheckCircle2, AlertCircle, Clock, X, Printer } from "lucide-react";
+import { ShieldCheck, Calculator, Save, X, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 
 interface EntityEditDialogProps {
   entity: EntidadeSaldo | null;
@@ -31,15 +30,12 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [entity]);
 
+  // Cálculos técnicos de auditoria
   const stats = useMemo(() => {
     const sumTable = (table?: RegistroTabela[]) => (table || []).reduce((acc, row) => acc + (row.valor || 0), 0);
     
-    const movTable = formData.tabelaMovimentacao || [];
-    const totalMov = sumTable(movTable);
-    const pagas = movTable.filter(m => m.statusAuditoria === 'Pago').length;
-    const percPago = movTable.length > 0 ? (pagas / movTable.length) * 100 : 0;
-
     const totalOrig = sumTable(formData.tabelaOriginacao);
+    const totalMov = sumTable(formData.tabelaMovimentacao);
     const totalAq = sumTable(formData.tabelaAquisicao);
 
     const totalCreditoImei = (formData.tabelaImei || []).reduce((acc, row) => acc + (row.valorCredito || 0), 0);
@@ -50,10 +46,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const totalAposentado = (formData.tabelaLegado || []).reduce((acc, row) => acc + (row.bloqueado || 0), 0);
     const totalBloqueado = (formData.tabelaLegado || []).reduce((acc, row) => acc + (row.aposentado || 0), 0);
     
+    // Fórmula de Auditoria BMV
     const finalAuditado = totalOrig + totalMov - totalAq;
 
     return {
-      percPago,
       totalMov,
       totalOrig,
       totalAq,
@@ -104,11 +100,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   if (!entity) return null;
 
   const handleUpdateRow = (field: keyof EntidadeSaldo, index: number, updates: Partial<RegistroTabela>) => {
-    setFormData(prev => {
-      const currentTable = [...((prev[field] as any[]) || [])];
-      currentTable[index] = { ...currentTable[index], ...updates };
-      return { ...prev, [field]: currentTable };
-    });
+    const currentTable = [...((formData[field] as any[]) || [])];
+    currentTable[index] = { ...currentTable[index], ...updates };
+    setFormData(prev => ({ ...prev, [field]: currentTable }));
   };
 
   const handleSaveFinal = () => {
@@ -129,39 +123,39 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[1200px] h-[90vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[2rem]">
+      <DialogContent className="max-w-[1200px] h-[90vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[2.5rem]">
         {activePasteField && (
           <div className="absolute inset-0 z-[100] bg-white/95 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in">
             <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-100 flex flex-col">
               <div className="p-4 flex justify-between items-center border-b">
-                <h3 className="text-xs font-black uppercase text-slate-900 tracking-widest">Processador de Dados</h3>
+                <h3 className="text-[10px] font-black uppercase text-slate-900 tracking-widest">Processador de Dados</h3>
                 <Button variant="ghost" size="icon" onClick={() => { setActivePasteField(null); setPasteBuffer(""); }}><X className="w-4 h-4" /></Button>
               </div>
               <div className="p-6">
-                <Textarea autoFocus value={pasteBuffer} onChange={e => setPasteBuffer(e.target.value)} placeholder="Cole aqui..." className="h-60 font-mono text-[11px] mb-4" />
-                <Button onClick={() => { setFormData(p => ({ ...p, [activePasteField]: previewRows })); setActivePasteField(null); setPasteBuffer(""); }} className="w-full h-12 font-black uppercase text-[10px]">Importar {previewRows.length} Linhas</Button>
+                <Textarea autoFocus value={pasteBuffer} onChange={e => setPasteBuffer(e.target.value)} placeholder="Cole aqui os dados da planilha..." className="h-60 font-mono text-[11px] mb-4" />
+                <Button onClick={() => { setFormData(p => ({ ...p, [activePasteField]: previewRows })); setActivePasteField(null); setPasteBuffer(""); }} className="w-full h-12 font-black uppercase text-[10px] rounded-xl">Importar {previewRows.length} Registros</Button>
               </div>
             </div>
           </div>
         )}
 
-        <div className="bg-[#0F172A] p-6 text-white shrink-0">
-          <div className="flex justify-between items-start mb-6">
+        <div className="bg-[#0F172A] p-8 text-white shrink-0">
+          <div className="flex justify-between items-start mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-1 text-primary">
-                <ShieldCheck className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Console de Auditoria</span>
+              <div className="flex items-center gap-2 mb-2 text-primary">
+                <ShieldCheck className="w-5 h-5" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Console Técnico • Auditoria BMV</span>
               </div>
-              <h2 className="text-2xl font-black uppercase tracking-tight">{entity.nome}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{entity.documento}</p>
+              <h2 className="text-2xl font-black uppercase tracking-tight leading-none">{entity.nome}</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">{entity.documento}</p>
             </div>
-            <div className="bg-primary/10 border border-primary/30 p-4 rounded-2xl text-right min-w-[200px]">
-              <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Saldo Auditado</p>
-              <p className="text-3xl font-black">{stats.finalAuditado.toLocaleString('pt-BR')} <span className="text-sm font-medium opacity-50">UCS</span></p>
+            <div className="bg-primary/10 border border-primary/30 p-5 rounded-3xl text-right min-w-[240px] shadow-lg shadow-primary/5">
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Saldo Final Auditado</p>
+              <p className="text-3xl font-black">{stats.finalAuditado.toLocaleString('pt-BR')} <span className="text-xs font-medium opacity-50">UCS</span></p>
             </div>
           </div>
 
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-4 pt-6 border-t border-white/10">
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-6 pt-8 border-t border-white/10">
             <StatItem label="Originação" value={stats.totalOrig} color="white" />
             <StatItem label="Movimentação" value={stats.totalMov} color="rose" />
             <StatItem label="Aposentado" value={stats.totalAposentado} color="white" />
@@ -169,29 +163,37 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             <StatItem label="Aquisição" value={stats.totalAq} color="rose" />
             <StatItem label="Ajuste IMEI" value={stats.ajusteImei} color="indigo" />
             <StatItem label="Legado" value={stats.legadoTotal} color="amber" />
-            <StatItem label="Final" value={stats.finalAuditado} color="emerald" />
+            <StatItem label="Válido" value={stats.finalAuditado} color="emerald" />
           </div>
         </div>
 
         <ScrollArea className="flex-1 p-8">
-          <div className="space-y-10">
-            <TableSection title="Originação" data={formData.tabelaOriginacao || []} onImport={() => setActivePasteField('tabelaOriginacao')} 
-              columns={[{label: "Ref", key: "dist"}, {label: "Data", key: "data"}, {label: "Volume", key: "valor", align: "right"}]} />
+          <div className="space-y-12">
+            <TableSection 
+              title="Registro de Originação" 
+              data={formData.tabelaOriginacao || []} 
+              onImport={() => setActivePasteField('tabelaOriginacao')} 
+              columns={[{label: "Ref", key: "dist"}, {label: "Data", key: "data"}, {label: "Volume", key: "valor", align: "right"}]} 
+            />
             
-            <TableSection title="Movimentações" data={formData.tabelaMovimentacao || []} onImport={() => setActivePasteField('tabelaMovimentacao')} 
-              onUpdate={(idx, upd) => handleUpdateRow('tabelaMovimentacao', idx, upd)}
+            <TableSection 
+              title="Histórico de Movimentações" 
+              data={formData.tabelaMovimentacao || []} 
+              onImport={() => setActivePasteField('tabelaMovimentacao')} 
+              onUpdate={(idx: number, upd: any) => handleUpdateRow('tabelaMovimentacao', idx, upd)}
               columns={[
                 {label: "Ref", key: "dist"}, {label: "Data", key: "data"}, {label: "Destino", key: "destino"}, 
                 {label: "Status", key: "statusAuditoria", type: "status"}, {label: "Volume", key: "valor", align: "right"}
-              ]} />
+              ]} 
+            />
           </div>
         </ScrollArea>
 
-        <div className="p-6 border-t bg-white flex justify-between items-center">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400">Cancelar</Button>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => window.print()} className="h-12 px-6 rounded-xl font-black uppercase text-[10px]"><Printer className="w-4 h-4 mr-2" /> PDF</Button>
-            <Button onClick={handleSaveFinal} className="h-12 px-10 rounded-xl font-black uppercase text-[10px] bg-primary">Salvar no Ledger</Button>
+        <div className="p-8 border-t bg-slate-50 flex justify-between items-center">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Descartar Alterações</Button>
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={() => window.print()} className="h-12 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest border-slate-200"><Printer className="w-4 h-4 mr-2" /> Gerar Relatório</Button>
+            <Button onClick={handleSaveFinal} className="h-12 px-12 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-primary shadow-xl shadow-primary/20">Sincronizar no Ledger</Button>
           </div>
         </div>
       </DialogContent>
@@ -200,41 +202,68 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 }
 
 function StatItem({ label, value, color }: any) {
-  const colors: any = { white: "text-white", rose: "text-rose-400", indigo: "text-indigo-300", amber: "text-amber-400", emerald: "text-primary" };
+  const colors: any = { 
+    white: "text-white", 
+    rose: "text-rose-400", 
+    indigo: "text-indigo-400", 
+    amber: "text-amber-400", 
+    emerald: "text-primary" 
+  };
   return (
-    <div className="space-y-0.5">
-      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</p>
-      <p className={cn("text-sm font-black truncate", colors[color])}>{value.toLocaleString('pt-BR')}</p>
+    <div className="space-y-1">
+      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</p>
+      <p className={cn("text-base font-black truncate tracking-tight", colors[color])}>{value.toLocaleString('pt-BR')}</p>
     </div>
   );
 }
 
 function TableSection({ title, data, onImport, columns, onUpdate }: any) {
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-center border-b pb-2">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900">{title}</h3>
-        <Button onClick={onImport} variant="outline" size="sm" className="h-7 text-[9px] font-black uppercase"><Calculator className="w-3 h-3 mr-1" /> Importar</Button>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+          <div className="w-1.5 h-4 bg-primary rounded-full"></div>
+          {title}
+        </h3>
+        <Button onClick={onImport} variant="outline" size="sm" className="h-8 rounded-full text-[9px] font-black uppercase px-4 border-primary/20 hover:bg-primary/5 text-primary">
+          <Calculator className="w-3.5 h-3.5 mr-2" /> Importar Dados
+        </Button>
       </div>
-      <div className="border rounded-xl overflow-hidden">
+      <div className="border border-slate-100 rounded-3xl overflow-hidden shadow-sm bg-white">
         <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              {columns.map((c: any) => <TableHead key={c.label} className={cn("text-[9px] font-black uppercase h-8", c.align === 'right' && "text-right")}>{c.label}</TableHead>)}
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="border-b border-slate-100">
+              {columns.map((c: any) => <TableHead key={c.label} className={cn("text-[9px] font-black uppercase text-slate-400 h-10 px-6", c.align === 'right' && "text-right")}>{c.label}</TableHead>)}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.length === 0 ? <TableRow><TableCell colSpan={columns.length} className="text-center py-8 text-[10px] text-slate-400 font-bold uppercase">Sem dados</TableCell></TableRow> :
+            {data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-12 text-[10px] text-slate-300 font-bold uppercase tracking-widest italic">
+                  Nenhum registro vinculado até o momento
+                </TableCell>
+              </TableRow>
+            ) : (
               data.map((row: any, i: number) => (
-                <TableRow key={i}>
+                <TableRow key={i} className="hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-0">
                   {columns.map((col: any) => (
-                    <TableCell key={col.label} className={cn("text-[10px] font-medium py-2", col.align === 'right' && "text-right")}>
+                    <TableCell key={col.label} className={cn("text-[10px] font-medium py-3 px-6", col.align === 'right' && "text-right font-mono font-bold")}>
                       {col.type === 'status' ? (
                         <Select value={row[col.key]} onValueChange={v => onUpdate(i, {[col.key]: v})}>
-                          <SelectTrigger className="h-7 text-[9px] font-bold uppercase"><SelectValue /></SelectTrigger>
-                          <SelectContent><SelectItem value="Pendente">Pendente</SelectItem><SelectItem value="Pago">Pago</SelectItem><SelectItem value="Não Pago">Não Pago</SelectItem></SelectContent>
+                          <SelectTrigger className="h-8 text-[9px] font-bold uppercase rounded-lg bg-slate-50 border-slate-100">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-none shadow-2xl">
+                            <SelectItem value="Pendente">⏳ Pendente</SelectItem>
+                            <SelectItem value="Pago">✅ Pago</SelectItem>
+                            <SelectItem value="Não Pago">❌ Não Pago</SelectItem>
+                          </SelectContent>
                         </Select>
-                      ) : (typeof row[col.key] === 'number' ? Math.abs(row[col.key]).toLocaleString('pt-BR') : row[col.key])}
+                      ) : (
+                        typeof row[col.key] === 'number' 
+                          ? <span className={row[col.key] < 0 ? "text-rose-500" : "text-slate-900"}>{Math.abs(row[col.key]).toLocaleString('pt-BR')}</span>
+                          : row[col.key]
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
