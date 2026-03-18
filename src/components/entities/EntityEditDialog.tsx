@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -229,7 +230,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               <ReportTable title="03. DEMONSTRATIVO DE SALDO LEGADO" data={formData.tabelaLegado} isLegado />
             )}
             {formData.tabelaImei && formData.tabelaImei.length > 0 && (
-              <ReportTable title="04. AJUSTE IMEI" data={formData.tabelaImei} />
+              <ReportTable title="04. AJUSTE IMEI" data={formData.tabelaImei} isImei />
+            )}
+            {formData.tabelaAquisicao && formData.tabelaAquisicao.length > 0 && (
+              <ReportTable title="05. AQUISIÇÃO" data={formData.tabelaAquisicao} isNegative />
             )}
           </div>
 
@@ -382,7 +386,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   );
 }
 
-function ReportTable({ title, data, isNegative, isLegado }: any) {
+function ReportTable({ title, data, isNegative, isLegado, isImei }: any) {
   return (
     <div className="space-y-1.5">
        <h4 className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 pb-1">{title}</h4>
@@ -398,10 +402,10 @@ function ReportTable({ title, data, isNegative, isLegado }: any) {
             {data.map((row: any, i: number) => (
               <tr key={i} className="border-b border-slate-50">
                 <td className="px-2 py-1 font-mono text-slate-400">{row.data || row.dist || '-'}</td>
-                <td className="px-2 py-1 text-slate-600 truncate max-w-[250px]">{row.destino || row.plataforma || '-'}</td>
+                <td className="px-2 py-1 text-slate-600 truncate max-w-[250px]">{row.destino || row.plataforma || row.nome || '-'}</td>
                 <td className={cn("px-2 py-1 text-right font-black", isNegative ? "text-rose-600" : "text-slate-900")}>
-                  {isLegado ? (row.disponivel + row.reservado).toLocaleString('pt-BR') : 
-                   type === 'imei' ? (row.valorDebito - row.valorCredito).toLocaleString('pt-BR') :
+                  {isLegado ? ((row.disponivel || 0) + (row.reservado || 0)).toLocaleString('pt-BR') : 
+                   isImei ? ((row.valorDebito || 0) - (row.valorCredito || 0)).toLocaleString('pt-BR') :
                    row.valor?.toLocaleString('pt-BR')}
                 </td>
               </tr>
@@ -433,7 +437,7 @@ function StatBox({ label, value, isNegative, isHighlight, isAmber, isImei }: any
         isImei ? "text-indigo-400" :
         "text-white"
       )}>
-        {value.toLocaleString('pt-BR')}
+        {(value || 0).toLocaleString('pt-BR')}
       </p>
     </div>
   );
@@ -452,7 +456,7 @@ function SectionHeader({ title, value, onPaste, isNegative, isAmber, isImei }: a
           "text-[9px] font-black uppercase rounded-full border-slate-100",
           isAmber ? "text-amber-500" : isImei ? "text-indigo-500" : isNegative ? "text-rose-500" : "text-[#10B981]"
         )}>
-          {value.toLocaleString('pt-BR')} UCS
+          {(value || 0).toLocaleString('pt-BR')} UCS
         </Badge>
       </div>
       <Button variant="outline" size="sm" onClick={onPaste} className="h-8 px-3 rounded-lg text-[8px] font-black uppercase gap-2 border-slate-200 hover:bg-slate-50">
@@ -482,8 +486,8 @@ function SectionTable({ data, type }: { data: any[], type: string }) {
                 <TableCell className="font-mono text-[10px] text-slate-400 py-2">{row.dist || row.data || '-'}</TableCell>
                 <TableCell className="font-bold text-[10px] uppercase text-slate-600 py-2">{row.destino || row.plataforma || row.nome || '-'}</TableCell>
                 <TableCell className="text-right font-mono font-black text-[11px] pr-6 text-slate-900 py-2">
-                   {type === 'imei' ? (row.valorDebito - row.valorCredito).toLocaleString('pt-BR') : 
-                    type === 'legado' ? (row.disponivel + row.reservado).toLocaleString('pt-BR') :
+                   {type === 'imei' ? ((row.valorDebito || 0) - (row.valorCredito || 0)).toLocaleString('pt-BR') : 
+                    type === 'legado' ? ((row.disponivel || 0) + (row.reservado || 0)).toLocaleString('pt-BR') :
                     row.valor?.toLocaleString('pt-BR')}
                 </TableCell>
               </TableRow>
