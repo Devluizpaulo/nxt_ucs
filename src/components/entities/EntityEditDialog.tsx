@@ -84,20 +84,22 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
     const parseBRL = (val: string) => {
       if (!val) return 0;
-      // Remove R$, espaços, pontos de milhar e converte vírgula decimal
       const clean = val.replace(/[R$\s.]/g, '').replace(',', '.');
       return parseFloat(clean) || 0;
     };
 
-    lines.forEach(line => {
-      // Ignorar cabeçalhos comuns
-      const lowerLine = line.toLowerCase();
-      if (lowerLine.includes('data') || lowerLine.includes('usuário') || lowerLine.includes('dist') || lowerLine.includes('ano')) return;
-
+    lines.forEach((line, index) => {
       const parts = line.split('\t').map(p => p.trim());
       
+      // Filtro de cabeçalho inteligente: apenas se for a primeira linha e não começar com número
+      if (index === 0) {
+        const firstCell = parts[0].toLowerCase();
+        const isHeader = firstCell.includes('data') || firstCell.includes('dist') || firstCell.includes('usuário') || firstCell.includes('ano');
+        const isNumericId = /^\d+$/.test(parts[0]);
+        if (isHeader && !isNumericId) return;
+      }
+
       if (activePasteField === 'tabelaAquisicao') {
-        // Formato esperado: "Ano - Valor" ou "Ano Valor"
         const match = line.match(/(\d{4})[^\d]+(\d+)/);
         if (match) {
           results.push({
@@ -107,7 +109,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           });
         }
       } else if (activePasteField === 'tabelaLegado') {
-        // Formato Legado (8 colunas): Data, Plataforma, Nome, Doc, Disp, Res, Bloq, Apos
         if (parts.length < 5) return;
         const disp = parseBRL(parts[4]);
         const res = parseBRL(parts[5]);
@@ -123,10 +124,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           reservado: res,
           bloqueado: bloq,
           aposentado: apos,
-          valor: disp + res, // Total Legado é a soma de Disp + Res
+          valor: disp + res,
         });
       } else if (activePasteField === 'tabelaImei') {
-        // Formato IMEI: Dist, Data, Destino, [Extras], Crédito, Débito
         if (parts.length < 5) return;
         const nonInternalParts = parts.filter(p => p !== "");
         const deb = parseBRL(nonInternalParts[nonInternalParts.length - 1]);
@@ -140,17 +140,18 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           valorDebito: deb 
         });
       } else {
-        // Formato Movimentação/Originação: Dist, Data, Destino, [Situacao], Valor
-        // Usa a técnica de pegar o último valor não vazio para garantir que leu a planilha toda
         const nonInternalParts = parts.filter(p => p !== "");
-        const valor = parseBRL(nonInternalParts[nonInternalParts.length - 1]);
+        if (nonInternalParts.length < 3) return;
+        
+        const valorRaw = nonInternalParts[nonInternalParts.length - 1];
+        const valor = parseBRL(valorRaw);
         const isNegative = activePasteField === 'tabelaMovimentacao';
         
         results.push({ 
           dist: parts[0], 
           data: parts[1], 
           destino: parts[2], 
-          situacao: parts.length > 4 ? parts[3] : "Processado",
+          situacao: "Processado",
           valor: isNegative ? -valor : valor,
         });
       }
@@ -165,7 +166,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     setPasteBuffer("");
     setPreviewRows([]);
     setActivePasteField(null);
-    toast({ title: "Auditado com Sucesso", description: `${previewRows.length} registros foram consolidados.` });
+    toast({ title: "Dados Consolidados", description: `${previewRows.length} registros auditados com sucesso.` });
   };
 
   if (!entity) return null;
@@ -216,7 +217,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                 <div className="bg-slate-50 rounded-[2rem] border border-slate-100 p-8 flex items-center justify-between">
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                      Total de {previewRows.length} Registros
+                      Total de {previewRows.length} Registros Detectados
                     </p>
                     <div className="flex items-baseline gap-2">
                       <span className={cn(
