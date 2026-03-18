@@ -186,6 +186,10 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
     window.print();
   };
 
+  const qrCodeUrl = link 
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(link)}`
+    : "";
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -201,104 +205,114 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
 
         {/* CERTIFICADO DE RASTREABILIDADE A4 */}
         <div className="printable-certificate hidden print:block bg-white text-slate-900 p-10">
+          {/* LOGO E HEADER */}
           <div className="flex justify-between items-start border-b-2 border-slate-100 pb-6 mb-8">
-            <div className="flex items-center gap-2">
-              <span className="text-[32px] font-black text-amber-500">bmv</span>
+            <div className="flex items-center">
+              <span className="text-[36px] font-black text-amber-500">bmv</span>
             </div>
-            <div className="text-right space-y-0.5">
-              <h2 className="text-[16px] font-black uppercase tracking-tight">Certificado de Rastreabilidade</h2>
-              <p className="text-[10px] font-bold text-slate-900 uppercase">Protocolo de Auditoria: #{order.id}</p>
-              <p className="text-[9px] text-slate-400 font-medium">{new Date().toLocaleString("pt-BR")}</p>
+            <div className="text-right">
+              <h2 className="text-[18px] font-black uppercase tracking-tight leading-tight">CERTIFICADO DE RASTREABILIDADE</h2>
+              <p className="text-[10px] font-black uppercase text-slate-900 tracking-widest mt-1">PROTOCOLO DE AUDITORIA: ##{order.id}</p>
+              <p className="text-[9px] text-slate-400 font-medium mt-0.5">{new Date().toLocaleString("pt-BR")}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-12 mt-8">
+            {/* IDENTIFICAÇÃO DO ATIVO */}
             <div className="space-y-4">
-              <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-widest">Identificação do Ativo</h3>
+              <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.15em]">IDENTIFICAÇÃO DO ATIVO</h3>
               <div className="space-y-4">
-                <p className="text-[18px] font-black text-emerald-500">#{order.id}</p>
+                <p className="text-[24px] font-black text-[#10B981]">##{order.id}</p>
                 <div className="text-[10px] space-y-2 font-medium">
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">Data:</strong> {new Date(order.data).toLocaleDateString()}</p>
-                  <p className="leading-relaxed"><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">Empresa:</strong> {order.empresa}</p>
+                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">DATA:</strong> {new Date(order.data).toLocaleDateString()}</p>
+                  <p className="leading-tight"><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">EMPRESA:</strong> {order.empresa}</p>
                   <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">CNPJ:</strong> {order.cnpj}</p>
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">Programa:</strong> {order.programa} ({order.uf})</p>
+                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">PROGRAMA:</strong> {order.programa} ({order.uf})</p>
                 </div>
               </div>
             </div>
 
+            {/* AUDITORIA DIGITAL */}
             <div className="space-y-4">
-              <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-widest">Auditoria Digital</h3>
+              <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.15em]">AUDITORIA DIGITAL</h3>
               <div className="flex justify-between items-start">
-                <div className="text-[10px] space-y-3 font-medium">
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">Quantidade UCS:</strong> {order.quantidade}</p>
-                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">Valor Auditado:</strong> {order.valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
-                  {order.linkNxt && (
+                <div className="text-[10px] space-y-3 font-medium flex-1">
+                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">QUANTIDADE UCS:</strong> {order.quantidade}</p>
+                  <p><strong className="font-black uppercase text-[9px] text-slate-400 mr-2">VALOR AUDITADO:</strong> {order.valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
+                  
+                  {link && (
                     <div className="pt-2">
-                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Explorer Link:</p>
-                      <p className="text-[8px] text-blue-600 font-bold underline break-all max-w-[200px] leading-tight">{order.linkNxt}</p>
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">EXPLORER LINK:</p>
+                      <p className="text-[8px] text-blue-600 font-bold underline break-all max-w-[220px] leading-tight">
+                        {link}
+                      </p>
                     </div>
                   )}
                 </div>
-                {/* QR CODE DINÂMICO DO LINK */}
-                <div className="flex flex-col items-center gap-1 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  {order.linkNxt ? (
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(order.linkNxt)}`} 
-                      alt="Certificado QR Code" 
-                      className="w-16 h-16"
-                    />
+
+                {/* QR CODE BOX */}
+                <div className="flex flex-col items-center gap-1.5 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 ml-4">
+                  {qrCodeUrl ? (
+                    <img src={qrCodeUrl} alt="QR Code" className="w-20 h-20 bg-white" />
                   ) : (
-                    <QrCodeIcon className="w-16 h-16 text-slate-300" />
+                    <div className="w-20 h-20 bg-slate-100 flex items-center justify-center rounded-lg border-2 border-dashed border-slate-200">
+                      <QrCodeIcon className="w-8 h-8 text-slate-300" />
+                    </div>
                   )}
-                  <p className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">validação digital</p>
+                  <p className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">VALIDAÇÃO DIGITAL</p>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* HISTÓRICO DE RASTREABILIDADE */}
           <div className="mt-12 space-y-4">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-widest">Histórico de Rastreabilidade (Ledger Records)</h3>
-            <div className="border border-slate-100 rounded-xl overflow-hidden">
+            <h3 className="text-[11px] font-black text-slate-400 uppercase border-b border-slate-100 pb-2 tracking-[0.15em]">HISTÓRICO DE RASTREABILIDADE (LEDGER RECORDS)</h3>
+            <div className="border border-slate-100 rounded-[1.25rem] overflow-hidden">
               <table className="w-full text-[9px] text-left">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="p-3 font-black uppercase text-slate-400">Categoria</th>
-                    <th className="p-3 font-black uppercase text-slate-400">Origem</th>
-                    <th className="p-3 font-black uppercase text-slate-400">Destino</th>
-                    <th className="p-3 font-black uppercase text-slate-400 text-right">Volume (UCS)</th>
+                    <th className="px-5 py-3.5 font-black uppercase text-slate-400">CATEGORIA</th>
+                    <th className="px-5 py-3.5 font-black uppercase text-slate-400">ORIGEM</th>
+                    <th className="px-5 py-3.5 font-black uppercase text-slate-400">DESTINO</th>
+                    <th className="px-5 py-3.5 font-black uppercase text-slate-400 text-right">VOLUME (UCS)</th>
                   </tr>
                 </thead>
                 <tbody className="font-medium">
-                  {movimentos?.map((mov, i) => (
-                    <tr key={i} className="border-t border-slate-50">
-                      <td className="p-3 uppercase text-slate-600">{mov.tipo || "cliente"}</td>
-                      <td className="p-3">{mov.origem}</td>
-                      <td className="p-3 uppercase">{mov.destino}</td>
-                      <td className="p-3 text-right font-black text-slate-900">{mov.quantidade}</td>
+                  {movimentos && movimentos.length > 0 ? (
+                    movimentos.map((mov, i) => (
+                      <tr key={i} className="border-t border-slate-50">
+                        <td className="px-5 py-3 uppercase text-slate-600 font-bold">{mov.tipo || "CLIENTE"}</td>
+                        <td className="px-5 py-3 text-slate-500 font-medium truncate max-w-[180px]">{mov.origem}</td>
+                        <td className="px-5 py-3 uppercase text-slate-900 font-black">{mov.destino}</td>
+                        <td className="px-5 py-3 text-right font-black text-slate-900">{mov.quantidade}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-5 py-10 text-center text-slate-400 italic">Nenhum registro de rastreabilidade encontrado para este protocolo.</td>
                     </tr>
-                  ))}
-                  {(!movimentos || movimentos.length === 0) && (
-                    <tr><td colSpan={4} className="p-6 text-center text-slate-400 italic">Aguardando sincronização de extrato...</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
 
-          <div className="mt-20 flex justify-between items-end">
-            <div className="text-[10px] text-emerald-600 font-black flex items-center gap-2 uppercase tracking-tight">
-              <Check className="w-4 h-4 stroke-[3px]" /> Integridade verificada
+          {/* FOOTER DO CERTIFICADO */}
+          <div className="mt-24 flex justify-between items-end">
+            <div className="text-[11px] text-[#10B981] font-black flex items-center gap-2.5 uppercase tracking-tight">
+              <Check className="w-4 h-4 stroke-[4px]" /> INTEGRIDADE VERIFICADA
             </div>
-            <div className="text-right space-y-1">
-              <div className="border-t-2 border-slate-900 w-64 pt-3">
-                <p className="text-[10px] font-black uppercase text-slate-900 tracking-tight">Auditor de Conformidade BMV</p>
-                <p className="text-[8px] font-bold text-slate-400 uppercase">Documento assinado digitalmente</p>
+            <div className="text-right">
+              <div className="border-t-2 border-slate-900 w-72 pt-3.5">
+                <p className="text-[11px] font-black uppercase text-slate-900 tracking-tight">AUDITOR DE CONFORMIDADE BMV</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">DOCUMENTO ASSINADO DIGITALMENTE</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* CONSOLE UI */}
+        {/* CONSOLE UI - INTERFACE DE AUDITORIA */}
         <div className="bg-[#0B0F1A] p-6 shrink-0 text-white relative print:hidden">
           <div className="flex justify-between items-start mb-6">
             <div className="space-y-1">
