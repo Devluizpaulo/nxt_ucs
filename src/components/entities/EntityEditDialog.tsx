@@ -151,7 +151,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-primary">
                   <ShieldCheck className="w-4 h-4" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Saldo Atualizado Ledger</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Saldo Atualizado Ledger</span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-white">
                   <div>
@@ -175,7 +175,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             </div>
 
             {/* SEÇÕES TÉCNICAS */}
-            <div className="space-y-12">
+            <div className="space-y-12 pb-10">
               
               <TechnicalSection 
                 title="Sessão de Originação"
@@ -291,6 +291,8 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 }
 
 function TechnicalSection({ title, activeField, setActiveField, pasteBuffer, setPasteBuffer, previewRows, onImport, data, columns, variant, currentValue }: any) {
+  const saldoASerAplicado = previewRows.reduce((acc: number, r: any) => acc + (r.valor || 0), 0);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between px-2">
@@ -312,34 +314,50 @@ function TechnicalSection({ title, activeField, setActiveField, pasteBuffer, set
           else { setActiveField(activeField); }
         }}>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="border-primary/20 text-primary h-10 px-6 rounded-full font-black uppercase text-[10px] tracking-widest gap-2 hover:bg-primary/5">
+            <Button variant="outline" className="border-primary/20 text-primary h-10 px-6 rounded-full font-black uppercase text-[10px] tracking-widest gap-2 hover:bg-primary/5 shadow-sm">
               <Plus className="w-3.5 h-3.5" /> Colagem via Calculadora
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[500px] p-6 rounded-2xl bg-white border-slate-200 shadow-3xl" side="top" align="end">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b pb-3">
-                <p className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-2">
-                  <Calculator className="w-4 h-4" /> Processador Excel: {title}
-                </p>
-                {previewRows.length > 0 && <Badge className="bg-emerald-100 text-emerald-600 font-black text-[9px]">{previewRows.length} LINHAS</Badge>}
-              </div>
-              <Textarea 
-                value={pasteBuffer} 
-                onChange={e => setPasteBuffer(e.target.value)}
-                placeholder="Copie as colunas da planilha e cole aqui..."
-                className="bg-slate-50 border-slate-100 text-slate-900 font-mono text-[10px] h-32 resize-none rounded-xl p-4"
-              />
-              <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border">
-                <div>
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Saldo a ser aplicado</p>
-                  <p className="text-lg font-black text-primary">
-                    {previewRows.reduce((acc, r) => acc + (r.valor || 0), 0).toLocaleString('pt-BR')} <span className="text-[10px] opacity-60">UCS</span>
-                  </p>
+          <PopoverContent className="w-[500px] p-0 rounded-[2rem] bg-white border-slate-200 shadow-3xl overflow-hidden" side="top" align="end">
+            <div className="flex flex-col">
+              {/* HEADER DO PROCESSADOR - ALTA FIDELIDADE */}
+              <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <Calculator className="w-4 h-4 text-primary" />
                 </div>
-                <Button onClick={onImport} disabled={previewRows.length === 0} className="bg-primary text-white font-black uppercase text-[10px] h-10 px-6 rounded-lg">
-                  Confirmar
-                </Button>
+                <h4 className="text-[10px] font-black uppercase text-primary tracking-widest">
+                  Processador Excel: {title}
+                </h4>
+              </div>
+
+              {/* ÁREA DE TEXTO */}
+              <div className="p-6">
+                <Textarea 
+                  value={pasteBuffer} 
+                  onChange={e => setPasteBuffer(e.target.value)}
+                  placeholder="Copie as colunas da planilha e cole aqui..."
+                  className="bg-slate-50/50 border-slate-100 text-slate-900 font-mono text-[10px] h-48 resize-none rounded-2xl p-6 focus:ring-primary shadow-inner"
+                />
+              </div>
+
+              {/* FOOTER DE CONSOLIDAÇÃO - ALTA FIDELIDADE */}
+              <div className="px-6 pb-6 pt-2">
+                <div className="bg-slate-50 rounded-2xl border border-slate-100 p-6 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Saldo a ser aplicado</p>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-black text-primary">{saldoASerAplicado.toLocaleString('pt-BR')}</span>
+                      <span className="text-[10px] font-black text-primary opacity-60">UCS</span>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={onImport} 
+                    disabled={previewRows.length === 0} 
+                    className="bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] h-12 px-10 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+                  >
+                    Confirmar
+                  </Button>
+                </div>
               </div>
             </div>
           </PopoverContent>
