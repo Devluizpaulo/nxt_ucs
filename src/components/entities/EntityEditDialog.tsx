@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -74,14 +73,19 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       if (activePasteField === 'tabelaLegado') {
         const disp = parseBRL(parts[4]);
         const res = parseBRL(parts[5]);
+        const bloq = parseBRL(parts[6]);
+        const apos = parseBRL(parts[7]);
+        
         results.push({
-          data: parts[0]?.trim(),
-          plataforma: parts[1]?.trim(),
-          nome: parts[2]?.trim(),
-          documento: parts[3]?.trim(),
+          data: parts[0]?.trim() || "N/A",
+          plataforma: parts[1]?.trim() || "N/A",
+          nome: parts[2]?.trim() || "N/A",
+          documento: parts[3]?.trim() || "N/A",
           disponivel: disp,
           reservado: res,
-          valor: disp + res,
+          bloqueado: bloq,
+          aposentado: apos,
+          valor: disp + res, // Regra: Saldo Legado = Disponível + Reservado
         });
       } else if (activePasteField === 'tabelaImei') {
         const cred = parseBRL(parts[parts.length - 2]);
@@ -122,7 +126,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
         onPointerDownOutside={(e) => { if (activePasteField) e.preventDefault(); }}
         onInteractOutside={(e) => { if (activePasteField) e.preventDefault(); }}
       >
-        {/* Acessibilidade: Título e Descrição para Leitores de Tela */}
         <DialogHeader className="sr-only">
           <DialogTitle>Auditoria Executiva: {entity.nome}</DialogTitle>
           <DialogDescription>Console de conciliação de ativos e rastreabilidade permanente.</DialogDescription>
@@ -175,7 +178,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                   </div>
                   <Button 
                     onClick={handleConfirmSection} 
-                    disabled={previewRows.length === 0}
+                    disabled={pasteBuffer.trim() === ""}
                     className="h-16 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-95"
                   >
                     Confirmar
@@ -281,9 +284,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               columns={[
                 { label: "Atualização", key: "data" },
                 { label: "Plataforma", key: "plataforma" },
-                { label: "Disponível", key: "disponivel", align: "right" },
-                { label: "Reservado", key: "reservado", align: "right" },
-                { label: "Total", key: "valor", align: "right", variant: "primary" }
+                { label: "Disponível", key: "disponivel", align: "right", variant: "slate" },
+                { label: "Reservado", key: "reservado", align: "right", variant: "slate" },
+                { label: "Bloqueado", key: "bloqueado", align: "right", variant: "rose" },
+                { label: "Aposentado", key: "aposentado", align: "right", variant: "amber" },
+                { label: "Total (D+R)", key: "valor", align: "right", variant: "primary" }
               ]}
             />
           </div>
@@ -357,6 +362,7 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
                       col.align === 'right' && "text-right",
                       col.variant === 'emerald' && "text-emerald-600",
                       col.variant === 'rose' && "text-rose-500",
+                      col.variant === 'amber' && "text-amber-500",
                       col.variant === 'primary' && "text-primary font-black"
                     )}>
                       {typeof row[col.key] === 'number' ? Math.abs(row[col.key]).toLocaleString('pt-BR') : row[col.key]}
