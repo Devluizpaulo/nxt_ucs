@@ -80,7 +80,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Bloqueado</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Aquisição</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-[#734DCC] text-right">Ajuste IMEI</TableHead>
-                <TableHead className="text-[11px] font-black uppercase tracking-widest text-primary text-right">Saldo Auditado</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-primary text-right">Saldo Auditado</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status Auditoria</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center pr-8">Ações</TableHead>
               </TableRow>
@@ -88,7 +88,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="h-48 text-center text-slate-400 font-bold uppercase text-[11px] tracking-widest">
+                  <TableCell colSpan={13} className="h-48 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>
@@ -103,7 +103,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                       />
                     </TableCell>
                     <TableCell 
-                      className="font-black text-[11px] uppercase text-slate-900 max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors"
+                      className="font-black text-[10px] uppercase text-slate-900 max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors py-5"
                       onClick={() => setEditingEntity(item)}
                     >
                       <div className="flex items-center gap-2">
@@ -117,13 +117,13 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-[10px] text-slate-400">{item.documento}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] font-bold text-slate-600">{formatUCS(item.originacao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-rose-500 font-bold">{item.movimentacao > 0 ? `-${formatUCS(item.movimentacao)}` : formatUCS(item.movimentacao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-slate-400">{formatUCS(item.aposentado)}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-rose-500">{formatUCS(item.bloqueado)}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-rose-500">{formatUCS(item.aquisicao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-[#734DCC] font-bold">{formatUCS(item.saldoAjustarImei)}</TableCell>
-                    <TableCell className="text-right font-mono font-black text-[14px] text-primary">
+                    <TableCell className="text-right font-mono text-[10px] font-bold text-slate-600">{formatUCS(item.originacao)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-rose-500 font-bold">{item.movimentacao > 0 ? `-${formatUCS(item.movimentacao)}` : formatUCS(item.movimentacao)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-slate-400">{formatUCS(item.aposentado)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-rose-500">{formatUCS(item.bloqueado)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-rose-500">{formatUCS(item.aquisicao)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-[#734DCC] font-black">{formatUCS(item.saldoAjustarImei)}</TableCell>
+                    <TableCell className="text-right font-mono font-black text-[12px] text-primary">
                       <div className="flex items-center justify-end gap-2">
                         {formatUCS(item.saldoFinalAtual)} UCS
                         {item.statusAuditoriaSaldo === 'inconsistente' && (
@@ -139,7 +139,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                         variant="ghost" 
                         size="icon"
                         onClick={() => setEditingEntity(item)}
-                        className="h-10 w-10 text-slate-300 hover:text-primary transition-all"
+                        className="h-10 w-10 text-slate-200 hover:text-primary transition-all"
                       >
                         <Search className="w-5 h-5" />
                       </Button>

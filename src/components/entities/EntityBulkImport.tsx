@@ -30,9 +30,6 @@ export function EntityBulkImport({ onImport, type }: EntityBulkImportProps) {
     const lines = text.split('\n').filter(l => l.trim());
     const results: any[] = [];
     
-    // Supondo ordem da planilha fornecida:
-    // Usuário | Documento | ORIGINAÇÃO | Débito | APOSENTADAS | BLOQUEADAS | Aquisição | TRANSF (IMEI) | ESTORNO (IMEI) | Saldo Ajustar (IMEI) | Saldo Legado | CPRs | BMTCA | Status BMTCA | Desmate | SALDO FINAL | VALOR A AJUSTAR | [Status Auditoria]
-    
     const startIdx = (lines[0]?.toLowerCase().includes('usuário') || lines[0]?.toLowerCase().includes('documento')) ? 1 : 0;
 
     for (let i = startIdx; i < lines.length; i++) {
@@ -78,8 +75,11 @@ export function EntityBulkImport({ onImport, type }: EntityBulkImportProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 text-[10px] font-bold uppercase tracking-widest border-primary/20 hover:bg-primary/5 h-12 px-6 rounded-full">
-          <Layers className="w-3.5 h-3.5" /> Importar {type === 'produtor' ? 'Produtores' : 'Associações'}
+        <Button 
+          variant="outline" 
+          className="h-12 px-8 rounded-full border-[#10B981]/20 bg-white hover:bg-[#10B981]/5 text-slate-900 font-black uppercase text-[10px] tracking-widest gap-3 shadow-none transition-all"
+        >
+          <Layers className="w-4 h-4 text-slate-900" /> IMPORTAR {type === 'produtor' ? 'PRODUTORES' : 'ASSOCIAÇÕES'}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-6xl bg-white border-none shadow-2xl rounded-[2.5rem] p-0 overflow-hidden">

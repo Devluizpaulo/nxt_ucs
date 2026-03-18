@@ -110,13 +110,16 @@ export default function ProdutoresPage() {
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : (
-            <Tabs value={activeTab} onValueChange={v => setActiveTab(v as EntityStatus)} className="w-full">
-              <div className="flex items-center justify-between mb-6">
-                <TabsList className="bg-slate-100/50 p-1 border rounded-full h-12">
-                  <TabsTrigger value="disponivel" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Disponíveis</TabsTrigger>
-                  <TabsTrigger value="bloqueado" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Bloqueados</TabsTrigger>
-                  <TabsTrigger value="inapto" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Inaptos</TabsTrigger>
-                </TabsList>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <Tabs value={activeTab} onValueChange={v => setActiveTab(v as EntityStatus)} className="w-auto">
+                  <TabsList className="bg-slate-100/50 p-1 border rounded-full h-12">
+                    <TabsTrigger value="disponivel" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Disponíveis</TabsTrigger>
+                    <TabsTrigger value="bloqueado" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Bloqueados</TabsTrigger>
+                    <TabsTrigger value="inapto" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Inaptos</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                
                 <div className="flex gap-3">
                   {(produtores?.length === 0) && (
                     <Button onClick={handleSeedProdutores} variant="outline" className="h-12 px-6 rounded-full text-[10px] font-bold uppercase tracking-widest border-dashed">
@@ -124,8 +127,8 @@ export default function ProdutoresPage() {
                     </Button>
                   )}
                   {selectedIds.length > 0 && (
-                    <Button onClick={handleBulkDelete} variant="destructive" size="sm" className="h-12 px-6 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                      <Trash2 className="w-3.5 h-3.5 mr-2" /> Excluir ({selectedIds.length})
+                    <Button onClick={handleBulkDelete} variant="destructive" size="sm" className="h-12 px-8 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      <Trash2 className="w-4 h-4 mr-2" /> EXCLUIR ({selectedIds.length})
                     </Button>
                   )}
                   <EntityBulkImport onImport={async (data) => {
@@ -154,7 +157,7 @@ export default function ProdutoresPage() {
                   </div>
                 </div>
               )}
-            </Tabs>
+            </div>
           )}
         </div>
       </main>
