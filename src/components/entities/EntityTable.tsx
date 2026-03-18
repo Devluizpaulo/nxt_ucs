@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react";
@@ -51,7 +52,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Movimentação</TableHead>
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Aposentado</TableHead>
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Bloqueado</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Aquisição</TableHead>
+                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Aquisição (Ret.)</TableHead>
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Ajuste IMEI</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-900 text-right bg-slate-50">Saldo Final</TableHead>
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Status</TableHead>
@@ -85,7 +86,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                     <TableCell className="text-right font-mono text-[10px] text-rose-500">{formatUCS(item.movimentacao)}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] text-slate-400">{formatUCS(item.aposentado)}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] text-rose-400">{formatUCS(item.bloqueado)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-emerald-600">{formatUCS(item.aquisicao)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-rose-500">{formatUCS(item.aquisicao)}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] text-indigo-600">{formatUCS(item.saldoAjustarImei)}</TableCell>
                     <TableCell className="text-right font-mono font-black text-[12px] text-primary bg-slate-50">{formatUCS(item.saldoFinalAtual)} UCS</TableCell>
                     <TableCell className="text-center py-4">

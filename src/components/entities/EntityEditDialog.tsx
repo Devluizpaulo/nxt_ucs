@@ -37,12 +37,15 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const sumField = (table?: RegistroTabela[], field: keyof RegistroTabela) => 
       (table || []).reduce((acc, row) => acc + (Number(row[field]) || 0), 0);
     
-    // Saldo Final Auditado: Soma matemática das operações ativas
-    // Aquisição agora é um incremento positivo
+    // Saldo Final Auditado: 
+    // (+) Originação
+    // (+) Movimentação (já vem negativa do parser)
+    // (+) IMEI (Líquido)
+    // (-) Aquisição (VOLUME A SER RETIRADO conforme regra de auditoria 2018/2019)
     const operationsTotal = 
       sumTable(formData.tabelaOriginacao) + 
       sumTable(formData.tabelaMovimentacao) + 
-      sumTable(formData.tabelaImei) + 
+      sumTable(formData.tabelaImei) - 
       sumTable(formData.tabelaAquisicao);
     
     // Saldo Legado: Valor de Referência (Disponível + Reservado)
@@ -91,12 +94,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
       if (activePasteField === 'tabelaAquisicao') {
         // Formato Simplificado: "Ano - Valor" ou "Ano Valor"
-        // Regex para capturar Ano (4 dígitos) e o Valor numérico
         const match = line.match(/(\d{4})[^\d]+(\d+)/);
         if (match) {
           results.push({
             data: match[1],
-            destino: `Aquisição Consolidada ${match[1]}`,
+            destino: `Dedução de Aquisição ${match[1]}`,
             valor: parseInt(match[2]) || 0
           });
         }
@@ -175,7 +177,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                   <div className="space-y-1">
                     <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Entrada Técnica</h3>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      {activePasteField === 'tabelaAquisicao' ? 'INSIRA ANO E VOLUME (EX: 2019 - 90)' : `COLAGEM: ${activePasteField.replace('tabela', '').toUpperCase()}`}
+                      {activePasteField === 'tabelaAquisicao' ? 'VOLUMES A SEREM RETIRADOS (EX: 2019 - 9)' : `COLAGEM: ${activePasteField.replace('tabela', '').toUpperCase()}`}
                     </p>
                   </div>
                 </div>
@@ -189,7 +191,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                   autoFocus
                   value={pasteBuffer}
                   onChange={e => setPasteBuffer(e.target.value)}
-                  placeholder={activePasteField === 'tabelaAquisicao' ? "Exemplo:\n2019 - 9\n2018 - 150\n2018 - 45" : "Cole as colunas do site legado ou Excel aqui..."}
+                  placeholder={activePasteField === 'tabelaAquisicao' ? "Insira no formato: Ano - Valor\n2019 - 9\n2018 - 90" : "Cole as colunas do site legado ou Excel aqui..."}
                   className="w-full h-64 bg-slate-50/50 border-slate-200 text-slate-900 font-mono text-sm p-8 rounded-3xl resize-none shadow-inner"
                 />
               </div>
@@ -197,11 +199,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               <div className="p-10">
                 <div className="bg-slate-50 rounded-[2rem] border border-slate-100 p-8 flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Identificado</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total {activePasteField === 'tabelaAquisicao' ? 'a Deduzir' : 'Identificado'}</p>
                     <div className="flex items-baseline gap-2">
                       <span className={cn(
                         "text-5xl font-black tracking-tighter",
-                        previewRows.reduce((a, r) => a + (r.valor || 0), 0) < 0 ? "text-rose-500" : "text-emerald-500"
+                        activePasteField === 'tabelaAquisicao' ? "text-rose-500" : (previewRows.reduce((a, r) => a + (r.valor || 0), 0) < 0 ? "text-rose-500" : "text-emerald-500")
                       )}>
                         {Math.abs(previewRows.reduce((a, r) => a + (r.valor || 0), 0)).toLocaleString('pt-BR')}
                       </span>
@@ -299,14 +301,15 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             />
 
             <SectionTechnical 
-              title="Aquisição de UCS"
+              title="Aquisições a Deduzir (2018/2019)"
               icon={Database}
+              color="rose"
               onImport={() => setActivePasteField('tabelaAquisicao')}
               data={formData.tabelaAquisicao || []}
               columns={[
-                { label: "Ano Referência", key: "data" },
-                { label: "Descrição Técnica", key: "destino" },
-                { label: "Volume Adquirido", key: "valor", align: "right", variant: "primary" }
+                { label: "Ano de Referência", key: "data" },
+                { label: "Status de Auditoria", key: "destino" },
+                { label: "Volume a Retirar", key: "valor", align: "right", variant: "rose" }
               ]}
             />
 
@@ -355,11 +358,14 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className={cn("w-1.5 h-10 rounded-full", color === "amber" ? "bg-amber-500" : "bg-primary")} />
+          <div className={cn("w-1.5 h-10 rounded-full", 
+            color === "amber" ? "bg-amber-500" : 
+            color === "rose" ? "bg-rose-500" : "bg-primary"
+          )} />
           <div>
             <h3 className="text-[13px] font-black uppercase tracking-widest text-slate-900 leading-none mb-1">{title}</h3>
             <p className="text-[10px] font-bold text-slate-400 uppercase">
-              Consolidado: <span className={cn("font-black", currentTotal < 0 ? "text-rose-500" : "text-emerald-600")}>
+              Consolidado: <span className={cn("font-black", (currentTotal < 0 || color === 'rose') ? "text-rose-500" : "text-emerald-600")}>
                 {Math.abs(currentTotal).toLocaleString('pt-BR')} UCS
               </span>
             </p>
@@ -367,7 +373,7 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
         </div>
 
         <Button onClick={onImport} variant="outline" className="h-11 px-8 rounded-2xl border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-widest gap-2 hover:bg-slate-50 shadow-sm transition-all">
-          <Calculator className="w-4 h-4" /> Colagem via Calculadora
+          <Calculator className="w-4 h-4" /> {color === 'rose' ? 'Ajustar Retirada' : 'Colagem via Calculadora'}
         </Button>
       </div>
 
