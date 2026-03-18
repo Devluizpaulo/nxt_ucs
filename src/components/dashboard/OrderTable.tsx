@@ -200,7 +200,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           <DialogDescription>Detalhamento técnico de rastreabilidade e conferência blockchain.</DialogDescription>
         </DialogHeader>
 
-        {/* CONTEÚDO IMPRIMÍVEL (CERTIFICADO DE RASTREABILIDADE - DESIGN ORIGINAL) */}
+        {/* CONTEÚDO IMPRIMÍVEL (CERTIFICADO DE RASTREABILIDADE) */}
         <div className="printable-certificate hidden print:block">
           <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8 mb-10">
             <div>
@@ -292,30 +292,30 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
         </div>
 
         {/* CABEÇALHO TÉCNICO - TEMA DARK (UI CONSOLE) */}
-        <div className="bg-[#0B0F1A] p-10 shrink-0 text-white relative print:hidden">
-          <div className="flex justify-between items-start mb-12">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
-                  <ShieldCheck className="w-4 h-4 text-white" />
+        <div className="bg-[#0B0F1A] p-6 shrink-0 text-white relative print:hidden">
+          <div className="flex justify-between items-start mb-6">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 bg-primary rounded-lg flex items-center justify-center">
+                  <ShieldCheck className="w-3.5 h-3.5 text-white" />
                 </div>
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">AUDITORIA DE CONFERÊNCIA</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AUDITORIA DE CONFERÊNCIA</p>
               </div>
-              <h1 className="text-[28px] font-black tracking-tight uppercase leading-none">{order.empresa}</h1>
-              <p className="text-xs font-bold text-slate-500 font-mono tracking-widest">{order.cnpj} • PEDIDO #{order.id}</p>
+              <h1 className="text-[24px] font-black tracking-tight uppercase leading-none max-w-2xl">{order.empresa}</h1>
+              <p className="text-[11px] font-bold text-slate-500 font-mono tracking-widest">{order.cnpj} • PEDIDO #{order.id}</p>
             </div>
 
-            <div className="bg-[#161B2E] border border-white/5 rounded-[2rem] p-8 min-w-[340px] shadow-2xl flex flex-col items-end relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 blur-3xl -mr-20 -mt-20"></div>
-               <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 relative z-10">Saldo Final Auditado</p>
-               <div className="flex items-baseline gap-3 relative z-10">
-                  <span className="text-5xl font-black text-white tracking-tighter">{order.quantidade.toLocaleString('pt-BR')}</span>
-                  <span className="text-[11px] font-black text-primary uppercase tracking-widest">UCS</span>
+            <div className="bg-[#161B2E] border border-white/5 rounded-[1.5rem] p-5 min-w-[280px] shadow-2xl flex flex-col items-end relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -mr-16 -mt-16"></div>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 relative z-10">Saldo Final Auditado</p>
+               <div className="flex items-baseline gap-2 relative z-10">
+                  <span className="text-3xl font-black text-white tracking-tighter">{order.quantidade.toLocaleString('pt-BR')}</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">UCS</span>
                </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             <StatBox label="VOLUME TOTAL" value={order.quantidade} />
             <StatBox label="MOVIMENTAÇÃO" value={stats.totalMov} percentage={stats.percentage} isNegative={stats.totalMov < 0} />
             <StatBox label="TAXA APLICADA" value={order.taxa} isCurrency />
@@ -405,12 +405,12 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
 
 function StatBox({ label, value, isNegative, isHighlight, isAccent, isCurrency, isStatus, percentage }: any) {
   return (
-    <div className="bg-[#161B2E] border border-white/5 rounded-2xl p-5 flex flex-col justify-between h-[100px] hover:bg-[#1C2237] transition-all group relative">
+    <div className="bg-[#161B2E] border border-white/5 rounded-xl p-4 flex flex-col justify-between h-[80px] hover:bg-[#1C2237] transition-all group relative">
       <div className="flex justify-between items-start w-full">
-        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">{label}</p>
+        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">{label}</p>
         {percentage !== undefined && (
           <span className={cn(
-            "text-[8px] font-black px-1.5 py-0.5 rounded-md",
+            "text-[7px] font-black px-1.5 py-0.5 rounded-md",
             isNegative ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"
           )}>
             {percentage}%
@@ -418,7 +418,7 @@ function StatBox({ label, value, isNegative, isHighlight, isAccent, isCurrency, 
         )}
       </div>
       <p className={cn(
-        "text-[18px] font-black font-mono leading-none tracking-tight truncate",
+        "text-[15px] font-black font-mono leading-none tracking-tight truncate",
         isNegative ? "text-rose-500" : isHighlight ? "text-emerald-400" : isAccent ? "text-primary" : "text-white"
       )}>
         {isCurrency ? (
