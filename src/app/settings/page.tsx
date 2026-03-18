@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -10,7 +11,6 @@ import {
   Key, 
   Loader2, 
   ShieldCheck,
-  Search,
   Trash2,
   UserPlus
 } from "lucide-react";
@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
@@ -57,12 +57,14 @@ export default function SettingsPage() {
     if (!firestore) return;
     const batch = writeBatch(firestore);
     const mockUsers: AppUser[] = [
-      { id: "U-001", nome: "Admin LedgerTrust", email: "admin@bmv.global", role: "admin", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
-      { id: "U-002", nome: "Auditor de UCS", email: "auditor@bmv.global", role: "auditor", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() }
+      { id: "U-001", nome: "ADMIN LEDGERTRUST", email: "admin@bmv.global", role: "admin", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
+      { id: "U-002", nome: "AUDITOR DE UCS", email: "auditor@bmv.global", role: "auditor", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
+      // Incluir o usuário atual caso não esteja na lista para teste
+      ...(user?.email ? [{ id: user.uid, nome: user.email.split('@')[0].toUpperCase(), email: user.email, role: 'auditor' as const, status: 'ativo' as const, ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() }] : [])
     ];
     mockUsers.forEach(u => batch.set(doc(firestore, "users", u.id), u));
     await batch.commit();
-    toast({ title: "Usuários de teste gerados" });
+    toast({ title: "Usuários de teste gerados com sucesso" });
   };
 
   if (isUserLoading || !user) {
@@ -73,7 +75,7 @@ export default function SettingsPage() {
     );
   }
 
-  const userInitial = user.email?.substring(0, 1).toUpperCase() || "A";
+  const userInitial = user.email?.substring(0, 2).toUpperCase() || "LU";
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -94,7 +96,7 @@ export default function SettingsPage() {
               <p className="text-sm font-bold text-slate-900 leading-none">{user.email}</p>
             </div>
             <div className="w-12 h-12 bg-[#734DCC] rounded-full flex items-center justify-center text-white font-bold text-base shadow-lg shadow-indigo-100 uppercase">
-              {user.email?.substring(0,2)}
+              {userInitial}
             </div>
           </div>
         </header>
@@ -131,7 +133,7 @@ export default function SettingsPage() {
 
                     <div className="flex items-center gap-8 mb-12">
                       <div className="w-24 h-24 bg-slate-100 rounded-[2rem] flex items-center justify-center text-slate-300 text-4xl font-black">
-                        {userInitial}
+                        {userInitial[0]}
                       </div>
                       <div className="space-y-1">
                         <h3 className="text-xl font-black text-slate-900">Auditor Responsável</h3>
@@ -145,7 +147,7 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</Label>
-                        <Input defaultValue="Auditor Master" className="h-14 bg-slate-50/50 border-slate-100 rounded-2xl px-6 font-bold text-slate-900" />
+                        <Input defaultValue={user.email?.split('@')[0].toUpperCase()} className="h-14 bg-slate-50/50 border-slate-100 rounded-2xl px-6 font-bold text-slate-900" />
                       </div>
                       <div className="space-y-3">
                         <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Cargo / Função</Label>
@@ -182,7 +184,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white">
+                  <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white min-h-[400px]">
                     <Table>
                       <TableHeader className="bg-slate-50/50">
                         <TableRow className="border-b border-slate-100 h-16">
@@ -195,41 +197,49 @@ export default function SettingsPage() {
                       <TableBody>
                         {isUsersLoading ? (
                           <TableRow>
-                            <TableCell colSpan={4} className="h-40 text-center">
-                              <Loader2 className="w-8 h-8 text-[#734DCC] animate-spin mx-auto" />
+                            <TableCell colSpan={4} className="h-60 text-center">
+                              <div className="flex flex-col items-center gap-4">
+                                <Loader2 className="w-10 h-10 text-[#734DCC] animate-spin" />
+                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Sincronizando usuários...</span>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ) : !appUsers || appUsers.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4} className="h-40 text-center text-slate-400 font-bold uppercase text-[12px]">Nenhum auditor cadastrado</TableCell>
+                            <TableCell colSpan={4} className="h-60 text-center">
+                              <div className="flex flex-col items-center gap-4 opacity-30">
+                                <Users className="w-12 h-12 text-slate-300" />
+                                <span className="text-[12px] font-black uppercase text-slate-400 tracking-widest">Nenhum auditor cadastrado</span>
+                              </div>
+                            </TableCell>
                           </TableRow>
                         ) : (
                           appUsers.map((item) => (
-                            <TableRow key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all h-20">
+                            <TableRow key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all h-24">
                               <TableCell className="pl-10">
                                 <div className="flex items-center gap-4">
-                                  <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs">
-                                    {item.nome.substring(0,1)}
+                                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black text-sm">
+                                    {item.nome ? item.nome.substring(0,1) : "U"}
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="text-[13px] font-black text-slate-900 uppercase">{item.nome}</span>
+                                    <span className="text-[13px] font-black text-slate-900 uppercase tracking-tight">{item.nome || "AUDITOR"}</span>
                                     <span className="text-[11px] text-slate-400 font-medium">{item.email}</span>
                                   </div>
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] uppercase px-2">
+                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] uppercase px-2 py-0.5">
                                   {item.role}
                                 </Badge>
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <div className={cn("w-2 h-2 rounded-full", item.status === 'ativo' ? 'bg-emerald-500' : 'bg-slate-300')} />
-                                  <span className="text-[11px] font-black text-slate-600 uppercase">{item.status}</span>
+                                  <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">{item.status}</span>
                                 </div>
                               </TableCell>
                               <TableCell className="text-right pr-10">
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(item.id)} className="text-slate-200 hover:text-rose-500 transition-colors">
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(item.id)} className="text-slate-200 hover:text-rose-500 transition-colors h-10 w-10">
                                   <Trash2 className="w-5 h-5" />
                                 </Button>
                               </TableCell>

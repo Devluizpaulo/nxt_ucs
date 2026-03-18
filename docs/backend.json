@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Pedido": {
@@ -43,6 +44,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "nome", "documento", "status"]
+    },
+    "AppUser": {
+      "title": "Usuário do Sistema",
+      "type": "object",
+      "description": "Perfil de auditor ou administrador do ecossistema LedgerTrust",
+      "properties": {
+        "id": { "type": "string" },
+        "nome": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "auditor", "viewer"] },
+        "status": { "type": "string", "enum": ["ativo", "suspenso", "pendente"] },
+        "ultimoAcesso": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "nome", "email", "role", "status"]
     }
   },
   "auth": {
@@ -53,20 +69,6 @@
       "schema": "Pedido",
       "description": "Coleção de pedidos de crédito"
     },
-    "/pedidos/{pedidoId}/movimentos/{movId}": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "tipo": { "type": "string" },
-          "origem": { "type": "string" },
-          "destino": { "type": "string" },
-          "quantidade": { "type": "number" },
-          "validado": { "type": "boolean" }
-        }
-      },
-      "description": "Rastreabilidade de movimentos do pedido"
-    },
     "/produtores/{produtorId}": {
       "schema": "EntidadeSaldo",
       "description": "Saldos de produtores rurais"
@@ -74,6 +76,10 @@
     "/associacoes/{associacaoId}": {
       "schema": "EntidadeSaldo",
       "description": "Saldos de associações"
+    },
+    "/users/{userId}": {
+      "schema": "AppUser",
+      "description": "Dados de perfil e permissões dos usuários"
     }
   }
 }

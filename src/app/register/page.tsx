@@ -3,8 +3,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ import Link from "next/link";
 export default function RegisterPage() {
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,7 +32,20 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Espelhar usuário no Firestore para a aba de Configurações
+      await setDoc(doc(firestore, "users", user.uid), {
+        id: user.uid,
+        nome: email.split('@')[0].toUpperCase(),
+        email: email,
+        role: 'auditor',
+        status: 'ativo',
+        ultimoAcesso: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      });
+
       toast({ title: "Conta criada!", description: "Seja bem-vindo ao LedgerTrust." });
       router.push("/dashboard");
     } catch (error: any) {
