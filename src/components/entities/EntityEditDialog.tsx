@@ -1,7 +1,8 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { EntidadeSaldo, RegistroTabela } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -118,7 +119,15 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-[1100px] h-[95vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[2.5rem]"
+        onPointerDownOutside={(e) => { if (activePasteField) e.preventDefault(); }}
+        onInteractOutside={(e) => { if (activePasteField) e.preventDefault(); }}
       >
+        {/* Acessibilidade: Título e Descrição para Leitores de Tela */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>Auditoria Executiva: {entity.nome}</DialogTitle>
+          <DialogDescription>Console de conciliação de ativos e rastreabilidade permanente.</DialogDescription>
+        </DialogHeader>
+
         {/* PROCESSADOR DE DADOS (OVERLAY INTERNO) */}
         {activePasteField && (
           <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex items-center justify-center p-12 animate-in fade-in zoom-in duration-200">
@@ -247,6 +256,19 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                 { label: "Crédito", key: "valorCredito", variant: "emerald" },
                 { label: "Débito", key: "valorDebito", variant: "rose" },
                 { label: "Líquido", key: "valor", align: "right", variant: "primary" }
+              ]}
+            />
+
+            <SectionTechnical 
+              title="Aquisição de UCs (Antecipação)"
+              icon={Database}
+              onImport={() => setActivePasteField('tabelaAquisicao')}
+              data={formData.tabelaAquisicao || []}
+              columns={[
+                { label: "Ano Ref.", key: "ano" },
+                { label: "Data Transação", key: "data" },
+                { label: "Descrição", key: "destino" },
+                { label: "Volume Adquirido", key: "valor", align: "right", variant: "primary" }
               ]}
             />
 
