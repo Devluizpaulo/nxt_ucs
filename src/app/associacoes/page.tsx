@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Search, Trash2, ChevronLeft, ChevronRight, Loader2, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -76,10 +76,10 @@ export default function AssociacoesPage() {
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-20 bg-white/50 backdrop-blur-md px-8 flex items-center justify-between border-b border-slate-200 sticky top-0 z-10 shrink-0">
+        <header className="h-20 bg-white px-8 flex items-center justify-between border-b border-slate-200 sticky top-0 z-10 shrink-0">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Search className="w-5 h-5 text-primary" />
+                <ShieldCheck className="w-5 h-5 text-primary" />
              </div>
              <h1 className="text-lg font-black uppercase tracking-[0.2em] text-slate-900">Auditoria BMV</h1>
           </div>

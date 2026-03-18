@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { EntidadeSaldo, RegistroTabela } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShieldCheck, Calculator, Save, X, Printer, Download } from "lucide-react";
+import { ShieldCheck, Calculator, Save, X, Printer, Download, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -147,13 +147,13 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               <h2 className="text-2xl font-black uppercase tracking-tight leading-none">{entity.nome}</h2>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">{entity.documento}</p>
             </div>
-            <div className="bg-primary/10 border border-primary/30 p-5 rounded-3xl text-right min-w-[240px] shadow-lg shadow-primary/5">
+            <div className="bg-primary/15 border border-primary/40 p-5 rounded-3xl text-right min-w-[260px] shadow-lg shadow-primary/10">
               <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Saldo Final Auditado</p>
-              <p className="text-3xl font-black">{stats.finalAuditado.toLocaleString('pt-BR')} <span className="text-xs font-medium opacity-50">UCS</span></p>
+              <p className="text-3xl font-black text-white">{stats.finalAuditado.toLocaleString('pt-BR')} <span className="text-sm font-medium opacity-50">UCS</span></p>
             </div>
           </div>
 
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-6 pt-8 border-t border-white/10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 pt-8 border-t border-white/10">
             <StatItem label="Originação" value={stats.totalOrig} color="white" />
             <StatItem label="Movimentação" value={stats.totalMov} color="rose" />
             <StatItem label="Aposentado" value={stats.totalAposentado} color="white" />
@@ -161,11 +161,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             <StatItem label="Aquisição" value={stats.totalAq} color="rose" />
             <StatItem label="Ajuste IMEI" value={stats.ajusteImei} color="indigo" />
             <StatItem label="Legado" value={stats.legadoTotal} color="amber" />
-            <StatItem label="Válido" value={stats.finalAuditado} color="emerald" />
+            <StatItem label="Integridade" value={stats.finalAuditado} color="emerald" />
           </div>
         </div>
 
-        <ScrollArea className="flex-1 p-8">
+        <ScrollArea className="flex-1 p-8 bg-slate-50/30">
           <div className="space-y-12">
             <TableSection 
               title="Registro de Originação" 
@@ -187,11 +187,15 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </ScrollArea>
 
-        <div className="p-8 border-t bg-slate-50 flex justify-between items-center">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Descartar Alterações</Button>
+        <div className="p-8 border-t bg-white flex justify-between items-center">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400 tracking-widest hover:text-rose-500">Descartar Alterações</Button>
           <div className="flex gap-4">
-            <Button variant="outline" onClick={() => window.print()} className="h-12 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest border-slate-200"><Printer className="w-4 h-4 mr-2" /> Gerar Relatório</Button>
-            <Button onClick={handleSaveFinal} className="h-12 px-12 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-primary shadow-xl shadow-primary/20">Sincronizar no Ledger</Button>
+            <Button variant="outline" onClick={() => window.print()} className="h-12 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest border-slate-200">
+              <Printer className="w-4 h-4 mr-2" /> Gerar Relatório
+            </Button>
+            <Button onClick={handleSaveFinal} className="h-12 px-12 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20">
+              Sincronizar no Ledger
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -208,9 +212,9 @@ function StatItem({ label, value, color }: any) {
     emerald: "text-primary" 
   };
   return (
-    <div className="space-y-1">
-      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</p>
-      <p className={cn("text-base font-black truncate tracking-tight", colors[color])}>{value.toLocaleString('pt-BR')}</p>
+    <div className="space-y-1 bg-white/5 p-3 rounded-2xl border border-white/5">
+      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</p>
+      <p className={cn("text-sm font-black truncate tracking-tight", colors[color])}>{value.toLocaleString('pt-BR')}</p>
     </div>
   );
 }
@@ -231,7 +235,11 @@ function TableSection({ title, data, onImport, columns, onUpdate }: any) {
         <Table>
           <TableHeader className="bg-slate-50/50">
             <TableRow className="border-b border-slate-100">
-              {columns.map((c: any) => <TableHead key={c.label} className={cn("text-[9px] font-black uppercase text-slate-400 h-10 px-6", c.align === 'right' && "text-right")}>{c.label}</TableHead>)}
+              {columns.map((c: any) => (
+                <TableHead key={c.label} className={cn("text-[9px] font-black uppercase text-slate-400 h-10 px-6", c.align === 'right' && "text-right")}>
+                  {c.label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>

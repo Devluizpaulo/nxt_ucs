@@ -5,24 +5,24 @@
 @layer base {
   :root {
     --background: 0 0% 98%;
-    --foreground: 240 10% 10%;
+    --foreground: 258 15% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 10%;
+    --card-foreground: 258 15% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 10%;
-    --primary: 162 100% 35%;
+    --popover-foreground: 258 15% 10%;
+    --primary: 258 55% 55%; /* #734DCC Indigo */
     --primary-foreground: 0 0% 100%;
-    --secondary: 162 20% 96%;
-    --secondary-foreground: 162 100% 20%;
+    --secondary: 258 20% 96%;
+    --secondary-foreground: 258 55% 20%;
     --muted: 240 5% 96%;
     --muted-foreground: 240 5% 45%;
-    --accent: 162 100% 35%;
+    --accent: 213 85% 68%; /* #69A9F0 Blue */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 162 100% 35%;
+    --ring: 258 55% 55%;
     --radius: 1rem;
   }
 }
@@ -42,7 +42,6 @@
     size: A4 portrait;
   }
 
-  /* Esconde tudo o que não é o portal do diálogo */
   body > *:not([data-radix-portal]),
   header, aside, main, 
   .print-hidden, 
@@ -51,7 +50,6 @@
     display: none !important;
   }
 
-  /* Reset total de layout para impressão */
   html, body {
     background: white !important;
     width: 210mm !important;
@@ -63,7 +61,6 @@
     print-color-adjust: exact !important;
   }
 
-  /* Garante que o Portal do Radix seja o container principal */
   [data-radix-portal] {
     position: absolute !important;
     top: 0 !important;
@@ -74,7 +71,6 @@
     overflow: visible !important;
   }
 
-  /* Força o Diálogo a ocupar toda a página sem scroll */
   div[role="dialog"] {
     position: static !important;
     transform: none !important;
@@ -91,7 +87,6 @@
     overflow: hidden !important;
   }
 
-  /* Estilização final do conteúdo do certificado */
   .printable-content {
     display: flex !important;
     flex-direction: column !important;
@@ -99,16 +94,11 @@
     width: 210mm !important;
     height: 297mm !important;
     background: white !important;
-    padding: 10mm 15mm !important; /* Margens reduzidas para caber mais */
+    padding: 10mm 15mm !important;
     margin: 0 auto !important;
     color: black !important;
     overflow: hidden !important;
     position: relative !important;
     box-sizing: border-box !important;
-  }
-
-  .print-no-break {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
   }
 }
