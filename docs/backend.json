@@ -2,10 +2,9 @@
 {
   "entities": {
     "Pedido": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Pedido",
-      "type": "object",
       "description": "Represents a credit order (UCS - Unidade de Crédito de Carbono) with its associated details, audit status, and overall processing status.",
+      "type": "object",
       "properties": {
         "id": { "type": "string" },
         "data": { "type": "string", "format": "date-time" },
@@ -25,10 +24,9 @@
       "required": ["id", "data", "empresa", "cnpj", "quantidade", "valorTotal", "status", "categoria", "createdAt"]
     },
     "Movimento": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Movimento",
-      "type": "object",
       "description": "Represents an individual movement or transaction of credits associated with a specific Pedido.",
+      "type": "object",
       "properties": {
         "id": { "type": "string" },
         "pedidoId": { "type": "string" },
@@ -45,10 +43,9 @@
       "required": ["id", "pedidoId", "hashMovimento", "origem", "destino", "quantidade", "createdAt"]
     },
     "EntidadeSaldo": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "EntidadeSaldo",
-      "type": "object",
       "description": "Represents a producer or association with their UCS balances and audit history.",
+      "type": "object",
       "properties": {
         "id": { "type": "string" },
         "nome": { "type": "string" },
@@ -71,35 +68,21 @@
     "providers": ["password"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/pedidos/{pedidoId}",
-        "definition": {
-          "entityName": "Pedido",
-          "description": "Main collection for credit orders."
-        }
-      },
-      {
-        "path": "/pedidos/{pedidoId}/movimentos/{movimentoId}",
-        "definition": {
-          "entityName": "Movimento",
-          "description": "Subcollection for movements associated with a Pedido."
-        }
-      },
-      {
-        "path": "/produtores/{produtorId}",
-        "definition": {
-          "entityName": "EntidadeSaldo",
-          "description": "Collection for individual producer balances and audit."
-        }
-      },
-      {
-        "path": "/associacoes/{associacaoId}",
-        "definition": {
-          "entityName": "EntidadeSaldo",
-          "description": "Collection for association balances and audit."
-        }
-      }
-    ]
+    "/pedidos/{pedidoId}": {
+      "schema": "#/backend/entities/Pedido",
+      "description": "Main collection for credit orders."
+    },
+    "/pedidos/{pedidoId}/movimentos/{movimentoId}": {
+      "schema": "#/backend/entities/Movimento",
+      "description": "Subcollection for movements associated with a Pedido."
+    },
+    "/produtores/{produtorId}": {
+      "schema": "#/backend/entities/EntidadeSaldo",
+      "description": "Collection for individual producer balances."
+    },
+    "/associacoes/{associacaoId}": {
+      "schema": "#/backend/entities/EntidadeSaldo",
+      "description": "Collection for association balances."
+    }
   }
 }

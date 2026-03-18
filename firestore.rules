@@ -6,27 +6,24 @@ service cloud.firestore {
     /**
      * CORE PHILOSOPHY
      * Para este protótipo de auditoria, permitimos que qualquer usuário autenticado
-     * (incluindo logins anônimos automáticos) visualize e gerencie os pedidos, movimentos,
-     * produtores e associações.
+     * visualize e gerencie os pedidos, movimentos, produtores e associações.
+     * Utilizamos curingas recursivos {allPaths=**} para garantir que a permissão
+     * de 'list' (listagem) seja aplicada corretamente a nível de coleção.
      */
 
     function isSignedIn() {
       return request.auth != null;
     }
 
-    match /pedidos/{pedidoId} {
-      allow read, write: if isSignedIn();
-      
-      match /movimentos/{movimentoId} {
-        allow read, write: if isSignedIn();
-      }
-    }
-    
-    match /produtores/{produtorId} {
+    match /pedidos/{allPaths=**} {
       allow read, write: if isSignedIn();
     }
     
-    match /associacoes/{associacaoId} {
+    match /produtores/{allPaths=**} {
+      allow read, write: if isSignedIn();
+    }
+    
+    match /associacoes/{allPaths=**} {
       allow read, write: if isSignedIn();
     }
 
