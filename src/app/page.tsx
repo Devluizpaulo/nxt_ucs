@@ -1,9 +1,11 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, useUser } from "@/firebase";
+import { useAuth, useUser, useFirestore } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +16,7 @@ import Link from "next/link";
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +34,20 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const loggedUser = userCredential.user;
+
+      // Sincronizar usuário logado com Firestore para aparecer na listagem
+      await setDoc(doc(firestore, "users", loggedUser.uid), {
+        id: loggedUser.uid,
+        email: loggedUser.email,
+        nome: loggedUser.email?.split('@')[0].toUpperCase() || "AUDITOR",
+        role: 'auditor',
+        status: 'ativo',
+        ultimoAcesso: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
       toast({ title: "Bem-vindo!", description: "Acesso autorizado ao LedgerTrust." });
       router.push("/dashboard");
     } catch (error: any) {
@@ -55,14 +71,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-white to-blue-50 relative overflow-hidden">
-      {/* Dark Mode Toggle Placeholder */}
       <button className="absolute top-8 right-8 w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors">
         <Moon className="w-5 h-5" />
       </button>
 
-      {/* Login Card */}
       <div className="w-full max-w-[420px] bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-12 border border-slate-100 flex flex-col items-center">
-        {/* Logo */}
         <div className="mb-4">
           <h1 className="text-[52px] font-black text-slate-900 leading-none tracking-tighter">bmv</h1>
         </div>
@@ -120,7 +133,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Decorative background blur */}
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
     </div>

@@ -12,7 +12,8 @@ import {
   Loader2, 
   Trash2,
   UserPlus,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw
 } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, doc, deleteDoc, writeBatch } from "firebase/firestore";
+import { collection, query, orderBy, doc, deleteDoc, writeBatch, setDoc } from "firebase/firestore";
 import { AppUser } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,25 @@ export default function SettingsPage() {
     }
   }, [user, isUserLoading, router]);
 
+  // Sincronizar usuário atual automaticamente se acessar configurações
+  useEffect(() => {
+    if (!firestore || !user || isUserLoading) return;
+    
+    const syncUser = async () => {
+      const userRef = doc(firestore, "users", user.uid);
+      await setDoc(userRef, {
+        id: user.uid,
+        nome: user.email?.split('@')[0].toUpperCase() || "AUDITOR",
+        email: user.email,
+        role: 'auditor',
+        status: 'ativo',
+        ultimoAcesso: new Date().toISOString(),
+      }, { merge: true });
+    };
+    
+    syncUser();
+  }, [firestore, user, isUserLoading]);
+
   const usersQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, "users"), orderBy("nome", "asc"));
@@ -54,16 +74,18 @@ export default function SettingsPage() {
   };
 
   const handleSeedUsers = async () => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     const batch = writeBatch(firestore);
+    
     const mockUsers: AppUser[] = [
       { id: "U-001", nome: "ADMIN LEDGERTRUST", email: "admin@bmv.global", role: "admin", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
       { id: "U-002", nome: "AUDITOR DE UCS", email: "auditor@bmv.global", role: "auditor", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
-      ...(user?.email ? [{ id: user.uid, nome: user.email.split('@')[0].toUpperCase(), email: user.email, role: 'auditor' as const, status: 'ativo' as const, ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() }] : [])
+      { id: user.uid, nome: user.email?.split('@')[0].toUpperCase() || "AUDITOR ATUAL", email: user.email || "", role: 'auditor', status: 'ativo', ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() }
     ];
+    
     mockUsers.forEach(u => batch.set(doc(firestore, "users", u.id), u));
     await batch.commit();
-    toast({ title: "Usuários de teste gerados com sucesso" });
+    toast({ title: "Usuários sincronizados com sucesso" });
   };
 
   if (isUserLoading || !user) {
@@ -164,11 +186,9 @@ export default function SettingsPage() {
                       <p className="text-sm font-medium text-slate-400">Controle de acesso e permissões administrativas da rede.</p>
                     </div>
                     <div className="flex gap-4">
-                      {(!appUsers || appUsers.length === 0) && (
-                        <Button onClick={handleSeedUsers} variant="outline" className="h-16 px-10 rounded-2xl text-[12px] font-black uppercase border-dashed border-slate-300">
-                          Gerar Usuários Teste
-                        </Button>
-                      )}
+                      <Button onClick={handleSeedUsers} variant="outline" className="h-16 px-10 rounded-2xl text-[12px] font-black uppercase border-dashed border-slate-300 flex gap-3">
+                        <RefreshCw className="w-4 h-4" /> Sincronizar Usuários
+                      </Button>
                       <Button className="h-16 px-12 rounded-2xl bg-[#734DCC] text-white font-black uppercase text-[12px] tracking-[0.2em] shadow-2xl shadow-indigo-100 flex gap-3 transition-all active:scale-95">
                         <UserPlus className="w-6 h-6" /> Novo Auditor
                       </Button>
@@ -200,7 +220,8 @@ export default function SettingsPage() {
                             <TableCell colSpan={4} className="h-80 text-center">
                               <div className="flex flex-col items-center gap-6 opacity-30">
                                 <Users className="w-16 h-16 text-slate-300" />
-                                <span className="text-[14px] font-black uppercase text-slate-400 tracking-[0.2em]">Nenhum auditor cadastrado</span>
+                                <span className="text-[14px] font-black uppercase text-slate-400 tracking-[0.2em]">Nenhum auditor encontrado no Firestore</span>
+                                <Button onClick={handleSeedUsers} variant="link" className="text-[#734DCC] font-bold">Clique para Sincronizar Agora</Button>
                               </div>
                             </TableCell>
                           </TableRow>
