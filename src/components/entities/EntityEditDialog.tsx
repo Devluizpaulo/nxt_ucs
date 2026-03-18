@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -60,12 +59,12 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const mov = sumVal(formData.tabelaMovimentacao);
     const aq = (formData.tabelaAquisicao || []).reduce((acc, curr) => acc + (curr.valor || 0), 0);
     
-    // IMEI Balance: Debits - Credits (Pending status)
+    // IMEI Balance: Debits - Credits (Pending status) - Neutral to final balance
     const imeiCredits = sumCredits(formData.tabelaImei);
     const imeiDebits = sumDebits(formData.tabelaImei);
     const imeiPending = imeiDebits - imeiCredits;
 
-    // Legado: Disponivel + Reservado
+    // Legado: Disponivel + Reservado (Reference only)
     const legDisp = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.disponivel || 0), 0);
     const legRes = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.reservado || 0), 0);
     const legadoTotal = legDisp + legRes;
@@ -73,8 +72,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const aposentado = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.aposentado || 0), 0);
     const bloqueado = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.bloqueado || 0), 0);
 
-    // EQUAÇÃO: Saldo = Originação + Movimentação - Aquisição
-    const final = orig + mov - aq;
+    // EQUAÇÃO DE AUDITORIA ATUALIZADA:
+    // Saldo Disponível = Originação + Movimentação - Aquisição - Aposentado - Bloqueado
+    const final = orig + mov - aq - aposentado - bloqueado;
     
     const movPercentage = orig !== 0 ? ((Math.abs(mov) / Math.abs(orig)) * 100).toFixed(1) : "0.0";
 
@@ -277,7 +277,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-5">
             <StatBox label="ORIGINAÇÃO" value={totals.orig} />
             <StatBox label="MOVIMENTAÇÃO" value={totals.mov} isNegative percentage={totals.movPercentage} />
-            <StatBox label="APOSENTADO" value={totals.aposentado} />
+            <StatBox label="APOSENTADO" value={totals.aposentado} isNegative />
             <StatBox label="BLOQUEADO" value={totals.bloqueado} isNegative />
             <StatBox label="AQUISIÇÃO" value={totals.aq} isNegative />
             <StatBox label="AJUSTE IMEI" value={totals.imeiPending} isPending />
