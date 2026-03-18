@@ -3,7 +3,7 @@
   "entities": {
     "Pedido": {
       "title": "Pedido",
-      "description": "Represents a credit order (UCS - Unidade de Crédito de Carbono) with its associated details, audit status, and overall processing status.",
+      "description": "Representa um pedido de crédito (UCS) com detalhes de auditoria e rastreabilidade blockchain.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -25,7 +25,7 @@
     },
     "Movimento": {
       "title": "Movimento",
-      "description": "Represents an individual movement or transaction of credits associated with a specific Pedido.",
+      "description": "Registro individual de movimentação de ativos associado a um pedido.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -44,7 +44,7 @@
     },
     "EntidadeSaldo": {
       "title": "EntidadeSaldo",
-      "description": "Represents a producer or association with their UCS balances and audit history.",
+      "description": "Representa um produtor ou associação com seus saldos de UCS e histórico de auditoria técnica.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -70,19 +70,19 @@
   "firestore": {
     "/pedidos/{pedidoId}": {
       "schema": "#/backend/entities/Pedido",
-      "description": "Main collection for credit orders."
+      "description": "Coleção principal de pedidos de crédito."
     },
     "/pedidos/{pedidoId}/movimentos/{movimentoId}": {
       "schema": "#/backend/entities/Movimento",
-      "description": "Subcollection for movements associated with a Pedido."
+      "description": "Subcoleção de movimentos de um pedido."
     },
     "/produtores/{produtorId}": {
       "schema": "#/backend/entities/EntidadeSaldo",
-      "description": "Collection for individual producer balances."
+      "description": "Saldos auditados de produtores individuais."
     },
     "/associacoes/{associacaoId}": {
       "schema": "#/backend/entities/EntidadeSaldo",
-      "description": "Collection for association balances."
+      "description": "Saldos auditados de associações."
     }
   }
 }
