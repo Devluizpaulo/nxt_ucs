@@ -109,8 +109,8 @@ export default function SettingsPage() {
               <Settings className="w-6 h-6 text-[#734DCC]" />
             </div>
             <div>
-              <h1 className="text-[24px] font-black uppercase tracking-[0.1em] text-slate-900 leading-none">Configurações</h1>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão de Governança LedgerTrust</p>
+              <h1 className="text-[32px] font-black uppercase tracking-tight text-slate-900 leading-none">Configurações</h1>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mt-1">Gestão de Governança LedgerTrust</p>
             </div>
           </div>
           
@@ -146,13 +146,13 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="flex items-center gap-10 mb-14">
-                      <div className="w-28 h-28 bg-slate-50 border-2 border-slate-100 rounded-[2.5rem] flex items-center justify-center text-slate-300 text-5xl font-black">
+                      <div className="w-28 h-28 bg-slate-50 border-2 border-slate-100 rounded-[2.5rem] flex items-center justify-center text-slate-300 text-5xl font-black uppercase">
                         {userInitial[0]}
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Auditor Responsável</h3>
+                        <h3 className="text-[24px] font-black text-slate-900 uppercase tracking-tight">Auditor Responsável</h3>
                         <p className="text-base text-slate-400 font-bold">{user.email}</p>
-                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-none font-black text-[11px] uppercase px-4 py-1.5 mt-3 rounded-full">
+                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase px-4 py-1.5 mt-3 rounded-full">
                           Acesso Autorizado ✓
                         </Badge>
                       </div>
@@ -160,16 +160,16 @@ export default function SettingsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                       <div className="space-y-3.5">
-                        <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Nome Completo</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Nome Completo</Label>
                         <Input defaultValue={user.email?.split('@')[0].toUpperCase()} className="h-16 bg-slate-50/50 border-slate-100 rounded-2xl px-8 font-black text-[14px] text-slate-900 uppercase" />
                       </div>
                       <div className="space-y-3.5">
-                        <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Cargo / Função</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Cargo / Função</Label>
                         <Input defaultValue="Auditor de UCS" className="h-16 bg-slate-50/50 border-slate-100 rounded-2xl px-8 font-black text-[14px] text-slate-900 uppercase" />
                       </div>
                       <div className="space-y-3.5 col-span-1">
-                        <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">E-mail Corporativo</Label>
-                        <Input value={user.email || ""} disabled className="h-16 bg-slate-50 border-none rounded-2xl px-8 font-bold text-slate-400 cursor-not-allowed" />
+                        <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">E-mail Corporativo</Label>
+                        <Input value={user.email || ""} disabled className="h-16 bg-slate-50 border-none rounded-2xl px-8 font-bold text-slate-300 cursor-not-allowed" />
                       </div>
                       <div className="flex items-end">
                         <Button className="h-16 w-full rounded-2xl bg-[#734DCC] hover:bg-[#633fb9] text-white font-black uppercase text-[12px] tracking-[0.2em] shadow-2xl shadow-indigo-100 transition-all active:scale-95">
@@ -231,7 +231,7 @@ export default function SettingsPage() {
                             <TableRow key={item.id} className="border-b border-slate-50 hover:bg-slate-50/80 transition-all h-28">
                               <TableCell className="pl-12">
                                 <div className="flex items-center gap-5">
-                                  <div className="w-14 h-14 bg-slate-100 rounded-[1.25rem] flex items-center justify-center text-slate-400 font-black text-base">
+                                  <div className="w-14 h-14 bg-slate-100 rounded-[1.25rem] flex items-center justify-center text-slate-400 font-black text-base uppercase">
                                     {item.nome ? item.nome.substring(0,1) : "U"}
                                   </div>
                                   <div className="flex flex-col gap-1">
