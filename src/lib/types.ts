@@ -36,6 +36,24 @@ export interface Pedido {
   createdAt: string;
 }
 
+export interface RegistroTabela {
+  dist?: string;
+  data: string;
+  destino?: string;
+  valor: number;
+  valorCredito?: number;
+  valorDebito?: number;
+  situacao?: string;
+  ano?: string;
+  plataforma?: string;
+  nome?: string;
+  documento?: string;
+  disponivel?: number;
+  reservado?: number;
+  bloqueado?: number;
+  aposentado?: number;
+}
+
 export interface EntidadeSaldo {
   id: string;
   nome: string; // Usuário
@@ -54,6 +72,13 @@ export interface EntidadeSaldo {
   // Seção: Saldo Legado
   saldoLegadoTotal: number;
   
+  // Tabelas de Histórico
+  tabelaOriginacao?: RegistroTabela[];
+  tabelaMovimentacao?: RegistroTabela[];
+  tabelaImei?: RegistroTabela[];
+  tabelaAquisicao?: RegistroTabela[];
+  tabelaLegado?: RegistroTabela[];
+
   // Informações Adicionais
   cprs: string;
   bmtca: string;
