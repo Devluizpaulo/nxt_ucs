@@ -2,6 +2,7 @@ export type OrderStatus = 'pendente' | 'ok' | 'erro';
 export type MovementType = 'gov' | 'cliente' | 'outro';
 export type OrderCategory = 'selo' | 'Saas_Tesouro_Verde' | 'Saas_BMV';
 export type EntityStatus = 'disponivel' | 'bloqueado' | 'inapto';
+export type AuditoriaStatus = 'Pendente' | 'Não Pago' | 'Pago';
 
 export interface Movimento {
   id: string;
@@ -52,6 +53,8 @@ export interface RegistroTabela {
   reservado?: number;
   bloqueado?: number;
   aposentado?: number;
+  statusAuditoria?: AuditoriaStatus;
+  linkComprovante?: string;
 }
 
 export interface EntidadeSaldo {

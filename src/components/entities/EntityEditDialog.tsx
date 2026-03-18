@@ -1,15 +1,16 @@
-
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { EntidadeSaldo, RegistroTabela } from "@/lib/types";
+import { EntidadeSaldo, RegistroTabela, AuditoriaStatus } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, ShieldCheck, Calculator, History, TrendingUp, ArrowRightLeft, Database, X, Printer } from "lucide-react";
+import { Save, ShieldCheck, Calculator, History, TrendingUp, ArrowRightLeft, Database, X, Printer, Link as LinkIcon, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface EntityEditDialogProps {
   entity: EntidadeSaldo | null;
@@ -30,14 +31,30 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [entity]);
 
-  useEffect(() => {
+  // Cálculos de Auditoria e Consolidados
+  const { percentPago, totalMovimentacao, totalOriginacao, totalAquisicao, saldoFinal } = useMemo(() => {
     const sumTable = (table?: RegistroTabela[]) => (table || []).reduce((acc, row) => acc + (row.valor || 0), 0);
+    
+    const movTable = formData.tabelaMovimentacao || [];
+    const totalMov = sumTable(movTable);
+    const pagas = movTable.filter(m => m.statusAuditoria === 'Pago').length;
+    const perc = movTable.length > 0 ? (pagas / movTable.length) * 100 : 0;
+
+    const totalOrig = sumTable(formData.tabelaOriginacao);
+    const totalAq = sumTable(formData.tabelaAquisicao);
+    
+    return {
+      percentPago: perc,
+      totalMovimentacao: totalMov,
+      totalOriginacao: totalOrig,
+      totalAquisicao: totalAq,
+      saldoFinal: totalOrig + totalMov - totalAq
+    };
+  }, [formData.tabelaMovimentacao, formData.tabelaOriginacao, formData.tabelaAquisicao]);
+
+  useEffect(() => {
     const sumField = (table?: RegistroTabela[], field: keyof RegistroTabela) => 
       (table || []).reduce((acc, row) => acc + (Number(row[field]) || 0), 0);
-    
-    const totalOriginacao = sumTable(formData.tabelaOriginacao);
-    const totalMovimentacao = sumTable(formData.tabelaMovimentacao);
-    const totalAquisicao = sumTable(formData.tabelaAquisicao);
     
     const totalCreditoImei = sumField(formData.tabelaImei, 'valorCredito');
     const totalDebitoImei = sumField(formData.tabelaImei, 'valorDebito');
@@ -47,8 +64,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const totalAposentado = sumField(formData.tabelaLegado, 'aposentado');
     const totalBloqueado = sumField(formData.tabelaLegado, 'bloqueado');
     
-    const saldoFinal = totalOriginacao + totalMovimentacao - totalAquisicao;
-
     setFormData(prev => ({ 
       ...prev, 
       originacao: totalOriginacao,
@@ -60,13 +75,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       saldoLegadoTotal: legadoTotal,
       saldoFinalAtual: saldoFinal
     }));
-  }, [
-    formData.tabelaOriginacao, 
-    formData.tabelaMovimentacao, 
-    formData.tabelaImei, 
-    formData.tabelaAquisicao, 
-    formData.tabelaLegado
-  ]);
+  }, [totalOriginacao, totalMovimentacao, totalAquisicao, saldoFinal, formData.tabelaImei, formData.tabelaLegado]);
 
   useEffect(() => {
     if (!pasteBuffer.trim()) {
@@ -134,6 +143,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           data: parts[1], 
           destino: parts[2], 
           situacao: "Processado",
+          statusAuditoria: 'Pendente',
           valor: isNegative ? -Math.abs(valor) : valor,
         });
       }
@@ -144,6 +154,14 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
   if (!entity) return null;
 
+  const handleUpdateRow = (field: keyof EntidadeSaldo, index: number, updates: Partial<RegistroTabela>) => {
+    setFormData(prev => {
+      const currentTable = [...(prev[field] as any[])];
+      currentTable[index] = { ...currentTable[index], ...updates };
+      return { ...prev, [field]: currentTable };
+    });
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -153,7 +171,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-[1400px] h-[95vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[1.5rem]"
+        className="max-w-[1450px] h-[95vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[1.5rem]"
         onPointerDownOutside={(e) => { if (activePasteField) e.preventDefault(); }}
         onInteractOutside={(e) => { if (activePasteField) e.preventDefault(); }}
       >
@@ -199,21 +217,24 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
 
           <div className="space-y-8">
-            <div className="flex justify-between items-end border-b border-slate-800/50 pb-4">
-              <h2 className="text-4xl font-black leading-none tracking-tighter uppercase">
+            <div className="flex justify-between items-start border-b border-slate-800/50 pb-4">
+              <h2 className="text-3xl font-black leading-none tracking-tighter uppercase max-w-[70%]">
                 {entity.nome}
               </h2>
-              <div className="text-right flex items-center gap-4">
-                <div className="flex flex-col items-end">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">DOCUMENTO</span>
-                  <span className="text-base font-bold tracking-tight text-slate-200 font-mono">{entity.documento}</span>
-                </div>
+              <div className="text-right flex flex-col items-end gap-1">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">DOCUMENTO</span>
+                <span className="text-sm font-bold tracking-tight text-slate-200 font-mono">{entity.documento}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6 items-center">
               <StatColumn label="ORIGINAÇÃO" value={formatUCS(formData.originacao)} color="slate" />
-              <StatColumn label="MOVIMENTAÇÃO" value={formatUCS(formData.movimentacao)} color="rose" />
+              <StatColumn 
+                label="MOVIMENTAÇÃO" 
+                value={formatUCS(formData.movimentacao)} 
+                color="rose" 
+                subValue={`${percentPago.toFixed(0)}% PAGO`}
+              />
               <StatColumn label="APOSENTADO" value={formatUCS(formData.aposentado)} color="slate" />
               <StatColumn label="BLOQUEADO" value={formatUCS(formData.bloqueado)} color="rose" />
               <StatColumn label="AQUISIÇÃO" value={formatUCS(formData.aquisicao)} color="rose" />
@@ -243,10 +264,13 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               icon={ArrowRightLeft}
               onImport={() => setActivePasteField('tabelaMovimentacao')}
               data={formData.tabelaMovimentacao || []}
+              onUpdateRow={(idx, updates) => handleUpdateRow('tabelaMovimentacao', idx, updates)}
               columns={[
                 { label: "Ref. Dist.", key: "dist" },
                 { label: "Data Operação", key: "data" },
                 { label: "Destinatário", key: "destino" },
+                { label: "Status", key: "statusAuditoria", type: "status" },
+                { label: "Comprovante", key: "linkComprovante", type: "link" },
                 { label: "Débito", key: "valor", align: "right", variant: "rose" }
               ]}
             />
@@ -298,7 +322,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   );
 }
 
-function StatColumn({ label, value, color, highlight }: { label: string, value: string, color: string, highlight?: boolean }) {
+function StatColumn({ label, value, color, highlight, subValue }: { label: string, value: string, color: string, highlight?: boolean, subValue?: string }) {
   const colorClasses = {
     slate: "text-slate-400",
     rose: "text-rose-500",
@@ -320,22 +344,28 @@ function StatColumn({ label, value, color, highlight }: { label: string, value: 
       </p>
       <div className={cn(
         "flex items-baseline gap-1 font-black tracking-tighter",
-        highlight ? "text-4xl" : "text-xl",
+        highlight ? "text-3xl" : "text-xl",
         colorClasses[color as keyof typeof colorClasses]
       )}>
         {value}
         <span className={cn(
           "uppercase tracking-tighter",
-          highlight ? "text-sm opacity-60" : "text-[8px] opacity-40"
+          highlight ? "text-xs opacity-60" : "text-[8px] opacity-40"
         )}>
           UCS
         </span>
       </div>
+      {subValue && (
+        <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+          {subValue.includes('PAGO') ? <CheckCircle2 className="w-2.5 h-2.5 text-primary" /> : <Clock className="w-2.5 h-2.5" />}
+          {subValue}
+        </span>
+      )}
     </div>
   );
 }
 
-function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data, columns }: any) {
+function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data, columns, onUpdateRow }: any) {
   const currentTotal = (data || []).reduce((acc: number, r: any) => acc + (r.valor || 0), 0);
 
   return (
@@ -387,7 +417,39 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
                       col.variant === 'rose' && "text-rose-500",
                       col.variant === 'amber' && "text-amber-600 font-black"
                     )}>
-                      {typeof row[col.key] === 'number' ? Math.abs(row[col.key]).toLocaleString('pt-BR') : row[col.key]}
+                      {col.type === 'status' ? (
+                        <Select 
+                          value={row[col.key] || 'Pendente'} 
+                          onValueChange={(v) => onUpdateRow?.(i, { [col.key]: v as AuditoriaStatus })}
+                        >
+                          <SelectTrigger className="h-7 w-28 text-[9px] font-bold uppercase tracking-widest rounded-lg border-slate-200">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pendente" className="text-[9px] font-bold uppercase">Pendente</SelectItem>
+                            <SelectItem value="Pago" className="text-[9px] font-bold uppercase text-emerald-600">Pago</SelectItem>
+                            <SelectItem value="Não Pago" className="text-[9px] font-bold uppercase text-rose-500">Não Pago</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : col.type === 'link' ? (
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            value={row[col.key] || ''} 
+                            placeholder="Link do comprovante..."
+                            onChange={(e) => onUpdateRow?.(i, { [col.key]: e.target.value })}
+                            className="h-7 w-40 text-[9px] font-mono border-slate-200 rounded-lg"
+                          />
+                          {row[col.key] && (
+                            <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+                              <LinkIcon className="w-3.5 h-3.5" />
+                            </a>
+                          ) || (
+                            <AlertCircle className="w-3.5 h-3.5 text-slate-300" />
+                          )}
+                        </div>
+                      ) : (
+                        typeof row[col.key] === 'number' ? Math.abs(row[col.key]).toLocaleString('pt-BR') : row[col.key]
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
