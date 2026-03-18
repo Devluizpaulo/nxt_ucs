@@ -46,12 +46,16 @@
     visibility: hidden;
   }
 
+  /* Classes de Impressão */
   .printable-certificate,
-  .printable-certificate * {
+  .printable-certificate *,
+  .printable-audit-report,
+  .printable-audit-report * {
     visibility: visible;
   }
 
-  .printable-certificate {
+  .printable-certificate,
+  .printable-audit-report {
     position: absolute;
     left: 0;
     top: 0;
@@ -66,8 +70,7 @@
     print-color-adjust: exact !important;
   }
 
-  /* Reset layout for print */
-  header, aside, main, button, [role="dialog"] > button {
+  header, aside, main, button, [role="dialog"] > button, .print-hidden {
     display: none !important;
   }
 
@@ -83,9 +86,5 @@
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
-  }
-
-  .print-hidden {
-    display: none !important;
   }
 }

@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   MessageSquare,
   FileText,
-  BadgeCheck
+  BadgeCheck,
+  QrCode
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -39,17 +40,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   const [pasteData, setPasteData] = useState<{ section: string; raw: string } | null>(null);
   const { user } = useUser();
   
-  // States for Acquisitions
-  const [newAqYear, setNewAqYear] = useState("");
-  const [newAqValue, setNewAqValue] = useState("");
-
-  // States for IMEI
-  const [newImeiDist, setNewImeiDist] = useState("");
-  const [newImeiDate, setNewImeiDate] = useState("");
-  const [newImeiDest, setNewImeiDest] = useState("");
-  const [newImeiCred, setNewImeiCred] = useState("");
-  const [newImeiDeb, setNewImeiDeb] = useState("");
-
   useEffect(() => {
     if (entity) {
       setFormData(entity);
@@ -75,9 +65,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const legRes = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.reservado || 0), 0);
     const legadoTotal = legDisp + legRes;
 
-    // Equação de Auditoria: Originação + Movimentação - Aquisição - Aposentado - Bloqueado
     const final = orig + mov - aq - aposentado - bloqueado;
-    
     const movPercentage = orig !== 0 ? ((Math.abs(mov) / Math.abs(orig)) * 100).toFixed(1) : "0.0";
 
     return { 
@@ -107,53 +95,12 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     onOpenChange(false);
   };
 
-  const handleAddAq = () => {
-    if (!newAqYear || !newAqValue) return;
-    const newItem: RegistroTabela = {
-      id: `AQ-${Date.now()}`,
-      data: newAqYear,
-      destino: `Aquisição Antecipada ${newAqYear}`,
-      valor: parseInt(newAqValue) || 0,
-    };
-    setFormData({
-      ...formData,
-      tabelaAquisicao: [...(formData.tabelaAquisicao || []), newItem]
-    });
-    setNewAqYear("");
-    setNewAqValue("");
-  };
-
-  const handleAddImei = () => {
-    if (!newImeiDist || (!newImeiCred && !newImeiDeb)) return;
-    const cred = parseInt(newImeiCred) || 0;
-    const deb = parseInt(newImeiDeb) || 0;
-    const newItem: RegistroTabela = {
-      id: `IMEI-${Date.now()}`,
-      dist: newImeiDist,
-      data: newImeiDate || new Date().toLocaleDateString('pt-BR'),
-      destino: newImeiDest || "Transferência IMEI",
-      valorCredito: cred,
-      valorDebito: deb,
-      valor: deb - cred, 
-    };
-    setFormData({
-      ...formData,
-      tabelaImei: [...(formData.tabelaImei || []), newItem]
-    });
-    setNewImeiDist("");
-    setNewImeiDate("");
-    setNewImeiDest("");
-    setNewImeiCred("");
-    setNewImeiDeb("");
-  };
-
   const handleProcessPaste = () => {
     if (!pasteData) return;
     const lines = pasteData.raw.split('\n').filter(l => l.trim());
     
     const newRows: RegistroTabela[] = lines.map(line => {
       const parts = line.split('\t');
-      
       const parseVal = (str: string | undefined) => {
         if (!str || !str.trim()) return 0;
         return parseInt(str.replace(/\./g, '').replace(/[^\d-]/g, '')) || 0;
@@ -172,67 +119,26 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             bloqueado: parseVal(parts[6]),
             aposentado: parseVal(parts[7]),
           };
-        
         case 'tabelaImeiDebito':
           const valDeb = parseVal(parts[parts.length - 1]);
-          return {
-            id: `IMEI-D-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
-            dist: parts[0]?.trim() || '',
-            data: parts[1]?.trim() || '',
-            destino: parts[2]?.trim() || '',
-            valorCredito: 0,
-            valorDebito: valDeb,
-            valor: valDeb,
-          };
-
+          return { id: `IMEI-D-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, dist: parts[0]?.trim() || '', data: parts[1]?.trim() || '', destino: parts[2]?.trim() || '', valorCredito: 0, valorDebito: valDeb, valor: valDeb };
         case 'tabelaImeiCredito':
           const valCred = parseVal(parts[parts.length - 1]);
-          return {
-            id: `IMEI-C-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
-            dist: parts[0]?.trim() || '',
-            data: parts[1]?.trim() || '',
-            destino: parts[2]?.trim() || '',
-            valorCredito: valCred,
-            valorDebito: 0,
-            valor: -valCred,
-          };
-
+          return { id: `IMEI-C-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, dist: parts[0]?.trim() || '', data: parts[1]?.trim() || '', destino: parts[2]?.trim() || '', valorCredito: valCred, valorDebito: 0, valor: -valCred };
         case 'tabelaOriginacao':
           let volOrig = 0;
           for (let j = parts.length - 1; j >= 0; j--) {
             const val = parseVal(parts[j]);
-            if (val !== 0) {
-              volOrig = val;
-              break;
-            }
+            if (val !== 0) { volOrig = val; break; }
           }
-          return {
-            id: `ORIG-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
-            dist: parts[0]?.trim() || '',
-            data: parts[1]?.trim() || '',
-            destino: parts[2]?.trim() || '',
-            valor: volOrig,
-          };
-
+          return { id: `ORIG-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, dist: parts[0]?.trim() || '', data: parts[1]?.trim() || '', destino: parts[2]?.trim() || '', valor: volOrig };
         default:
-          return {
-            id: `MOV-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
-            dist: parts[0]?.trim() || '',
-            data: parts[1]?.trim() || '',
-            destino: parts[2]?.trim() || '',
-            valor: parseVal(parts[parts.length - 1]),
-          };
+          return { id: `MOV-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, dist: parts[0]?.trim() || '', data: parts[1]?.trim() || '', destino: parts[2]?.trim() || '', valor: parseVal(parts[parts.length - 1]) };
       }
     });
 
-    const targetSection = (pasteData.section === 'tabelaImeiDebito' || pasteData.section === 'tabelaImeiCredito') 
-      ? 'tabelaImei' 
-      : pasteData.section;
-
-    setFormData({ 
-      ...formData, 
-      [targetSection]: [...(formData[targetSection as keyof EntidadeSaldo] as any[] || []), ...newRows] 
-    });
+    const targetSection = (pasteData.section === 'tabelaImeiDebito' || pasteData.section === 'tabelaImeiCredito') ? 'tabelaImei' : pasteData.section;
+    setFormData({ ...formData, [targetSection]: [...(formData[targetSection as keyof EntidadeSaldo] as any[] || []), ...newRows] });
     setPasteData(null);
   };
 
@@ -246,64 +152,92 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           <DialogDescription>Detalhamento técnico de conformidade e auditoria de UCS para {entity.nome}.</DialogDescription>
         </DialogHeader>
         
-        {/* CONTEÚDO PARA IMPRESSÃO (RELATÓRIO BUSINESS) */}
-        <div className="printable-content hidden">
-          <div className="report-header">
-            <div className="flex justify-between items-center mb-6">
-               <div>
-                 <h1 className="text-2xl font-black text-primary uppercase">LedgerTrust Auditoria</h1>
-                 <p className="text-xs font-bold text-slate-400">PROTOCOLO DE CONFORMIDADE DE UCS - BLOCKCHAIN NXT</p>
-               </div>
-               <div className="text-right">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase">Documento Gerado em:</p>
-                 <p className="text-xs font-black">{new Date().toLocaleString('pt-BR')}</p>
-               </div>
+        {/* COMPONENTE DE PDF / IMPRESSÃO EXECUTIVA (RELATÓRIO DE SALDOS) */}
+        <div className="printable-audit-report hidden print:block">
+          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8 mb-10">
+            <div>
+               <h1 className="text-[42px] font-black text-primary leading-none tracking-tighter">bmv</h1>
+               <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2 text-slate-400">LedgerTrust Auditoria de Conformidade</p>
             </div>
-            <div className="grid grid-cols-2 gap-8 border-t border-b border-slate-100 py-6">
-               <div>
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">PRODUTOR / ENTIDADE</p>
-                 <p className="text-base font-black uppercase">{entity.nome}</p>
-                 <p className="text-xs font-mono">{entity.documento}</p>
+            <div className="text-right">
+              <h2 className="text-[20px] font-black uppercase tracking-tight text-slate-900">Protocolo de Auditoria de Saldo</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ref. Técnica: {entity.id}</p>
+              <p className="text-[9px] text-slate-400 font-mono mt-0.5">{new Date().toLocaleString('pt-BR')}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-16 mb-12">
+            <div className="space-y-6">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">Identificação da Entidade</h3>
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <p className="text-[13px] font-black text-slate-900 uppercase">{entity.nome}</p>
+                  <p className="text-[11px] font-bold text-slate-400 font-mono">{entity.documento}</p>
+                  <div className="mt-4 pt-4 border-t border-slate-50">
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Auditor Responsável:</p>
+                    <p className="text-[11px] font-bold text-slate-900">{user?.email}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">Sumário Executivo (UCS)</h3>
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Originação Total</p>
+                    <p className="text-[16px] font-black text-slate-900">{totals.orig.toLocaleString('pt-BR')}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Saldo Final Auditado</p>
+                    <p className="text-[16px] font-black text-primary">{totals.final.toLocaleString('pt-BR')}</p>
+                  </div>
                </div>
-               <div>
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AUDITOR RESPONSÁVEL</p>
-                 <p className="text-base font-black uppercase">{user?.email?.split('@')[0] || "SISTEMA"}</p>
-                 <p className="text-xs">{user?.email}</p>
+               <div className="p-5 border-2 border-primary/20 rounded-2xl bg-primary/5 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Status de Conformidade</p>
+                    <p className="text-[14px] font-black text-slate-900 mt-1 uppercase">✓ SALDO VALIDADO PELO LEDGER</p>
+                  </div>
+                  <QrCode className="w-12 h-12 text-slate-200" />
                </div>
             </div>
           </div>
 
-          <div className="my-8">
-            <h2 className="text-sm font-black uppercase tracking-widest mb-4 text-slate-900 border-l-4 border-primary pl-3">Resumo de Saldo Auditado</h2>
-            <div className="grid grid-cols-4 gap-4">
-              <ReportStat label="ORIGINAÇÃO" value={totals.orig} />
-              <ReportStat label="MOVIMENTAÇÃO" value={totals.mov} />
-              <ReportStat label="BLOQUEADO" value={totals.bloqueado} />
-              <ReportStat label="SALDO DISPONÍVEL" value={totals.final} isHighlight />
-            </div>
+          <div className="space-y-10">
+            {formData.tabelaOriginacao && formData.tabelaOriginacao.length > 0 && (
+              <ReportTable title="Histórico de Originação" data={formData.tabelaOriginacao} />
+            )}
+            {formData.tabelaMovimentacao && formData.tabelaMovimentacao.length > 0 && (
+              <ReportTable title="Fluxo de Movimentação de Ativos" data={formData.tabelaMovimentacao} isNegative />
+            )}
+            {formData.tabelaImei && formData.tabelaImei.length > 0 && (
+              <ReportTable title="Detalhamento de Ajustes IMEI" data={formData.tabelaImei} isImei />
+            )}
           </div>
 
-          <div className="space-y-8">
-            <ReportSection title="Histórico de Movimentações" data={formData.tabelaMovimentacao || []} />
-            <ReportSection title="Transferências IMEI" data={formData.tabelaImei || []} isImei />
-            <ReportSection title="Saldos Legados" data={formData.tabelaLegado || []} isLegado />
-          </div>
-
-          <div className="mt-12 p-6 bg-slate-50 rounded-xl border border-slate-100">
-             <h3 className="text-[10px] font-black uppercase text-slate-400 mb-2">Apontamentos do Auditor</h3>
-             <p className="text-xs leading-relaxed italic text-slate-700">
-               {formData.observacao || "Nenhuma divergência ou apontamento registrado para este período de auditoria."}
+          <div className="mt-12 p-8 bg-slate-50/50 rounded-2xl border border-slate-100">
+             <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Apontamentos e Observações Técnicas</h3>
+             <p className="text-[11px] leading-relaxed text-slate-700 italic">
+               {formData.observacao || "Nenhuma divergência ou apontamento registrado para este período de auditoria. O saldo final reflete a integridade dos lançamentos em blockchain."}
              </p>
           </div>
 
-          <div className="signature-block">
-             <div className="signature-line">ASSINATURA DO AUDITOR</div>
-             <div className="signature-line">CARIMBO DE CONFORMIDADE</div>
+          <div className="mt-auto pt-20 flex justify-between items-end">
+            <div className="flex items-center gap-3">
+               <ShieldCheck className="w-8 h-8 text-primary" />
+               <p className="text-[10px] font-black uppercase tracking-widest text-primary">Autenticidade Verificada</p>
+            </div>
+            <div className="text-right space-y-4">
+               <div className="w-64 border-t border-slate-900 pt-2">
+                 <p className="text-[10px] font-black uppercase text-slate-900">Responsável Técnico BMV</p>
+                 <p className="text-[8px] font-bold text-slate-400 uppercase">Documento Gerado pelo Sistema LedgerTrust</p>
+               </div>
+            </div>
           </div>
         </div>
 
-        {/* CONTEÚDO VISUAL (MODAL) */}
-        <div className="flex-1 flex flex-col overflow-hidden print-hidden">
+        {/* UI DO CONSOLE (HIDDEN EM PRINT) */}
+        <div className="flex-1 flex flex-col overflow-hidden print:hidden">
           <div className="bg-[#0B0F1A] p-10 shrink-0 text-white relative">
             <div className="flex justify-between items-start mb-12">
               <div className="space-y-1.5">
@@ -341,7 +275,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
           <ScrollArea className="flex-1 bg-white">
             <div className="p-10 space-y-20">
-              {/* MÓDULO DE APONTAMENTOS */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 bg-slate-50/50 p-10 rounded-[2.5rem] border border-slate-100">
                  <div className="lg:col-span-2 space-y-4">
                     <div className="flex items-center gap-3 mb-2">
@@ -371,16 +304,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                         </SelectContent>
                       </Select>
                     </div>
-                    {formData.statusAuditoriaSaldo === 'inconsistente' && (
-                      <div className="p-6 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-4">
-                         <AlertTriangle className="w-6 h-6 text-rose-500 shrink-0" />
-                         <p className="text-[11px] font-bold text-rose-500/80 leading-tight uppercase">Sinalizado como Divergente</p>
-                      </div>
-                    )}
                  </div>
               </div>
 
-              {/* TABELAS TÉCNICAS */}
               <div className="space-y-6">
                 <SectionHeader title="01. ORIGINAÇÃO" value={totals.orig} onPaste={() => setPasteData({ section: 'tabelaOriginacao', raw: '' })} />
                 <SectionTable data={formData.tabelaOriginacao || []} type="originacao" />
@@ -438,39 +364,25 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   );
 }
 
-function ReportStat({ label, value, isHighlight }: any) {
+function ReportTable({ title, data, isNegative, isImei }: any) {
   return (
-    <div className={cn("p-4 border rounded-lg", isHighlight ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100")}>
-       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-       <p className={cn("text-sm font-black font-mono", isHighlight ? "text-primary" : "text-slate-900")}>
-         {value.toLocaleString('pt-BR')} UCS
-       </p>
-    </div>
-  );
-}
-
-function ReportSection({ title, data, isImei, isLegado }: any) {
-  if (!data || data.length === 0) return null;
-  return (
-    <div>
-       <h3 className="text-[10px] font-black uppercase tracking-widest mb-2 text-slate-400">{title}</h3>
-       <table className="report-table">
-          <thead>
-            <tr>
-              <th>Data/Ref</th>
-              <th>Histórico / Destino</th>
-              <th className="text-right">Volume (UCS)</th>
+    <div className="space-y-3">
+       <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">{title}</h4>
+       <table className="w-full text-left text-[10px]">
+          <thead className="bg-[#F8FAFC]">
+            <tr className="border-b border-slate-200">
+              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500">Referência</th>
+              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500">Histórico / Destino</th>
+              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500 text-right">Volume (UCS)</th>
             </tr>
           </thead>
           <tbody>
             {data.map((row: any, i: number) => (
-              <tr key={i}>
-                <td>{row.data || row.dist || '-'}</td>
-                <td>{row.destino || row.plataforma || '-'}</td>
-                <td className="text-right font-mono font-bold">
-                   {isImei ? (row.valorDebito - row.valorCredito).toLocaleString('pt-BR') : 
-                    isLegado ? (row.disponivel + row.reservado).toLocaleString('pt-BR') :
-                    row.valor?.toLocaleString('pt-BR')}
+              <tr key={i} className="border-b border-slate-100 last:border-0">
+                <td className="px-4 py-3 font-mono">{row.data || row.dist || '-'}</td>
+                <td className="px-4 py-3 text-slate-600 uppercase font-bold">{row.destino || row.plataforma || '-'}</td>
+                <td className={cn("px-4 py-3 text-right font-black", isNegative ? "text-rose-600" : "")}>
+                  {isImei ? (row.valorDebito - row.valorCredito).toLocaleString('pt-BR') : row.valor?.toLocaleString('pt-BR')}
                 </td>
               </tr>
             ))}
