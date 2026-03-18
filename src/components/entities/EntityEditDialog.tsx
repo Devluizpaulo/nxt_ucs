@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -31,7 +32,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [entity]);
 
-  // Cálculos de Auditoria e Consolidados
+  // Cálculos de Auditoria e Consolidados em tempo real apenas para exibição
   const stats = useMemo(() => {
     const sumTable = (table?: RegistroTabela[]) => (table || []).reduce((acc, row) => acc + (row.valor || 0), 0);
     
@@ -53,7 +54,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const totalAposentado = (formData.tabelaLegado || []).reduce((acc, row) => acc + (row.aposentado || 0), 0);
     const totalBloqueado = (formData.tabelaLegado || []).reduce((acc, row) => acc + (row.bloqueado || 0), 0);
     
-    // O Saldo Auditado é a Originação + Movimentação (que é negativa) - Aquisição
+    // O Saldo Auditado é a Originação + Movimentação (negativa) - Aquisição
     const finalAuditado = totalOrig + totalMov - totalAq;
 
     return {
@@ -68,21 +69,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       finalAuditado
     };
   }, [formData]);
-
-  // Sincroniza estados derivados no formData para gravação
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      originacao: stats.totalOrig,
-      movimentacao: stats.totalMov,
-      aquisicao: stats.totalAq,
-      aposentado: stats.totalAposentado,
-      bloqueado: stats.totalBloqueado,
-      saldoAjustarImei: stats.ajusteImei,
-      saldoLegadoTotal: stats.legadoTotal,
-      saldoFinalAtual: stats.finalAuditado
-    }));
-  }, [stats]);
 
   useEffect(() => {
     if (!pasteBuffer.trim()) {
@@ -160,6 +146,22 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     });
   };
 
+  const handleSaveFinal = () => {
+    const finalData: Partial<EntidadeSaldo> = {
+      ...formData,
+      originacao: stats.totalOrig,
+      movimentacao: stats.totalMov,
+      aquisicao: stats.totalAq,
+      aposentado: stats.totalAposentado,
+      bloqueado: stats.totalBloqueado,
+      saldoAjustarImei: stats.ajusteImei,
+      saldoLegadoTotal: stats.legadoTotal,
+      saldoFinalAtual: stats.finalAuditado
+    };
+    onUpdate(entity.id, finalData);
+    onOpenChange(false);
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -178,7 +180,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           <DialogDescription>Console de conformidade técnica LedgerTrust.</DialogDescription>
         </DialogHeader>
 
-        {/* Modal de Colagem */}
+        {/* Modal de Colagem Técnica */}
         {activePasteField && (
           <div className="absolute inset-0 z-[100] bg-white/95 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in zoom-in duration-200">
             <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
@@ -201,7 +203,15 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Registros Detectados: {previewRows.length}
                 </div>
-                <Button onClick={() => { setFormData(prev => ({ ...prev, [activePasteField]: previewRows })); setActivePasteField(null); setPasteBuffer(""); }} disabled={!pasteBuffer.trim()} className="px-10 h-12 rounded-xl font-black uppercase text-xs">
+                <Button 
+                  onClick={() => { 
+                    setFormData(prev => ({ ...prev, [activePasteField]: previewRows })); 
+                    setActivePasteField(null); 
+                    setPasteBuffer(""); 
+                  }} 
+                  disabled={!pasteBuffer.trim()} 
+                  className="px-10 h-12 rounded-xl font-black uppercase text-xs"
+                >
                   Confirmar Importação
                 </Button>
               </div>
@@ -209,25 +219,25 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         )}
 
-        {/* CABEÇALHO BMV PREMIUM (Idêntico à Imagem) */}
-        <div className="bg-[#0F172A] p-12 shrink-0 text-white relative">
-          <div className="flex items-center gap-2 mb-8">
+        {/* CABEÇALHO BMV PREMIUM */}
+        <div className="bg-[#0F172A] p-10 shrink-0 text-white relative">
+          <div className="flex items-center gap-2 mb-6">
             <ShieldCheck className="w-4 h-4 text-primary" />
             <span className="text-[10px] font-black uppercase tracking-widest text-primary">AUDITORIA BMV</span>
           </div>
 
-          <div className="flex justify-between items-start mb-10">
-            <h2 className="text-5xl font-black leading-none tracking-tighter uppercase">
+          <div className="flex justify-between items-center mb-10">
+            <h2 className="text-3xl font-black leading-none tracking-tighter uppercase">
               {entity.nome}
             </h2>
             <div className="text-right flex flex-col items-end">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DOCUMENTO</span>
-              <span className="text-lg font-bold tracking-tight text-slate-200 font-mono">{entity.documento}</span>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">DOCUMENTO</span>
+              <span className="text-base font-bold tracking-tight text-slate-200 font-mono">{entity.documento}</span>
             </div>
           </div>
 
-          {/* Grade de 8 Consolidados */}
-          <div className="grid grid-cols-8 gap-8 items-end px-1">
+          {/* Grade de 8 Consolidados Normalizada */}
+          <div className="grid grid-cols-8 gap-6 items-end">
             <StatColumn label="ORIGINAÇÃO" value={formatUCS(stats.totalOrig)} color="white" />
             <StatColumn 
               label="MOVIMENTAÇÃO" 
@@ -241,11 +251,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             <StatColumn label="AJUSTE IMEI" value={formatUCS(stats.ajusteImei)} color="indigo" />
             <StatColumn label="SALDO LEGADO" value={formatUCS(stats.legadoTotal)} color="amber" />
             
-            <div className="bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 min-w-[220px]">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">SALDO AUDITADO</p>
-              <div className="flex items-baseline gap-1 text-4xl font-black tracking-tighter text-primary">
+            <div className="bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 min-w-[200px]">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">SALDO AUDITADO</p>
+              <div className="flex items-baseline gap-1 text-2xl font-black tracking-tighter text-primary">
                 {formatUCS(stats.finalAuditado)}
-                <span className="text-sm font-black opacity-60 ml-1">UCS</span>
+                <span className="text-[10px] font-black opacity-60 ml-1">UCS</span>
               </div>
             </div>
           </div>
@@ -253,7 +263,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
         {/* ÁREA DE TRABALHO TÉCNICA */}
         <ScrollArea className="flex-1 bg-white">
-          <div className="p-12 space-y-12 pb-24">
+          <div className="p-10 space-y-10 pb-24">
             <SectionTechnical 
               title="Originação de Ativos"
               icon={TrendingUp}
@@ -271,7 +281,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               icon={ArrowRightLeft}
               onImport={() => setActivePasteField('tabelaMovimentacao')}
               data={formData.tabelaMovimentacao || []}
-              onUpdateRow={(idx, updates) => handleUpdateRow('tabelaMovimentacao', idx, updates)}
+              onUpdateRow={(idx: number, updates: any) => handleUpdateRow('tabelaMovimentacao', idx, updates)}
               columns={[
                 { label: "Ref. Dist.", key: "dist" },
                 { label: "Data Operação", key: "data" },
@@ -327,17 +337,17 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </ScrollArea>
 
-        {/* RODAPÉ BMV (Idêntico à Imagem) */}
-        <div className="p-10 border-t bg-white flex justify-between items-center shrink-0">
+        {/* RODAPÉ BMV */}
+        <div className="p-8 border-t bg-white flex justify-between items-center shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400 tracking-widest hover:bg-transparent hover:text-rose-500">
             DESCARTAR ALTERAÇÕES
           </Button>
           <div className="flex gap-4">
-            <Button onClick={handlePrint} variant="outline" className="h-14 px-10 rounded-2xl border-slate-200 font-black uppercase text-[10px] tracking-widest gap-3 hover:bg-slate-50 transition-all border-2">
-              <Printer className="w-4 h-4" /> IMPRIMIR RELATÓRIO AUDITADO
+            <Button onClick={handlePrint} variant="outline" className="h-12 px-8 rounded-2xl border-slate-200 font-black uppercase text-[10px] tracking-widest gap-3 hover:bg-slate-50 transition-all border-2">
+              <Printer className="w-4 h-4" /> IMPRIMIR RELATÓRIO
             </Button>
-            <Button onClick={() => { onUpdate(entity.id, formData); onOpenChange(false); }} className="h-14 px-12 rounded-2xl bg-[#00B894] hover:bg-[#00A381] text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-[#00B894]/20 gap-3 transition-all active:scale-95">
-              <Save className="w-4 h-4" /> GRAVAR NO LEDGER PERMANENTE
+            <Button onClick={handleSaveFinal} className="h-12 px-10 rounded-2xl bg-[#00B894] hover:bg-[#00A381] text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-[#00B894]/20 gap-3 transition-all active:scale-95">
+              <Save className="w-4 h-4" /> GRAVAR NO LEDGER
             </Button>
           </div>
         </div>
@@ -356,14 +366,14 @@ function StatColumn({ label, value, color, subValue }: { label: string, value: s
   };
 
   return (
-    <div className="flex flex-col gap-1.5 min-w-[120px]">
-      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
-      <div className={cn("flex items-baseline gap-1 text-2xl font-black tracking-tighter", colorClasses[color as keyof typeof colorClasses])}>
+    <div className="flex flex-col gap-1 min-w-[110px]">
+      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
+      <div className={cn("flex items-baseline gap-1 text-xl font-black tracking-tighter", colorClasses[color as keyof typeof colorClasses])}>
         {value}
-        <span className="text-[9px] font-black opacity-40 ml-0.5">UCS</span>
+        <span className="text-[8px] font-black opacity-40 ml-0.5">UCS</span>
       </div>
       {subValue && (
-        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1 mt-0.5">
           {subValue.includes('PAGO') ? <CheckCircle2 className="w-3 h-3 text-primary" /> : <Clock className="w-3 h-3" />}
           {subValue}
         </span>
@@ -376,17 +386,17 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
   const currentTotal = (data || []).reduce((acc: number, r: any) => acc + (r.valor || 0), 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between border-b border-slate-100 pb-5">
+    <div className="space-y-4">
+      <div className="flex items-end justify-between border-b border-slate-100 pb-4">
         <div className="flex items-center gap-4">
-          <div className={cn("w-1 h-10 rounded-full", 
+          <div className={cn("w-1 h-8 rounded-full", 
             color === "amber" ? "bg-amber-500" : 
             color === "rose" ? "bg-rose-500" : 
             color === "indigo" ? "bg-indigo-500" : "bg-primary"
           )} />
           <div>
-            <h3 className="text-lg font-black uppercase tracking-widest text-slate-900 leading-none">{title}</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+            <h3 className="text-base font-black uppercase tracking-widest text-slate-900 leading-none">{title}</h3>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">
               CONSOLIDADO DA SEÇÃO: <span className={cn("font-black", 
                 color === 'rose' ? "text-rose-500" : 
                 (color === 'amber' ? "text-amber-600" : 
@@ -397,23 +407,23 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
             </p>
           </div>
         </div>
-        <Button onClick={onImport} variant="outline" className="h-11 px-5 rounded-2xl border-primary text-primary font-black uppercase text-[10px] tracking-widest gap-2 hover:bg-emerald-50 transition-all border-2">
-          <Calculator className="w-4 h-4" /> COLAGEM TÉCNICA
+        <Button onClick={onImport} variant="outline" className="h-10 px-4 rounded-xl border-primary text-primary font-black uppercase text-[9px] tracking-widest gap-2 hover:bg-emerald-50 transition-all border-2">
+          <Calculator className="w-3.5 h-3.5" /> COLAGEM TÉCNICA
         </Button>
       </div>
 
-      <div className="rounded-[1.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
+      <div className="rounded-2xl border border-slate-100 overflow-hidden bg-white shadow-sm">
         {data.length === 0 ? (
-          <div className="py-12 text-center opacity-30 flex flex-col items-center gap-2">
-            <AlertCircle className="w-6 h-6 text-slate-300" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sem registros processados nesta seção</p>
+          <div className="py-8 text-center opacity-30 flex flex-col items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-slate-300" />
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Sem registros processados</p>
           </div>
         ) : (
           <Table>
             <TableHeader className="bg-slate-50/50">
-              <TableRow className="h-12">
+              <TableRow className="h-10">
                 {columns.map((col: any) => (
-                  <TableHead key={col.label} className={cn("text-[9px] font-black uppercase tracking-widest text-slate-400 px-8", col.align === 'right' && "text-right")}>
+                  <TableHead key={col.label} className={cn("text-[8px] font-black uppercase tracking-widest text-slate-400 px-6", col.align === 'right' && "text-right")}>
                     {col.label}
                   </TableHead>
                 ))}
@@ -421,10 +431,10 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
             </TableHeader>
             <TableBody>
               {data.map((row: any, i: number) => (
-                <TableRow key={i} className="h-12 hover:bg-slate-50/40 transition-colors border-b border-slate-50 last:border-0">
+                <TableRow key={i} className="h-10 hover:bg-slate-50/40 transition-colors border-b border-slate-50 last:border-0">
                   {columns.map((col: any) => (
                     <TableCell key={col.label} className={cn(
-                      "px-8 text-[11px] font-bold text-slate-600",
+                      "px-6 text-[10px] font-bold text-slate-600",
                       col.align === 'right' && "text-right",
                       col.variant === 'emerald' && "text-emerald-600",
                       col.variant === 'rose' && "text-rose-500",
@@ -436,29 +446,29 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
                           value={row[col.key] || 'Pendente'} 
                           onValueChange={(v) => onUpdateRow?.(i, { [col.key]: v as AuditoriaStatus })}
                         >
-                          <SelectTrigger className="h-9 w-32 text-[10px] font-black uppercase tracking-widest rounded-xl border-slate-200">
+                          <SelectTrigger className="h-8 w-28 text-[9px] font-black uppercase tracking-widest rounded-lg border-slate-200">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Pendente" className="text-[10px] font-black uppercase">PENDENTE</SelectItem>
-                            <SelectItem value="Pago" className="text-[10px] font-black uppercase text-emerald-600">PAGO</SelectItem>
-                            <SelectItem value="Não Pago" className="text-[10px] font-black uppercase text-rose-500">NÃO PAGO</SelectItem>
+                            <SelectItem value="Pendente" className="text-[9px] font-black uppercase">PENDENTE</SelectItem>
+                            <SelectItem value="Pago" className="text-[9px] font-black uppercase text-emerald-600">PAGO</SelectItem>
+                            <SelectItem value="Não Pago" className="text-[9px] font-black uppercase text-rose-500">NÃO PAGO</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : col.type === 'link' ? (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <Input 
                             value={row[col.key] || ''} 
-                            placeholder="Link do comprovante..."
+                            placeholder="Comprovante..."
                             onChange={(e) => onUpdateRow?.(i, { [col.key]: e.target.value })}
-                            className="h-9 w-48 text-[10px] font-mono border-slate-200 rounded-xl"
+                            className="h-8 w-36 text-[9px] font-mono border-slate-200 rounded-lg"
                           />
                           {row[col.key] ? (
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
-                              <LinkIcon className="w-4 h-4" />
+                              <LinkIcon className="w-3.5 h-3.5" />
                             </a>
                           ) : (
-                            <AlertCircle className="w-4 h-4 text-slate-200" />
+                            <AlertCircle className="w-3.5 h-3.5 text-slate-100" />
                           )}
                         </div>
                       ) : (
