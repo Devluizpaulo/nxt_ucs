@@ -41,7 +41,7 @@ export default function SettingsPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // Sincronizar usuário atual automaticamente se acessar configurações
+  // Sincronizar usuário atual automaticamente com todos os campos obrigatórios
   useEffect(() => {
     if (!firestore || !user || isUserLoading) return;
     
@@ -54,15 +54,17 @@ export default function SettingsPage() {
         role: 'auditor',
         status: 'ativo',
         ultimoAcesso: new Date().toISOString(),
+        createdAt: new Date().toISOString(), // Garantir campo para não quebrar queries
       }, { merge: true });
     };
     
     syncUser();
   }, [firestore, user, isUserLoading]);
 
+  // Consulta simplificada para garantir que os dados apareçam mesmo sem índices complexos inicialmente
   const usersQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(collection(firestore, "users"), orderBy("nome", "asc"));
+    return collection(firestore, "users");
   }, [firestore, user]);
 
   const { data: appUsers, isLoading: isUsersLoading } = useCollection<AppUser>(usersQuery);
