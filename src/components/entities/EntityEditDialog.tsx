@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { EntidadeSaldo } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, ClipboardPaste, Database, ShieldCheck, Table as TableIcon, Calculator, ChevronDown, ListFilter } from "lucide-react";
+import { Save, ClipboardPaste, Database, ShieldCheck, Table as TableIcon, Calculator, ListFilter } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -33,6 +33,20 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [entity]);
 
+  // Cálculo Automático do Saldo Final (Atual)
+  useEffect(() => {
+    const final = 
+      (formData.originacao || 0) + 
+      (formData.movimentacao || 0) + 
+      (formData.aposentado || 0) + 
+      (formData.bloqueado || 0) + 
+      (formData.aquisicao || 0);
+    
+    if (final !== formData.saldoFinalAtual) {
+      setFormData(prev => ({ ...prev, saldoFinalAtual: final }));
+    }
+  }, [formData.originacao, formData.movimentacao, formData.aposentado, formData.bloqueado, formData.aquisicao]);
+
   const handleIndividualSave = () => {
     if (!entity) return;
     onUpdate(entity.id, formData);
@@ -46,10 +60,8 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     let total = 0;
 
     lines.forEach(line => {
-      // Tenta encontrar o valor numérico na linha (geralmente a penúltima ou última coluna)
       const parts = line.split('\t');
-      // Se for TSV (Excel), tentamos pegar a coluna que parece ser de valor
-      // Para movimentação, costuma ser o Débito (UCS)
+      // Tenta encontrar o valor numérico na linha (geralmente a penúltima ou última coluna da seção colada)
       const rawValue = parts.length > 1 ? parts[parts.length - 2] || parts[parts.length - 1] : line;
       
       const cleanValue = parseFloat(rawValue.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
@@ -63,6 +75,35 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     toast({ 
       title: "Consolidação Concluída", 
       description: `${lines.length} registros processados para o campo ${field.toString().toUpperCase()}.` 
+    });
+  };
+
+  const processLegacyPaste = (text: string) => {
+    if (!text.trim()) return;
+    const lines = text.split('\n').filter(l => l.trim());
+    let total = 0;
+
+    lines.forEach(line => {
+      const parts = line.split('\t');
+      // O formato legado geralmente tem "Disponível" na 5ª coluna (index 4)
+      if (parts.length >= 5) {
+        const rawValue = parts[4];
+        const cleanValue = parseFloat(rawValue.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+        
+        // Ignora cabeçalhos e linhas de total
+        const isHeader = line.toLowerCase().includes('disponível') || line.toLowerCase().includes('plataforma');
+        const isTotal = line.toLowerCase().startsWith('total');
+        
+        if (!isHeader && !isTotal) {
+          total += cleanValue;
+        }
+      }
+    });
+
+    setFormData(prev => ({ ...prev, saldoLegadoTotal: total }));
+    toast({ 
+      title: "Extrato Legado Processado", 
+      description: `Saldo total de ${total.toLocaleString('pt-BR')} UCS consolidado a partir de ${lines.length} registros.` 
     });
   };
 
@@ -113,8 +154,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden bg-[#F1F5F9] border-none shadow-2xl rounded-[3rem] p-0 flex flex-col">
-        <DialogTitle className="sr-only">Editor de Auditoria - {entity.nome}</DialogTitle>
-        <DialogDescription className="sr-only">Interface para consolidação de saldos e rastreabilidade por seções.</DialogDescription>
+        <DialogHeader className="sr-only">
+          <DialogTitle>Editor de Auditoria - {entity.nome}</DialogTitle>
+          <DialogDescription>Interface para consolidação de saldos e rastreabilidade por seções.</DialogDescription>
+        </DialogHeader>
         
         {/* Header Superior - Identificação */}
         <div className="bg-slate-900 p-10 text-white shrink-0">
@@ -189,13 +232,29 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                   />
                   <p className="text-[9px] text-slate-400 font-bold uppercase italic">Soma de Trading, Investment e Custódia.</p>
                 </div>
-                <div className="col-span-2 bg-slate-50/50 p-6 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center space-y-3">
-                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
-                    <ClipboardPaste className="w-6 h-6 text-slate-300" />
+                
+                <div className="col-span-2 relative group">
+                  <Textarea 
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                    onPaste={(e) => {
+                      const text = e.clipboardData.getData('text');
+                      processLegacyPaste(text);
+                    }}
+                    onChange={(e) => {
+                      // Permite processar se o usuário colar manualmente no campo
+                      if (e.target.value.includes('\t')) {
+                        processLegacyPaste(e.target.value);
+                      }
+                    }}
+                  />
+                  <div className="bg-slate-50/50 p-6 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center space-y-3 min-h-[160px] group-hover:border-primary group-hover:bg-emerald-50/30 transition-all">
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                      <ClipboardPaste className="w-6 h-6 text-slate-300 group-hover:text-primary" />
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 group-hover:text-primary uppercase tracking-widest max-w-xs leading-relaxed">
+                      Arraste ou cole o extrato consolidado para vinculação permanente de hash.
+                    </p>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest max-w-xs leading-relaxed">
-                    Arraste ou cole o extrato consolidado para vinculação permanente de hash.
-                  </p>
                 </div>
               </div>
             </div>
