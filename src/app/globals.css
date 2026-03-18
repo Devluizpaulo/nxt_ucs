@@ -46,6 +46,7 @@
     margin: 0;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    background: white !important;
   }
 
   body * {
@@ -64,10 +65,10 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 210mm;
-    min-height: 297mm;
+    width: 100%;
+    height: auto;
     background: white !important;
-    padding: 10mm;
+    padding: 40px !important;
     box-sizing: border-box;
     display: block !important;
     color: black !important;
