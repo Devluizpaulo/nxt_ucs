@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -9,43 +10,32 @@ service cloud.firestore {
      * produtores e associações.
      */
 
-    // --- Funções Auxiliares Globais ---
-
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Simplificado para o protótipo: qualquer usuário logado é considerado auditor
-    function isAuditor() {
-      return isSignedIn();
-    }
-
-    // --- Regras de Coleção ---
-
-    match /roles_auditor/{userId} {
-      allow get: if isSignedIn() && request.auth.uid == userId;
-      allow list, write: if false;
-    }
-
     match /pedidos/{pedidoId} {
-      allow read, write: if isAuditor();
-    }
-
-    match /pedidos/{pedidoId}/movimentos/{movimentoId} {
-      allow read, write: if isAuditor();
+      allow read, write: if isSignedIn();
+      
+      match /movimentos/{movimentoId} {
+        allow read, write: if isSignedIn();
+      }
     }
     
     match /produtores/{produtorId} {
-      allow read, write: if isAuditor();
+      allow read, write: if isSignedIn();
     }
     
     match /associacoes/{associacaoId} {
-      allow read, write: if isAuditor();
+      allow read, write: if isSignedIn();
+    }
+
+    match /roles_auditor/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
     }
 
     match /system_metadata/unique_movimento_hashes/{hashMovimento} {
-      allow read: if isAuditor();
-      allow write: if false;
+      allow read: if isSignedIn();
     }
   }
 }
