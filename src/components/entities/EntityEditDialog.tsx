@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { EntidadeSaldo, RegistroTabela } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, Database, ShieldCheck, Table as TableIcon, Calculator, CheckCircle2, Trash2 } from "lucide-react";
+import { Save, Database, ShieldCheck, Table as TableIcon, Calculator, CheckCircle2, Trash2, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -34,7 +34,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [entity]);
 
-  // Cálculo Automático do Saldo Final Baseado nos Totais Consolidados
   useEffect(() => {
     const final = 
       (formData.originacao || 0) + 
@@ -49,7 +48,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [formData.originacao, formData.movimentacao, formData.aposentado, formData.bloqueado, formData.aquisicao, formData.saldoAjustarImei]);
 
-  // Parser inteligente de linhas de planilha baseado no tipo de campo
   useEffect(() => {
     if (!pasteBuffer.trim()) {
       setPreviewRows([]);
@@ -149,7 +147,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     
     toast({ 
       title: "Consolidação Concluída", 
-      description: `Campo ${activePasteField.toString().toUpperCase()} atualizado.` 
+      description: `Tabela e Saldo de ${activePasteField.toString().toUpperCase()} atualizados.` 
     });
   };
 
@@ -159,21 +157,41 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     onOpenChange(false);
   };
 
-  const clearTable = (field: keyof EntidadeSaldo) => {
-    setFormData(prev => ({ ...prev, [field]: [] }));
-    toast({ variant: "destructive", title: "Tabela limpa" });
+  const clearTable = (tableField: keyof EntidadeSaldo, balanceField: keyof EntidadeSaldo) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      [tableField]: [],
+      [balanceField]: 0 
+    }));
+    toast({ variant: "destructive", title: "Registros e saldo removidos" });
   };
 
-  if (!entity) return null;
-
-  const SaldoField = ({ label, field, color }: { label: string, field: keyof EntidadeSaldo, color: string }) => (
-    <div className="bg-white p-4 space-y-2 relative group border-r border-slate-100 last:border-0">
-      <div className="flex items-center justify-between">
-        <Label className="text-[8px] font-black uppercase text-slate-400 tracking-tighter block">{label}</Label>
-        <Popover open={activePasteField === field} onOpenChange={(open) => setActivePasteField(open ? field : null)}>
+  const SectionHeader = ({ 
+    icon: Icon, 
+    title, 
+    tableField, 
+    balanceField 
+  }: { 
+    icon: any, 
+    title: string, 
+    tableField: keyof EntidadeSaldo,
+    balanceField: keyof EntidadeSaldo
+  }) => (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2">
+        <Icon className="w-4 h-4 text-slate-400" />
+        <h3 className="text-[10px] font-black uppercase text-slate-900 tracking-[0.2em]">{title}</h3>
+      </div>
+      <div className="flex items-center gap-2">
+        {(formData[tableField] as any[])?.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={() => clearTable(tableField, balanceField)} className="text-[8px] font-black text-rose-500 uppercase h-8 hover:bg-rose-50">
+            <Trash2 className="w-3.5 h-3.5 mr-1" /> Limpar
+          </Button>
+        )}
+        <Popover open={activePasteField === balanceField} onOpenChange={(open) => setActivePasteField(open ? balanceField : null)}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-primary hover:bg-emerald-50 rounded-md">
-              <Calculator className="w-3 h-3" />
+            <Button className="h-8 px-4 font-black uppercase text-[9px] tracking-widest bg-primary hover:bg-primary/90 rounded-full gap-2">
+              <Plus className="w-3 h-3" /> Importar Dados (Excel)
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[550px] p-0 rounded-[2rem] shadow-2xl border-none bg-slate-900 overflow-hidden" side="top">
@@ -181,7 +199,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               <div className="flex items-center justify-between text-white">
                 <div className="flex items-center gap-2">
                   <Calculator className="w-4 h-4 text-primary" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">Consolidar {label}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest">Colagem via Calculadora: {title}</p>
                 </div>
                 {previewRows.length > 0 && (
                   <span className="text-[9px] font-black text-primary bg-primary/10 px-2 py-1 rounded-md">
@@ -196,31 +214,16 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                 className="bg-slate-800 border-slate-700 text-[9px] font-mono h-32 resize-none text-slate-300 rounded-xl"
               />
               <Button onClick={consolidateField} disabled={previewRows.length === 0} className="w-full h-12 font-black uppercase text-[10px] bg-primary rounded-xl">
-                Confirmar e Popular Tabela
+                Processar e Atualizar Tabela
               </Button>
             </div>
           </PopoverContent>
         </Popover>
       </div>
-      <div className={cn("text-sm font-bold font-mono py-1 px-1 rounded", color)}>
-        {(formData[field] as number || 0).toLocaleString('pt-BR')}
-      </div>
     </div>
   );
 
-  const SectionHeader = ({ icon: Icon, title, tableField }: { icon: any, title: string, tableField?: keyof EntidadeSaldo }) => (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 text-slate-400" />
-        <h3 className="text-[10px] font-black uppercase text-slate-900 tracking-[0.2em]">{title}</h3>
-      </div>
-      {tableField && (formData[tableField] as any[])?.length > 0 && (
-        <Button variant="ghost" size="sm" onClick={() => clearTable(tableField)} className="text-[8px] font-black text-rose-500 uppercase h-6">
-          <Trash2 className="w-3 h-3 mr-1" /> Limpar
-        </Button>
-      )}
-    </div>
-  );
+  if (!entity) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -230,7 +233,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           <DialogDescription>Gestão detalhada de movimentações técnicas e saldos auditados.</DialogDescription>
         </DialogHeader>
         
-        {/* Cabeçalho Fixo */}
         <div className="bg-slate-900 p-8 text-white shrink-0">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -254,44 +256,45 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </div>
 
-        {/* Área de Rolagem Principal */}
         <ScrollArea className="flex-1">
           <div className="p-8 space-y-10">
-            {/* Consolidação de Saldos */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <TableIcon className="w-5 h-5 text-slate-400" />
-                  <h3 className="text-[11px] font-black uppercase text-slate-900 tracking-[0.2em]">Consolidação de Saldos (Processamento por Guia)</h3>
+                  <h3 className="text-[11px] font-black uppercase text-slate-900 tracking-[0.2em]">Consolidação de Saldos (Resumo Ledger)</h3>
                 </div>
                 <div className="bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100 flex items-center gap-2">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Calculadora atualiza automaticamente as tabelas abaixo</p>
+                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Saldos atualizados conforme colagem nas tabelas abaixo</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-sm bg-white">
-                <SaldoField label="Originação" field="originacao" color="text-slate-900" />
-                <SaldoField label="Movimentação" field="movimentacao" color="text-rose-600" />
-                <SaldoField label="Aposentado" field="aposentado" color="text-slate-600" />
-                <SaldoField label="Bloqueado" field="bloqueado" color="text-amber-600" />
-                <SaldoField label="Aquisição" field="aquisicao" color="text-emerald-600" />
-                <SaldoField label="Ajuste IMEI" field="saldoAjustarImei" color="text-indigo-600" />
-                <div className="bg-slate-50 p-4 space-y-2 border-l border-slate-200">
-                  <Label className="text-[8px] font-black uppercase text-slate-400 tracking-tighter block">Auditado</Label>
-                  <div className="text-sm font-black font-mono text-primary">
-                    {(formData.saldoFinalAtual || 0).toLocaleString('pt-BR')}
+                {[
+                  { label: "Originação", val: formData.originacao, color: "text-slate-900" },
+                  { label: "Movimentação", val: formData.movimentacao, color: "text-rose-600" },
+                  { label: "Aposentado", val: formData.aposentado, color: "text-slate-600" },
+                  { label: "Bloqueado", val: formData.bloqueado, color: "text-amber-600" },
+                  { label: "Aquisição", val: formData.aquisicao, color: "text-emerald-600" },
+                  { label: "Ajuste IMEI", val: formData.saldoAjustarImei, color: "text-indigo-600" },
+                  { label: "Legado", val: formData.saldoLegadoTotal, color: "text-slate-400" }
+                ].map((s, idx) => (
+                  <div key={idx} className="bg-white p-4 space-y-2 border-r border-slate-100 last:border-0">
+                    <Label className="text-[8px] font-black uppercase text-slate-400 tracking-tighter block">{s.label}</Label>
+                    <div className={cn("text-sm font-bold font-mono", s.color)}>
+                      {(s.val || 0).toLocaleString('pt-BR')}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Tabelas de Histórico */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-10">
               {/* Originação */}
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col min-h-[350px]">
-                <SectionHeader icon={Database} title="Histórico de Originação" tableField="tabelaOriginacao" />
-                <div className="flex-1 rounded-xl border border-slate-100 overflow-hidden">
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col min-h-[400px]">
+                <SectionHeader icon={Database} title="Histórico de Originação" tableField="tabelaOriginacao" balanceField="originacao" />
+                <div className="flex-1 rounded-xl border border-slate-100 overflow-hidden bg-slate-50/30">
                   <Table>
                     <TableHeader className="bg-slate-50">
                       <TableRow className="h-10">
@@ -303,10 +306,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                     </TableHeader>
                     <TableBody>
                       {(!formData.tabelaOriginacao || formData.tabelaOriginacao.length === 0) ? (
-                        <TableRow><TableCell colSpan={4} className="h-48 text-center text-[9px] font-bold text-slate-300 uppercase">Aguardando dados de Originação</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={4} className="h-64 text-center text-[9px] font-bold text-slate-300 uppercase italic">Aguardando colagem de dados na calculadora de originação</TableCell></TableRow>
                       ) : (
                         formData.tabelaOriginacao.map((row, i) => (
-                          <TableRow key={i} className="h-8 border-b border-slate-50">
+                          <TableRow key={i} className="h-8 border-b border-slate-50 hover:bg-emerald-50/20">
                             <TableCell className="py-1 text-[9px] font-mono">{row.dist}</TableCell>
                             <TableCell className="py-1 text-[9px] text-slate-500">{row.data}</TableCell>
                             <TableCell className="py-1 text-[9px] truncate max-w-[120px]">{row.destino}</TableCell>
@@ -320,9 +323,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               </div>
 
               {/* Movimentações */}
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col min-h-[350px]">
-                <SectionHeader icon={Database} title="Histórico de Movimentações" tableField="tabelaMovimentacao" />
-                <div className="flex-1 rounded-xl border border-slate-100 overflow-hidden">
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col min-h-[400px]">
+                <SectionHeader icon={Database} title="Histórico de Movimentações" tableField="tabelaMovimentacao" balanceField="movimentacao" />
+                <div className="flex-1 rounded-xl border border-slate-100 overflow-hidden bg-slate-50/30">
                   <Table>
                     <TableHeader className="bg-slate-50">
                       <TableRow className="h-10">
@@ -334,10 +337,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                     </TableHeader>
                     <TableBody>
                       {(!formData.tabelaMovimentacao || formData.tabelaMovimentacao.length === 0) ? (
-                        <TableRow><TableCell colSpan={4} className="h-48 text-center text-[9px] font-bold text-slate-300 uppercase">Aguardando dados de Movimentação</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={4} className="h-64 text-center text-[9px] font-bold text-slate-300 uppercase italic">Aguardando colagem de dados na calculadora de movimentação</TableCell></TableRow>
                       ) : (
                         formData.tabelaMovimentacao.map((row, i) => (
-                          <TableRow key={i} className="h-8 border-b border-slate-50">
+                          <TableRow key={i} className="h-8 border-b border-slate-50 hover:bg-rose-50/20">
                             <TableCell className="py-1 text-[9px] font-mono">{row.dist}</TableCell>
                             <TableCell className="py-1 text-[9px] text-slate-500">{row.data}</TableCell>
                             <TableCell className="py-1 text-[9px] truncate max-w-[120px]">{row.destino}</TableCell>
@@ -351,9 +354,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               </div>
 
               {/* IMEI */}
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col min-h-[350px]">
-                <SectionHeader icon={Database} title="Detalhamento IMEI" tableField="tabelaImei" />
-                <div className="flex-1 rounded-xl border border-slate-100 overflow-hidden">
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col min-h-[400px]">
+                <SectionHeader icon={Database} title="Detalhamento IMEI" tableField="tabelaImei" balanceField="saldoAjustarImei" />
+                <div className="flex-1 rounded-xl border border-slate-100 overflow-hidden bg-slate-50/30">
                   <Table>
                     <TableHeader className="bg-slate-50">
                       <TableRow className="h-10">
@@ -365,10 +368,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                     </TableHeader>
                     <TableBody>
                       {(!formData.tabelaImei || formData.tabelaImei.length === 0) ? (
-                        <TableRow><TableCell colSpan={4} className="h-48 text-center text-[9px] font-bold text-slate-300 uppercase">Aguardando dados de IMEI</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={4} className="h-64 text-center text-[9px] font-bold text-slate-300 uppercase italic">Aguardando colagem de dados na calculadora de IMEI</TableCell></TableRow>
                       ) : (
                         formData.tabelaImei.map((row, i) => (
-                          <TableRow key={i} className="h-8 border-b border-slate-50">
+                          <TableRow key={i} className="h-8 border-b border-slate-50 hover:bg-indigo-50/20">
                             <TableCell className="py-1 text-[9px] font-mono">{row.dist}</TableCell>
                             <TableCell className="py-1 text-[9px] text-slate-500">{row.data}</TableCell>
                             <TableCell className="py-1 text-[9px] truncate max-w-[120px]">{row.destino}</TableCell>
@@ -382,9 +385,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               </div>
 
               {/* Legado */}
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col min-h-[350px]">
-                <SectionHeader icon={Database} title="Extrato Legado Auditado" tableField="tabelaLegado" />
-                <div className="flex-1 rounded-xl border border-slate-100 overflow-hidden">
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col min-h-[400px]">
+                <SectionHeader icon={Database} title="Extrato Legado Auditado" tableField="tabelaLegado" balanceField="saldoLegadoTotal" />
+                <div className="flex-1 rounded-xl border border-slate-100 overflow-hidden bg-slate-50/30">
                   <Table>
                     <TableHeader className="bg-slate-50">
                       <TableRow className="h-10">
@@ -395,10 +398,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                     </TableHeader>
                     <TableBody>
                       {(!formData.tabelaLegado || formData.tabelaLegado.length === 0) ? (
-                        <TableRow><TableCell colSpan={3} className="h-48 text-center text-[9px] font-bold text-slate-300 uppercase">Aguardando extrato legado</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={3} className="h-64 text-center text-[9px] font-bold text-slate-300 uppercase italic">Aguardando colagem de dados na calculadora de legado</TableCell></TableRow>
                       ) : (
                         formData.tabelaLegado.map((row, i) => (
-                          <TableRow key={i} className="h-8 border-b border-slate-50">
+                          <TableRow key={i} className="h-8 border-b border-slate-50 hover:bg-slate-50">
                             <TableCell className="py-1 text-[9px] font-black text-slate-500 uppercase">{row.plataforma}</TableCell>
                             <TableCell className="py-1 text-right font-mono text-[9px] font-black text-primary">{row.disponivel?.toLocaleString('pt-BR')}</TableCell>
                             <TableCell className="py-1 text-right font-mono text-[9px] text-rose-400">{row.aposentado?.toLocaleString('pt-BR')}</TableCell>
@@ -413,7 +416,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </ScrollArea>
 
-        {/* Rodapé Fixo */}
         <div className="p-8 border-t border-slate-200 bg-white flex justify-between items-center shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="px-10 h-16 font-black uppercase text-[10px] text-slate-400">Descartar</Button>
           <Button onClick={handleIndividualSave} className="px-16 h-20 rounded-3xl font-black uppercase text-sm tracking-[0.2em] shadow-2xl shadow-primary/30 bg-primary hover:bg-primary/90 transition-all active:scale-95">
