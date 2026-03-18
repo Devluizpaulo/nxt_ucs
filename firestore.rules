@@ -1,16 +1,29 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    /**
-     * REGRA GLOBAL DE AUDITORIA
-     * Conforme solicitado: Se o usuário estiver autenticado, ele possui 
-     * permissão total de leitura e escrita em todo o Ledger.
-     */
-    match /{document=**} {
+    // Regra explícita para a coleção de pedidos e suas subcoleções
+    match /pedidos/{pedidoId} {
+      allow read, write: if request.auth != null;
+      
+      match /movimentos/{movimentoId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Regra para produtores
+    match /produtores/{produtorId} {
       allow read, write: if request.auth != null;
     }
     
+    // Regra para associações
+    match /associacoes/{associacaoId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Regra global de segurança: permite acesso se o usuário estiver autenticado
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
