@@ -17,7 +17,8 @@ import {
   Printer,
   ArrowRightLeft,
   Calculator,
-  FileText
+  FileText,
+  QrCode
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { MovementList } from "./MovementList";
@@ -198,8 +199,116 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           <DialogDescription>Detalhamento técnico de rastreabilidade e conferência blockchain.</DialogDescription>
         </DialogHeader>
 
-        {/* CABEÇALHO TÉCNICO - TEMA DARK */}
-        <div className="bg-[#0B0F1A] p-10 shrink-0 text-white relative">
+        {/* CONTEÚDO IMPRIMÍVEL (CERTIFICADO DE RASTREABILIDADE) */}
+        <div className="printable-certificate hidden print:block">
+          {/* Header */}
+          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8 mb-10">
+            <div>
+               <h1 className="text-[52px] font-black text-[#E6A623] leading-none tracking-tighter">bmv</h1>
+            </div>
+            <div className="text-right">
+              <h2 className="text-[20px] font-black uppercase tracking-tight text-slate-900">Certificado de Rastreabilidade</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Protocolo de Auditoria: {order.id}</p>
+              <p className="text-[9px] text-slate-400 font-mono mt-0.5">{new Date().toLocaleString('pt-BR')}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-16 mb-12">
+            {/* Asset ID Column */}
+            <div className="space-y-6">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">Identificação do Ativo</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">Pedido ID:</span>
+                  <div className="px-5 py-1.5 bg-[#E6F3F0] rounded-full text-primary font-black text-xs">
+                    {order.id}
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <p className="text-[11px] font-bold text-slate-900"><span className="text-slate-400 font-medium uppercase text-[10px]">Data de Registro:</span> {new Date(order.data).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-[11px] font-bold text-slate-900"><span className="text-slate-400 font-medium uppercase text-[10px]">Empresa/Origem:</span> {order.empresa}</p>
+                  <p className="text-[11px] font-bold text-slate-900"><span className="text-slate-400 font-medium uppercase text-[10px]">CNPJ:</span> <span className="text-[#734DCC] underline decoration-1 underline-offset-2">{order.cnpj}</span></p>
+                  <p className="text-[11px] font-bold text-slate-900"><span className="text-slate-400 font-medium uppercase text-[10px]">Programa:</span> {order.programa}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Audit Column */}
+            <div className="space-y-6">
+               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">Auditoria Digital</h3>
+               <div className="flex justify-between items-start">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Quantidade UCS:</p>
+                      <p className="text-[28px] font-black text-slate-900 leading-none">{order.quantidade.toLocaleString('pt-BR')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Valor Auditado:</p>
+                      <p className="text-[20px] font-black text-slate-900 leading-none">
+                        {order.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </p>
+                    </div>
+                    <p className="text-[10px] text-[#734DCC] font-bold underline decoration-1 underline-offset-2 break-all max-w-[150px]">
+                      {order.linkNxt || 'VALIDAÇÃO EM PROCESSAMENTO'}
+                    </p>
+                  </div>
+                  <div className="w-24 h-24 border border-slate-100 rounded-xl flex items-center justify-center bg-slate-50">
+                    <QrCode className="w-16 h-16 text-slate-200" />
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          {/* History Section */}
+          <div className="space-y-4">
+             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 border-b border-slate-100 pb-2">Histórico de Rastreabilidade (Ledger Records)</h3>
+             <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <table className="w-full text-left text-[10px]">
+                  <thead className="bg-[#F8FAFC]">
+                    <tr className="border-b border-slate-200">
+                      <th className="px-4 py-3 font-black uppercase tracking-widest text-[#734DCC]">Categoria</th>
+                      <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-400">Origem do Ativo</th>
+                      <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-400">Destino</th>
+                      <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-400 text-right">Volume (UCS)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movimentos && movimentos.length > 0 ? movimentos.map((mov, i) => (
+                      <tr key={i} className="border-b border-slate-100 last:border-0">
+                        <td className="px-4 py-3 font-bold uppercase">{mov.tipo}</td>
+                        <td className="px-4 py-3 text-slate-600">{mov.origem}</td>
+                        <td className="px-4 py-3 text-slate-600">{mov.destino}</td>
+                        <td className="px-4 py-3 text-right font-black">{mov.quantidade.toLocaleString('pt-BR')}</td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-10 text-center text-slate-300 font-bold uppercase italic tracking-widest">Aguardando Importação de Ledger Records</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+             </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-auto pt-20 flex justify-between items-end">
+            <div className="flex items-center gap-3">
+               <div className="w-10 h-10 bg-[#E6F9F3] rounded-full flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6 text-primary" />
+               </div>
+               <p className="text-[10px] font-black uppercase tracking-widest text-primary">Integridade Verificada</p>
+            </div>
+            <div className="text-right space-y-2">
+               <div className="w-64 border-t border-slate-900 pt-2">
+                 <p className="text-[10px] font-black uppercase text-slate-900">Auditor de Conformidade BMV</p>
+                 <p className="text-[8px] font-bold text-slate-400 uppercase">Documento assinado digitalmente</p>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CABEÇALHO TÉCNICO - TEMA DARK (UI CONSOLE) */}
+        <div className="bg-[#0B0F1A] p-10 shrink-0 text-white relative print:hidden">
           <div className="flex justify-between items-start mb-12">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 mb-3">
@@ -234,7 +343,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           </div>
         </div>
 
-        <ScrollArea className="flex-1 bg-white">
+        <ScrollArea className="flex-1 bg-white print:hidden">
           <div className="p-10 space-y-14">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                {/* Sessão de Vinculação */}
@@ -290,15 +399,15 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
           </div>
         </ScrollArea>
 
-        {/* RODAPÉ DE AÇÕES */}
-        <div className="p-8 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
+        {/* RODAPÉ DE AÇÕES (CONSOLE) */}
+        <div className="p-8 border-t border-slate-100 bg-white flex items-center justify-between shrink-0 print:hidden">
           <Button variant="ghost" className="text-[11px] font-black uppercase text-rose-500 hover:bg-rose-50 hover:text-rose-600 px-8 rounded-xl h-14" onClick={() => onDeleteOrder(order.id)}>
             Remover Registro Permanente
           </Button>
           
           <div className="flex gap-4">
             <Button variant="outline" onClick={handlePrint} className="h-14 px-10 rounded-2xl border-slate-200 bg-slate-50/50 font-black uppercase text-[11px] tracking-widest text-slate-700 hover:bg-white transition-all">
-              <Printer className="w-4 h-4 mr-2" /> Gerar Relatório PDF
+              <Printer className="w-4 h-4 mr-2" /> Gerar Certificado PDF
             </Button>
             <Button onClick={handleSaveAudit} className="h-14 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[11px] tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-[0.98]">
               <Save className="w-4 h-4 mr-2" /> Finalizar Auditoria
