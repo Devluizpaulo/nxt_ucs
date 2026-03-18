@@ -89,15 +89,13 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     };
 
     lines.forEach((line, index) => {
-      const parts = line.split('\t').map(p => p.trim());
-      
-      // Filtro de cabeçalho inteligente: apenas se for a primeira linha e não começar com número
-      if (index === 0) {
-        const firstCell = parts[0].toLowerCase();
-        const isHeader = firstCell.includes('data') || firstCell.includes('dist') || firstCell.includes('usuário') || firstCell.includes('ano');
-        const isNumericId = /^\d+$/.test(parts[0]);
-        if (isHeader && !isNumericId) return;
-      }
+      // Divide por TAB ou múltiplos espaços
+      const parts = line.split(/[\t\s]{2,}/).map(p => p.trim()).filter(p => p !== "");
+      if (parts.length === 0) return;
+
+      // Filtro de cabeçalho: ignora se a linha contiver palavras típicas de header e não tiver muitos números
+      const isHeader = (line.toLowerCase().includes('data') || line.toLowerCase().includes('dist') || line.toLowerCase().includes('usuário')) && !/^\d+/.test(line);
+      if (isHeader && index === 0) return;
 
       if (activePasteField === 'tabelaAquisicao') {
         const match = line.match(/(\d{4})[^\d]+(\d+)/);
@@ -110,10 +108,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
         }
       } else if (activePasteField === 'tabelaLegado') {
         if (parts.length < 5) return;
-        const disp = parseBRL(parts[4]);
-        const res = parseBRL(parts[5]);
-        const bloq = parts.length > 6 ? parseBRL(parts[6]) : 0;
-        const apos = parts.length > 7 ? parseBRL(parts[7]) : 0;
+        const disp = parseBRL(parts[parts.length - 4]);
+        const res = parseBRL(parts[parts.length - 3]);
+        const bloq = parseBRL(parts[parts.length - 2]);
+        const apos = parseBRL(parts[parts.length - 1]);
         
         results.push({
           data: parts[0] || "N/A",
@@ -127,10 +125,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           valor: disp + res,
         });
       } else if (activePasteField === 'tabelaImei') {
-        if (parts.length < 5) return;
-        const nonInternalParts = parts.filter(p => p !== "");
-        const deb = parseBRL(nonInternalParts[nonInternalParts.length - 1]);
-        const cred = parseBRL(nonInternalParts[nonInternalParts.length - 2]);
+        if (parts.length < 4) return;
+        const deb = parseBRL(parts[parts.length - 1]);
+        const cred = parseBRL(parts[parts.length - 2]);
         results.push({ 
           dist: parts[0], 
           data: parts[1], 
@@ -140,10 +137,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           valorDebito: deb 
         });
       } else {
-        const nonInternalParts = parts.filter(p => p !== "");
-        if (nonInternalParts.length < 3) return;
-        
-        const valorRaw = nonInternalParts[nonInternalParts.length - 1];
+        // Para Originação e Movimentação: Pega o último elemento como valor
+        if (parts.length < 3) return;
+        const valorRaw = parts[parts.length - 1];
         const valor = parseBRL(valorRaw);
         const isNegative = activePasteField === 'tabelaMovimentacao';
         
@@ -174,7 +170,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-[1100px] h-[95vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[2.5rem]"
+        className="max-w-[1200px] h-[95vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[2.5rem]"
         onPointerDownOutside={(e) => { if (activePasteField) e.preventDefault(); }}
         onInteractOutside={(e) => { if (activePasteField) e.preventDefault(); }}
       >
@@ -238,54 +234,60 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         )}
 
-        <div className="bg-[#0F172A] px-12 py-10 shrink-0 flex justify-between items-end">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-primary" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Auditoria de Rastreabilidade BMV</span>
+        {/* CABEÇALHO BMV PREMIUM (HIGH FIDELITY) */}
+        <div className="bg-[#0F172A] px-12 py-10 shrink-0">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
             </div>
-            <div>
-              <h2 className="text-3xl font-black text-white tracking-tight leading-none mb-3">{entity.nome}</h2>
-              <div className="flex gap-10">
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Documento de Origem</span>
-                  <span className="text-sm font-mono font-bold text-slate-300 tracking-tighter">{entity.documento}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Estado (UF)</span>
-                  <span className="text-sm font-bold text-slate-300">{entity.uf || "MT"}</span>
-                </div>
-              </div>
-            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Auditoria de Rastreabilidade BMV</span>
           </div>
 
-          <div className="flex gap-10 text-right">
-            <div className="flex flex-col items-end">
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Saldo Legado (REF)</span>
-              <div className="flex items-baseline justify-end gap-2 text-amber-500">
-                <span className="text-3xl font-black tracking-tighter">{(formData.saldoLegadoTotal || 0).toLocaleString('pt-BR')}</span>
-                <span className="text-sm font-black opacity-30">UCS</span>
+          <div className="flex justify-between items-end">
+            <div className="space-y-4">
+              <h2 className="text-4xl font-black text-white tracking-tight leading-tight uppercase max-w-[400px]">
+                {entity.nome}
+              </h2>
+              <div className="flex gap-10">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1">Documento de Origem</span>
+                  <span className="text-base font-mono font-bold text-slate-300 tracking-tighter">{entity.documento}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1">Estado (UF)</span>
+                  <span className="text-base font-bold text-slate-300">{entity.uf || "MT"}</span>
+                </div>
               </div>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Ajuste IMEI (PENDÊNCIA)</span>
-              <div className="flex items-baseline justify-end gap-2 text-indigo-400">
-                <span className="text-3xl font-black tracking-tighter">{(formData.saldoAjustarImei || 0).toLocaleString('pt-BR')}</span>
-                <span className="text-sm font-black opacity-30">UCS</span>
+
+            <div className="flex gap-12 text-right">
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Saldo Legado (REF)</span>
+                <div className="flex items-baseline justify-end gap-2 text-amber-500">
+                  <span className="text-5xl font-black tracking-tighter leading-none">{(formData.saldoLegadoTotal || 0).toLocaleString('pt-BR')}</span>
+                  <span className="text-sm font-black opacity-30">UCS</span>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Saldo Final Auditado</span>
-              <div className="flex items-baseline justify-end gap-3 text-primary">
-                <span className="text-6xl font-black tracking-tighter">{(formData.saldoFinalAtual || 0).toLocaleString('pt-BR')}</span>
-                <span className="text-2xl font-black opacity-30">UCS</span>
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Ajuste IMEI (PENDÊNCIA)</span>
+                <div className="flex items-baseline justify-end gap-2 text-indigo-400/80">
+                  <span className="text-5xl font-black tracking-tighter leading-none">{(formData.saldoAjustarImei || 0).toLocaleString('pt-BR')}</span>
+                  <span className="text-sm font-black opacity-30">UCS</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Saldo Final Auditado</span>
+                <div className="flex items-baseline justify-end gap-3 text-primary">
+                  <span className="text-7xl font-black tracking-tighter leading-none">{(formData.saldoFinalAtual || 0).toLocaleString('pt-BR')}</span>
+                  <span className="text-2xl font-black opacity-30">UCS</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="p-12 space-y-12">
+          <div className="p-12 space-y-16">
             <SectionTechnical 
               title="Originação de Ativos"
               icon={TrendingUp}
