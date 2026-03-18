@@ -10,9 +10,9 @@ import {
   Shield, 
   Key, 
   Loader2, 
-  ShieldCheck,
   Trash2,
-  UserPlus
+  UserPlus,
+  ShieldCheck
 } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,6 @@ export default function SettingsPage() {
     const mockUsers: AppUser[] = [
       { id: "U-001", nome: "ADMIN LEDGERTRUST", email: "admin@bmv.global", role: "admin", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
       { id: "U-002", nome: "AUDITOR DE UCS", email: "auditor@bmv.global", role: "auditor", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
-      // Incluir o usuário atual caso não esteja na lista para teste
       ...(user?.email ? [{ id: user.uid, nome: user.email.split('@')[0].toUpperCase(), email: user.email, role: 'auditor' as const, status: 'ativo' as const, ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() }] : [])
     ];
     mockUsers.forEach(u => batch.set(doc(firestore, "users", u.id), u));
@@ -81,84 +80,76 @@ export default function SettingsPage() {
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* HEADER PADRÃO VISUAL */}
-        <header className="h-20 bg-white px-10 flex items-center justify-between border-b border-slate-100 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-[#734DCC]/10 rounded-xl flex items-center justify-center">
-              <Settings className="w-5 h-5 text-[#734DCC]" />
+        <header className="h-24 bg-white px-12 flex items-center justify-between border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 bg-[#734DCC]/10 rounded-2xl flex items-center justify-center">
+              <Settings className="w-6 h-6 text-[#734DCC]" />
             </div>
-            <h1 className="text-[22px] font-black uppercase tracking-[0.1em] text-slate-900">Configurações</h1>
+            <div>
+              <h1 className="text-[24px] font-black uppercase tracking-[0.1em] text-slate-900 leading-none">Configurações</h1>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão de Governança LedgerTrust</p>
+            </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <div className="text-right">
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Auditor Autenticado</p>
-              <p className="text-sm font-bold text-slate-900 leading-none">{user.email}</p>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] leading-none mb-1.5">Auditor Autenticado</p>
+              <p className="text-[14px] font-bold text-slate-900 leading-none">{user.email}</p>
             </div>
-            <div className="w-12 h-12 bg-[#734DCC] rounded-full flex items-center justify-center text-white font-bold text-base shadow-lg shadow-indigo-100 uppercase">
+            <div className="w-14 h-14 bg-[#734DCC] rounded-full flex items-center justify-center text-white font-black text-lg shadow-xl shadow-indigo-100 uppercase">
               {userInitial}
             </div>
           </div>
         </header>
 
-        <div className="flex-1 p-10 overflow-y-auto">
+        <div className="flex-1 p-12 overflow-y-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="flex flex-col lg:flex-row gap-10">
-              {/* MENU LATERAL DE CONFIGURAÇÕES */}
-              <div className="w-full lg:w-72">
-                <TabsList className="flex flex-col h-auto bg-transparent p-0 space-y-3">
-                  <TabsTrigger value="perfil" className="w-full justify-start gap-4 h-16 px-8 rounded-2xl border-2 border-transparent data-[state=active]:border-[#734DCC] data-[state=active]:bg-white data-[state=active]:text-[#734DCC] text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all shadow-none">
-                    <User className="w-4 h-4" /> Meu Perfil
-                  </TabsTrigger>
-                  <TabsTrigger value="usuarios" className="w-full justify-start gap-4 h-16 px-8 rounded-2xl border-2 border-transparent data-[state=active]:border-[#734DCC] data-[state=active]:bg-white data-[state=active]:text-[#734DCC] text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all shadow-none">
-                    <Users className="w-4 h-4" /> Gerenciar Usuários
-                  </TabsTrigger>
-                  <TabsTrigger value="seguranca" className="w-full justify-start gap-4 h-16 px-8 rounded-2xl border-2 border-transparent data-[state=active]:border-[#734DCC] data-[state=active]:bg-white data-[state=active]:text-[#734DCC] text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all shadow-none">
-                    <Shield className="w-4 h-4" /> Segurança & Logs
-                  </TabsTrigger>
-                  <TabsTrigger value="api" className="w-full justify-start gap-4 h-16 px-8 rounded-2xl border-2 border-transparent data-[state=active]:border-[#734DCC] data-[state=active]:bg-white data-[state=active]:text-[#734DCC] text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all shadow-none">
-                    <Key className="w-4 h-4" /> Chaves de API
-                  </TabsTrigger>
+            <div className="flex flex-col lg:flex-row gap-12">
+              <div className="w-full lg:w-80">
+                <TabsList className="flex flex-col h-auto bg-transparent p-0 space-y-4">
+                  <SettingsTabTrigger value="perfil" icon={User} label="Meu Perfil" />
+                  <SettingsTabTrigger value="usuarios" icon={Users} label="Gerenciar Usuários" />
+                  <SettingsTabTrigger value="seguranca" icon={Shield} label="Segurança & Logs" />
+                  <SettingsTabTrigger value="api" icon={Key} label="Chaves de API" />
                 </TabsList>
               </div>
 
-              {/* CONTEÚDO DA PÁGINA */}
               <div className="flex-1">
                 <TabsContent value="perfil" className="mt-0">
-                  <Card className="rounded-[2.5rem] border-none shadow-sm p-12 bg-white">
-                    <div className="mb-10">
-                      <h2 className="text-[28px] font-black uppercase text-slate-900 leading-none mb-3">Perfil do Auditor</h2>
-                      <p className="text-sm font-medium text-slate-400">Informações de identificação no ecossistema BMV.</p>
+                  <Card className="rounded-[3rem] border-none shadow-sm p-14 bg-white">
+                    <div className="mb-12">
+                      <h2 className="text-[32px] font-black uppercase text-slate-900 leading-none mb-4">Perfil do Auditor</h2>
+                      <p className="text-sm font-medium text-slate-400">Informações de identificação técnica no ecossistema BMV.</p>
                     </div>
 
-                    <div className="flex items-center gap-8 mb-12">
-                      <div className="w-24 h-24 bg-slate-100 rounded-[2rem] flex items-center justify-center text-slate-300 text-4xl font-black">
+                    <div className="flex items-center gap-10 mb-14">
+                      <div className="w-28 h-28 bg-slate-50 border-2 border-slate-100 rounded-[2.5rem] flex items-center justify-center text-slate-300 text-5xl font-black">
                         {userInitial[0]}
                       </div>
-                      <div className="space-y-1">
-                        <h3 className="text-xl font-black text-slate-900">Auditor Responsável</h3>
-                        <p className="text-base text-slate-400 font-medium">{user.email}</p>
-                        <Badge variant="secondary" className="bg-[#E6F9F3] text-[#10B981] border-none font-black text-[10px] uppercase px-3 py-1 mt-2">
-                          Acesso Autorizado
+                      <div className="space-y-2">
+                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Auditor Responsável</h3>
+                        <p className="text-base text-slate-400 font-bold">{user.email}</p>
+                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-none font-black text-[11px] uppercase px-4 py-1.5 mt-3 rounded-full">
+                          Acesso Autorizado ✓
                         </Badge>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-3">
-                        <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</Label>
-                        <Input defaultValue={user.email?.split('@')[0].toUpperCase()} className="h-14 bg-slate-50/50 border-slate-100 rounded-2xl px-6 font-bold text-slate-900" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div className="space-y-3.5">
+                        <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Nome Completo</Label>
+                        <Input defaultValue={user.email?.split('@')[0].toUpperCase()} className="h-16 bg-slate-50/50 border-slate-100 rounded-2xl px-8 font-black text-[14px] text-slate-900 uppercase" />
                       </div>
-                      <div className="space-y-3">
-                        <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Cargo / Função</Label>
-                        <Input defaultValue="Auditor de UCS" className="h-14 bg-slate-50/50 border-slate-100 rounded-2xl px-6 font-bold text-slate-900" />
+                      <div className="space-y-3.5">
+                        <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Cargo / Função</Label>
+                        <Input defaultValue="Auditor de UCS" className="h-16 bg-slate-50/50 border-slate-100 rounded-2xl px-8 font-black text-[14px] text-slate-900 uppercase" />
                       </div>
-                      <div className="space-y-3 col-span-1">
-                        <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">E-mail Corporativo</Label>
-                        <Input value={user.email || ""} disabled className="h-14 bg-slate-50/80 border-none rounded-2xl px-6 font-bold text-slate-400 cursor-not-allowed" />
+                      <div className="space-y-3.5 col-span-1">
+                        <Label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">E-mail Corporativo</Label>
+                        <Input value={user.email || ""} disabled className="h-16 bg-slate-50 border-none rounded-2xl px-8 font-bold text-slate-400 cursor-not-allowed" />
                       </div>
                       <div className="flex items-end">
-                        <Button className="h-14 w-full rounded-2xl bg-[#734DCC] hover:bg-[#633fb9] text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-indigo-100">
+                        <Button className="h-16 w-full rounded-2xl bg-[#734DCC] hover:bg-[#633fb9] text-white font-black uppercase text-[12px] tracking-[0.2em] shadow-2xl shadow-indigo-100 transition-all active:scale-95">
                           Salvar Alterações
                         </Button>
                       </div>
@@ -166,81 +157,81 @@ export default function SettingsPage() {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="usuarios" className="mt-0 space-y-8">
+                <TabsContent value="usuarios" className="mt-0 space-y-10">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h2 className="text-[28px] font-black uppercase text-slate-900 leading-none mb-3">Gestão de Usuários</h2>
-                      <p className="text-sm font-medium text-slate-400">Controle de acesso e permissões administrativas.</p>
+                      <h2 className="text-[32px] font-black uppercase text-slate-900 leading-none mb-4">Gestão de Auditores</h2>
+                      <p className="text-sm font-medium text-slate-400">Controle de acesso e permissões administrativas da rede.</p>
                     </div>
                     <div className="flex gap-4">
                       {(!appUsers || appUsers.length === 0) && (
-                        <Button onClick={handleSeedUsers} variant="outline" className="h-14 px-8 rounded-2xl text-[12px] font-black uppercase border-dashed">
+                        <Button onClick={handleSeedUsers} variant="outline" className="h-16 px-10 rounded-2xl text-[12px] font-black uppercase border-dashed border-slate-300">
                           Gerar Usuários Teste
                         </Button>
                       )}
-                      <Button className="h-14 px-10 rounded-2xl bg-[#734DCC] text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-indigo-100 flex gap-2">
-                        <UserPlus className="w-5 h-5" /> Novo Auditor
+                      <Button className="h-16 px-12 rounded-2xl bg-[#734DCC] text-white font-black uppercase text-[12px] tracking-[0.2em] shadow-2xl shadow-indigo-100 flex gap-3 transition-all active:scale-95">
+                        <UserPlus className="w-6 h-6" /> Novo Auditor
                       </Button>
                     </div>
                   </div>
 
-                  <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white min-h-[400px]">
+                  <Card className="rounded-[3rem] border-none shadow-sm overflow-hidden bg-white min-h-[500px]">
                     <Table>
                       <TableHeader className="bg-slate-50/50">
-                        <TableRow className="border-b border-slate-100 h-16">
-                          <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 pl-10">Auditor</TableHead>
-                          <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Nível</TableHead>
-                          <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Status</TableHead>
-                          <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right pr-10">Ações</TableHead>
+                        <TableRow className="border-b border-slate-100 h-20">
+                          <TableHead className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 pl-12">Auditor</TableHead>
+                          <TableHead className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Nível</TableHead>
+                          <TableHead className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Status</TableHead>
+                          <TableHead className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 text-right pr-12">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {isUsersLoading ? (
                           <TableRow>
-                            <TableCell colSpan={4} className="h-60 text-center">
-                              <div className="flex flex-col items-center gap-4">
-                                <Loader2 className="w-10 h-10 text-[#734DCC] animate-spin" />
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Sincronizando usuários...</span>
+                            <TableCell colSpan={4} className="h-80 text-center">
+                              <div className="flex flex-col items-center gap-6">
+                                <Loader2 className="w-12 h-12 text-[#734DCC] animate-spin" />
+                                <span className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em]">Sincronizando banco de auditores...</span>
                               </div>
                             </TableCell>
                           </TableRow>
                         ) : !appUsers || appUsers.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4} className="h-60 text-center">
-                              <div className="flex flex-col items-center gap-4 opacity-30">
-                                <Users className="w-12 h-12 text-slate-300" />
-                                <span className="text-[12px] font-black uppercase text-slate-400 tracking-widest">Nenhum auditor cadastrado</span>
+                            <TableCell colSpan={4} className="h-80 text-center">
+                              <div className="flex flex-col items-center gap-6 opacity-30">
+                                <Users className="w-16 h-16 text-slate-300" />
+                                <span className="text-[14px] font-black uppercase text-slate-400 tracking-[0.2em]">Nenhum auditor cadastrado</span>
                               </div>
                             </TableCell>
                           </TableRow>
                         ) : (
                           appUsers.map((item) => (
-                            <TableRow key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all h-24">
-                              <TableCell className="pl-10">
-                                <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black text-sm">
+                            <TableRow key={item.id} className="border-b border-slate-50 hover:bg-slate-50/80 transition-all h-28">
+                              <TableCell className="pl-12">
+                                <div className="flex items-center gap-5">
+                                  <div className="w-14 h-14 bg-slate-100 rounded-[1.25rem] flex items-center justify-center text-slate-400 font-black text-base">
                                     {item.nome ? item.nome.substring(0,1) : "U"}
                                   </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-[13px] font-black text-slate-900 uppercase tracking-tight">{item.nome || "AUDITOR"}</span>
-                                    <span className="text-[11px] text-slate-400 font-medium">{item.email}</span>
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-[14px] font-black text-slate-900 uppercase tracking-tight">{item.nome || "AUDITOR"}</span>
+                                    <span className="text-[11px] text-slate-400 font-bold">{item.email}</span>
                                   </div>
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] uppercase px-2 py-0.5">
+                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[10px] uppercase px-3 py-1 rounded-md">
                                   {item.role}
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <div className={cn("w-2 h-2 rounded-full", item.status === 'ativo' ? 'bg-emerald-500' : 'bg-slate-300')} />
-                                  <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">{item.status}</span>
+                                <div className="flex items-center gap-3">
+                                  <div className={cn("w-2.5 h-2.5 rounded-full", item.status === 'ativo' ? 'bg-emerald-500' : 'bg-slate-300')} />
+                                  <span className="text-[11px] font-black text-slate-600 uppercase tracking-[0.1em]">{item.status}</span>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right pr-10">
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(item.id)} className="text-slate-200 hover:text-rose-500 transition-colors h-10 w-10">
-                                  <Trash2 className="w-5 h-5" />
+                              <TableCell className="text-right pr-12">
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(item.id)} className="text-slate-200 hover:text-rose-500 transition-colors h-12 w-12 rounded-xl">
+                                  <Trash2 className="w-6 h-6" />
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -252,29 +243,29 @@ export default function SettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="seguranca" className="mt-0">
-                  <Card className="rounded-[2.5rem] border-none shadow-sm p-20 bg-white flex flex-col items-center justify-center text-center space-y-6">
-                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
-                      <ShieldCheck className="w-10 h-10 text-slate-200" />
+                  <Card className="rounded-[3rem] border-none shadow-sm p-24 bg-white flex flex-col items-center justify-center text-center space-y-8">
+                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center border-2 border-slate-100">
+                      <ShieldCheck className="w-12 h-12 text-slate-200" />
                     </div>
                     <div>
-                      <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Logs de Conformidade</h3>
-                      <p className="text-sm text-slate-300 font-medium">As gravações de auditoria estão ativas e sendo sincronizadas em tempo real.</p>
+                      <h3 className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Logs de Conformidade Técnica</h3>
+                      <p className="text-sm text-slate-400 font-medium max-w-sm mx-auto">As gravações de auditoria estão ativas e sendo sincronizadas em tempo real com o Ledger.</p>
                     </div>
                   </Card>
                 </TabsContent>
 
                 <TabsContent value="api" className="mt-0">
-                  <Card className="rounded-[2.5rem] border-none shadow-sm p-12 bg-white space-y-8">
+                  <Card className="rounded-[3rem] border-none shadow-sm p-14 bg-white space-y-10">
                     <div>
-                      <h2 className="text-[28px] font-black uppercase text-slate-900 leading-none mb-3">Integração Ledger</h2>
-                      <p className="text-sm font-medium text-slate-400">Configure o acesso via API para sistemas externos.</p>
+                      <h2 className="text-[32px] font-black uppercase text-slate-900 leading-none mb-4">Integração Ledger</h2>
+                      <p className="text-sm font-medium text-slate-400">Configure o acesso via API para sistemas externos de rastreabilidade.</p>
                     </div>
-                    <div className="bg-slate-50 p-8 rounded-2xl flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Chave de Produção</p>
-                        <p className="text-sm font-mono text-slate-600">lt_prod_********************************</p>
+                    <div className="bg-slate-50 p-10 rounded-[2rem] flex items-center justify-between border border-slate-100">
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Chave de Produção Ativa</p>
+                        <p className="text-base font-mono text-slate-600 font-bold">lt_prod_********************************</p>
                       </div>
-                      <Button variant="outline" className="h-12 px-6 rounded-xl text-[10px] font-black uppercase border-slate-200">Revogar Chave</Button>
+                      <Button variant="outline" className="h-14 px-8 rounded-2xl text-[11px] font-black uppercase border-slate-200 tracking-widest hover:bg-white">Revogar Chave</Button>
                     </div>
                   </Card>
                 </TabsContent>
@@ -284,5 +275,17 @@ export default function SettingsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function SettingsTabTrigger({ value, icon: Icon, label }: { value: string, icon: any, label: string }) {
+  return (
+    <TabsTrigger 
+      value={value} 
+      className="w-full justify-start gap-5 h-20 px-10 rounded-full border-2 border-transparent data-[state=active]:border-[#734DCC] data-[state=active]:bg-white data-[state=active]:text-[#734DCC] text-[12px] font-black uppercase tracking-[0.15em] text-slate-400 transition-all shadow-none group"
+    >
+      <Icon className="w-5 h-5 transition-colors group-data-[state=active]:text-[#734DCC]" />
+      {label}
+    </TabsTrigger>
   );
 }
