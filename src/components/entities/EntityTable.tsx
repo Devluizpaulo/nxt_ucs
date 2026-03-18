@@ -36,7 +36,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
     <>
       <div className="rounded-[2.5rem] border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
         <ScrollArea className="w-full">
-          <Table className="min-w-[1600px]">
+          <Table className="min-w-[1800px]">
             <TableHeader>
               <TableRow className="bg-slate-50/50 h-16 border-b border-slate-100">
                 <TableHead className="w-[60px] pl-8">
@@ -46,22 +46,23 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                     className="rounded-md border-slate-300"
                   />
                 </TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400">Usuário</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400">Documento</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Originação</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Movimentação</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Aposentado</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Bloqueado</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Aquisição (Ret.)</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Ajuste IMEI</TableHead>
-                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-900 text-right bg-slate-50">Saldo Final</TableHead>
-                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Status</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Usuário</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Documento</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Originação</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Movimentação</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Aposentado</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Bloqueado</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Aquisição</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Ajuste IMEI</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right bg-amber-50">Legado (REF)</TableHead>
+                <TableHead className="text-[11px] font-black uppercase tracking-widest text-primary text-right bg-emerald-50">Saldo Auditado</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-48 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                  <TableCell colSpan={12} className="h-48 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">
                     Nenhum registro encontrado nesta categoria
                   </TableCell>
                 </TableRow>
@@ -76,24 +77,25 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                       />
                     </TableCell>
                     <TableCell 
-                      className="font-black text-[10px] uppercase text-slate-900 max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors flex items-center gap-2"
+                      className="font-black text-[11px] uppercase text-slate-900 max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors flex items-center gap-2"
                       onClick={() => setEditingEntity(item)}
                     >
-                      {item.nome} <Search className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                      {item.nome} <Search className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100" />
                     </TableCell>
-                    <TableCell className="font-mono text-[9px] text-slate-500">{item.documento}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] font-bold">{formatUCS(item.originacao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-rose-500">{formatUCS(item.movimentacao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-slate-400">{formatUCS(item.aposentado)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-rose-400">{formatUCS(item.bloqueado)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-rose-500">{formatUCS(item.aquisicao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-indigo-600">{formatUCS(item.saldoAjustarImei)}</TableCell>
-                    <TableCell className="text-right font-mono font-black text-[12px] text-primary bg-slate-50">{formatUCS(item.saldoFinalAtual)} UCS</TableCell>
+                    <TableCell className="font-mono text-[10px] text-slate-500">{item.documento}</TableCell>
+                    <TableCell className="text-right font-mono text-[11px] font-bold">{formatUCS(item.originacao)}</TableCell>
+                    <TableCell className="text-right font-mono text-[11px] text-rose-500">{formatUCS(item.movimentacao)}</TableCell>
+                    <TableCell className="text-right font-mono text-[11px] text-slate-400">{formatUCS(item.aposentado)}</TableCell>
+                    <TableCell className="text-right font-mono text-[11px] text-rose-400">{formatUCS(item.bloqueado)}</TableCell>
+                    <TableCell className="text-right font-mono text-[11px] text-rose-500">{formatUCS(item.aquisicao)}</TableCell>
+                    <TableCell className="text-right font-mono text-[11px] text-indigo-600">{formatUCS(item.saldoAjustarImei)}</TableCell>
+                    <TableCell className="text-right font-mono font-bold text-[11px] text-amber-600 bg-amber-50/30">{formatUCS(item.saldoLegadoTotal)}</TableCell>
+                    <TableCell className="text-right font-mono font-black text-[13px] text-primary bg-emerald-50/30">{formatUCS(item.saldoFinalAtual)} UCS</TableCell>
                     <TableCell className="text-center py-4">
                       {item.status === 'disponivel' ? (
-                        <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[8px] font-black uppercase">Válido</Badge>
+                        <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[9px] font-black uppercase">Válido</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[8px] font-black uppercase">{item.status}</Badge>
+                        <Badge variant="outline" className="text-[9px] font-black uppercase">{item.status}</Badge>
                       )}
                     </TableCell>
                   </TableRow>
