@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -28,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
 import { collection, doc, deleteDoc, writeBatch, setDoc } from "firebase/firestore";
@@ -254,6 +253,7 @@ export default function SettingsPage() {
                         <DialogContent className="max-w-md bg-white rounded-3xl p-8 border-none">
                           <DialogHeader>
                             <DialogTitle className="text-xl font-black uppercase text-slate-900">Novo Auditor</DialogTitle>
+                            <DialogDescription className="text-slate-400 font-medium">Cadastre um novo membro para a equipe de auditoria.</DialogDescription>
                           </DialogHeader>
                           <div className="space-y-6 mt-6">
                             <div className="space-y-2">
@@ -298,6 +298,10 @@ export default function SettingsPage() {
                       {/* Modal de Sucesso e Compartilhamento */}
                       <Dialog open={showInviteResult} onOpenChange={setShowInviteResult}>
                         <DialogContent className="max-w-md bg-white rounded-[2.5rem] p-10 border-none shadow-2xl">
+                          <DialogHeader className="sr-only">
+                            <DialogTitle>Convite Gerado</DialogTitle>
+                            <DialogDescription>Link de acesso e opções de compartilhamento para o novo auditor.</DialogDescription>
+                          </DialogHeader>
                           <div className="flex flex-col items-center text-center space-y-6">
                             <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center">
                               <CheckCircle2 className="w-10 h-10 text-emerald-500" />
@@ -433,7 +437,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="bg-slate-50 p-10 rounded-[2rem] flex items-center justify-between border border-slate-100">
                       <div className="space-y-2">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Chave de Produção Ativa</p>
+                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Chave de Produção Ativa</p>
                         <p className="text-base font-mono text-slate-600 font-bold">lt_prod_********************************</p>
                       </div>
                       <Button variant="outline" className="h-14 px-8 rounded-2xl text-[11px] font-black uppercase border-slate-200 tracking-widest hover:bg-white">Revogar Chave</Button>

@@ -241,6 +241,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[1280px] w-[95vw] h-[95vh] p-0 border-none bg-white overflow-hidden flex flex-col rounded-[2.5rem] shadow-2xl">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Console de Auditoria de Saldo - {entity.nome}</DialogTitle>
+          <DialogDescription>Detalhamento técnico de conformidade e auditoria de UCS para {entity.nome}.</DialogDescription>
+        </DialogHeader>
         
         {/* CONTEÚDO PARA IMPRESSÃO (RELATÓRIO BUSINESS) */}
         <div className="printable-content hidden">
@@ -417,6 +421,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                 <DialogTitle className="text-xl font-black uppercase text-slate-900 flex items-center gap-3">
                   <Calculator className="w-6 h-6 text-primary" /> COLAGEM TÉCNICA
                 </DialogTitle>
+                <DialogDescription className="sr-only">Interface de colagem de dados estruturados para processamento em lote.</DialogDescription>
               </DialogHeader>
               <Textarea 
                 value={pasteData.raw} 
