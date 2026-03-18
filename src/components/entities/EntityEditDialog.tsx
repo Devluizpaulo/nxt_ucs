@@ -196,10 +196,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
         <div className="bg-[#0F172A] p-10 shrink-0 text-white relative">
           <div className="flex items-center gap-2 mb-6">
             <ShieldCheck className="w-4 h-4 text-primary" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-primary">SISTEMA LEDGERTRUST BMV</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">AUDITORIA BMV</span>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="flex justify-between items-start">
               <h2 className="text-3xl font-black leading-none tracking-tighter uppercase max-w-[800px]">
                 {entity.nome}
@@ -212,7 +212,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
             <div className="grid grid-cols-4 lg:grid-cols-8 gap-4 pt-6 border-t border-slate-800/50">
               <StatColumn label="ORIGINAÇÃO" value={formatUCS(formData.originacao)} color="slate" />
-              <StatColumn label="MOVIMENTAÇÃO" value={formatUCS(formData.movimentacao)} color="rose" prefix="-" />
+              <StatColumn label="MOVIMENTAÇÃO" value={formatUCS(formData.movimentacao)} color="rose" />
               <StatColumn label="APOSENTADO" value={formatUCS(formData.aposentado)} color="slate" />
               <StatColumn label="BLOQUEADO" value={formatUCS(formData.bloqueado)} color="rose" />
               <StatColumn label="AQUISIÇÃO" value={formatUCS(formData.aquisicao)} color="rose" />
@@ -334,7 +334,7 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
           <div>
             <h3 className="text-base font-black uppercase tracking-widest text-slate-900 leading-none">{title}</h3>
             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">
-              Consolidado da Seção: <span className={cn("font-black", color === 'rose' ? "text-rose-500" : (color === 'amber' ? "text-amber-600" : "text-emerald-600"))}>
+              CONSOLIDADO DA SEÇÃO: <span className={cn("font-black", color === 'rose' ? "text-rose-500" : (color === 'amber' ? "text-amber-600" : "text-emerald-600"))}>
                 {Math.abs(currentTotal).toLocaleString('pt-BR')} UCS
               </span>
             </p>
