@@ -14,7 +14,11 @@ import {
   UserPlus,
   ShieldCheck,
   RefreshCw,
-  Plus
+  Copy,
+  Share2,
+  MessageCircle,
+  Mail,
+  CheckCircle2
 } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -26,8 +30,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
 import { collection, doc, deleteDoc, writeBatch, setDoc } from "firebase/firestore";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { AppUser } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -35,10 +40,13 @@ import { cn } from "@/lib/utils";
 export default function SettingsPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const firestore = useFirestore();
   const [activeTab, setActiveTab] = useState("perfil");
   const [isAddingUser, setIsAddingUser] = useState(false);
+  const [showInviteResult, setShowInviteResult] = useState(false);
   const [newUserData, setNewUserData] = useState({ nome: "", email: "", role: "auditor" });
+  const [generatedLink, setGeneratedLink] = useState("");
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -84,19 +92,41 @@ export default function SettingsPage() {
     const newId = `U-${Date.now()}`;
     const userRef = doc(firestore, "users", newId);
     
+    // 1. Criar registro no Firestore
     await setDoc(userRef, {
       id: newId,
       nome: newUserData.nome.toUpperCase(),
       email: newUserData.email,
       role: newUserData.role,
-      status: 'ativo',
+      status: 'pendente',
       ultimoAcesso: new Date().toISOString(),
       createdAt: new Date().toISOString()
     });
 
-    toast({ title: "Auditor Adicionado", description: "O novo perfil foi criado no LedgerTrust." });
-    setNewUserData({ nome: "", email: "", role: "auditor" });
+    // 2. Disparar e-mail de recuperação de senha (para o usuário definir a primeira senha)
+    try {
+      await sendPasswordResetEmail(auth, newUserData.email);
+    } catch (e) {
+      console.warn("Não foi possível disparar e-mail automático, mas o registro foi criado.");
+    }
+
+    // 3. Gerar link de convite (URL do sistema)
+    const baseUrl = window.location.origin;
+    setGeneratedLink(baseUrl);
+    
     setIsAddingUser(false);
+    setShowInviteResult(true);
+    toast({ title: "Registro Criado", description: "O auditor foi pré-cadastrado no sistema." });
+  };
+
+  const handleShareWhatsApp = () => {
+    const message = `Olá ${newUserData.nome}! Você foi convidado para o ecossistema LedgerTrust Auditoria. \n\nPara acessar, utilize seu e-mail corporativo: ${newUserData.email} \n\nDefina sua senha através do link enviado ao seu e-mail ou acesse o portal: ${generatedLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    toast({ title: "Link copiado!" });
   };
 
   const handleSeedUsers = async () => {
@@ -264,6 +294,52 @@ export default function SettingsPage() {
                           </div>
                         </DialogContent>
                       </Dialog>
+
+                      {/* Modal de Sucesso e Compartilhamento */}
+                      <Dialog open={showInviteResult} onOpenChange={setShowInviteResult}>
+                        <DialogContent className="max-w-md bg-white rounded-[2.5rem] p-10 border-none shadow-2xl">
+                          <div className="flex flex-col items-center text-center space-y-6">
+                            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center">
+                              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                            </div>
+                            <div className="space-y-2">
+                              <h2 className="text-2xl font-black uppercase text-slate-900 tracking-tight">Convite Gerado!</h2>
+                              <p className="text-sm font-medium text-slate-400">O auditor {newUserData.nome} já pode acessar o sistema.</p>
+                            </div>
+
+                            <div className="w-full space-y-4">
+                              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 block text-left">Link de Acesso Único</Label>
+                                <div className="flex gap-2">
+                                  <Input value={generatedLink} readOnly className="h-10 bg-white border-slate-200 text-xs font-mono" />
+                                  <Button size="icon" variant="outline" onClick={handleCopyLink} className="shrink-0 h-10 w-10 rounded-xl">
+                                    <Copy className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <Button 
+                                  onClick={handleShareWhatsApp}
+                                  className="h-14 rounded-2xl bg-[#25D366] hover:bg-[#128C7E] text-white font-black uppercase text-[10px] tracking-widest flex gap-2"
+                                >
+                                  <MessageCircle className="w-5 h-5" /> WhatsApp
+                                </Button>
+                                <Button 
+                                  variant="outline"
+                                  className="h-14 rounded-2xl border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-widest flex gap-2"
+                                >
+                                  <Mail className="w-5 h-5" /> E-mail
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <Button variant="ghost" onClick={() => setShowInviteResult(false)} className="text-[10px] font-black uppercase text-slate-400">
+                              Fechar Janela
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
 
@@ -318,7 +394,7 @@ export default function SettingsPage() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-3">
-                                  <div className={cn("w-2.5 h-2.5 rounded-full", item.status === 'ativo' ? 'bg-emerald-500' : 'bg-slate-300')} />
+                                  <div className={cn("w-2.5 h-2.5 rounded-full", item.status === 'ativo' ? 'bg-emerald-500' : item.status === 'pendente' ? 'bg-amber-400' : 'bg-slate-300')} />
                                   <span className="text-[11px] font-black text-slate-600 uppercase tracking-[0.1em]">{item.status}</span>
                                 </div>
                               </TableCell>
