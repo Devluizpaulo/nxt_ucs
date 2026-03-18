@@ -6,11 +6,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { EntidadeSaldo, RegistroTabela } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, ShieldCheck, Calculator, History, Download, TrendingUp, ArrowRightLeft, CreditCard, X, Database } from "lucide-react";
+import { Save, ShieldCheck, Calculator, History, Download, TrendingUp, ArrowRightLeft, CreditCard, X, Database, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface EntityEditDialogProps {
   entity: EntidadeSaldo | null;
@@ -31,34 +32,24 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [entity]);
 
-  // Cálculo Dinâmico de Saldos baseados nos históricos
+  // Cálculo Dinâmico de Saldos
   useEffect(() => {
     const sumTable = (table?: RegistroTabela[]) => (table || []).reduce((acc, row) => acc + (row.valor || 0), 0);
     const sumField = (table?: RegistroTabela[], field: keyof RegistroTabela) => 
       (table || []).reduce((acc, row) => acc + (Number(row[field]) || 0), 0);
     
-    // Saldo Final Auditado: 
-    // (+) Originação
-    // (+) Movimentação (já vem negativa do parser)
-    // (-) Aquisição (VOLUME A SER RETIRADO conforme regra de auditoria 2018/2019)
-    // IMEI não entra no saldo, é apenas controle.
     const operationsTotal = 
       sumTable(formData.tabelaOriginacao) + 
       sumTable(formData.tabelaMovimentacao) - 
       sumTable(formData.tabelaAquisicao);
     
-    // Ajuste IMEI: Débito - Crédito (Pendência de estorno)
     const totalCreditoImei = sumField(formData.tabelaImei, 'valorCredito');
     const totalDebitoImei = sumField(formData.tabelaImei, 'valorDebito');
     const ajusteImei = Math.max(0, totalDebitoImei - totalCreditoImei);
 
-    // Saldo Legado: Valor de Referência (Disponível + Reservado)
     const legadoTotal = sumTable(formData.tabelaLegado);
-    
-    // Bloqueado e Aposentado vêm da tabela de legado
     const totalAposentado = sumField(formData.tabelaLegado, 'aposentado');
     const totalBloqueado = sumField(formData.tabelaLegado, 'bloqueado');
-    const totalAquisicao = sumTable(formData.tabelaAquisicao);
     
     setFormData(prev => ({ 
       ...prev, 
@@ -66,7 +57,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       saldoLegadoTotal: legadoTotal,
       aposentado: totalAposentado,
       bloqueado: totalBloqueado,
-      aquisicao: totalAquisicao,
+      aquisicao: sumTable(formData.tabelaAquisicao),
       movimentacao: sumTable(formData.tabelaMovimentacao),
       saldoAjustarImei: ajusteImei
     }));
@@ -78,7 +69,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     formData.tabelaLegado
   ]);
 
-  // Parser Heurístico para entrada de dados (Calculadora)
+  // Parser Heurístico para entrada de dados
   useEffect(() => {
     if (!pasteBuffer.trim()) {
       setPreviewRows([]);
@@ -89,7 +80,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const results: RegistroTabela[] = [];
 
     lines.forEach(line => {
-      // Ignorar cabeçalhos
       if (line.toLowerCase().includes('data') || line.toLowerCase().includes('usuário') || line.toLowerCase().includes('ano')) return;
 
       const parseBRL = (val: string) => {
@@ -128,8 +118,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       } else if (activePasteField === 'tabelaImei') {
         const parts = line.split('\t');
         if (parts.length < 5) return;
-        // Estrutura esperada: Dist | Data | Usuário Destino | [Vazio/Outros] | Crédito | Débito
-        // Frequentemente as colunas variam, buscamos os últimos 2 campos numéricos
         const cred = parseBRL(parts[parts.length - 2]);
         const deb = parseBRL(parts[parts.length - 1]);
         results.push({ 
@@ -148,6 +136,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           dist: parts[0]?.trim(), 
           data: parts[1]?.trim(), 
           destino: parts[2]?.trim(), 
+          situacao: parts.length > 3 ? parts[3]?.trim() : "Processado",
           valor: isNegative ? -valor : valor,
         });
       }
@@ -179,7 +168,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           <DialogDescription>Console para conciliação de ativos UCS.</DialogDescription>
         </DialogHeader>
 
-        {/* PROCESSADOR DE ENTRADA (CALCULADORA) */}
         {activePasteField && (
           <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex items-center justify-center p-12 animate-in fade-in zoom-in duration-200">
             <div className="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
@@ -191,7 +179,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                   <div className="space-y-1">
                     <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Entrada Técnica</h3>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      {activePasteField === 'tabelaAquisicao' ? 'VOLUMES A SEREM RETIRADOS (EX: 2019 - 9)' : `COLAGEM: ${activePasteField.replace('tabela', '').toUpperCase()}`}
+                      {activePasteField === 'tabelaAquisicao' ? 'VOLUMES A SER SER RETIRADOS (EX: 2019 - 9)' : `COLAGEM: ${activePasteField.replace('tabela', '').toUpperCase()}`}
                     </p>
                   </div>
                 </div>
@@ -214,8 +202,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                 <div className="bg-slate-50 rounded-[2rem] border border-slate-100 p-8 flex items-center justify-between">
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                      {activePasteField === 'tabelaAquisicao' ? 'Total a Deduzir' : 
-                       activePasteField === 'tabelaImei' ? 'Saldo Identificado (Líquido)' : 'Total Identificado'}
+                      {activePasteField === 'tabelaAquisicao' ? 'Total a Deduzir' : 'Total Identificado'}
                     </p>
                     <div className="flex items-baseline gap-2">
                       <span className={cn(
@@ -236,7 +223,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         )}
 
-        {/* CABEÇALHO EXECUTIVO BMV STYLE */}
         <div className="bg-[#0F172A] px-12 py-10 shrink-0 flex justify-between items-end">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -283,7 +269,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </div>
 
-        {/* ÁREA TÉCNICA DE CONCILIAÇÃO */}
         <ScrollArea className="flex-1">
           <div className="p-12 space-y-12">
             <SectionTechnical 
@@ -307,6 +292,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                 { label: "Ref. Dist.", key: "dist" },
                 { label: "Data Operação", key: "data" },
                 { label: "Destinatário", key: "destino" },
+                { label: "Situação", key: "situacao", variant: "status" },
                 { label: "Débito", key: "valor", align: "right", variant: "rose" }
               ]}
             />
@@ -358,7 +344,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </ScrollArea>
 
-        {/* RODAPÉ DE AÇÕES */}
         <div className="p-8 border-t border-slate-100 bg-white flex justify-between items-center shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-8">
             Descartar Alterações
@@ -426,23 +411,52 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((row: any, i: number) => (
-                <TableRow key={i} className="border-b border-slate-50 last:border-0 h-14 hover:bg-slate-50/30 transition-colors">
-                  {columns.map((col: any) => (
-                    <TableCell key={col.label} className={cn(
-                      "px-8 text-[11px] font-bold text-slate-600 tracking-tight",
-                      col.align === 'right' && "text-right",
-                      col.variant === 'emerald' && "text-emerald-600",
-                      col.variant === 'rose' && "text-rose-500",
-                      col.variant === 'amber' && "text-amber-500",
-                      col.variant === 'primary' && "text-primary font-black",
-                      col.variant === 'slate' && "text-slate-400"
-                    )}>
-                      {typeof row[col.key] === 'number' ? Math.abs(row[col.key]).toLocaleString('pt-BR') : row[col.key]}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+              {data.map((row: any, i: number) => {
+                const isTransfer = title.toLowerCase().includes('movimentação') && 
+                  (row.destino?.toLowerCase().includes('transferência') || row.destino?.toLowerCase().includes('cliente'));
+
+                return (
+                  <TableRow 
+                    key={i} 
+                    className={cn(
+                      "border-b border-slate-50 last:border-0 h-14 hover:bg-slate-50/30 transition-colors",
+                      isTransfer && "bg-indigo-50/40 border-l-4 border-l-indigo-400"
+                    )}
+                  >
+                    {columns.map((col: any) => (
+                      <TableCell key={col.label} className={cn(
+                        "px-8 text-[11px] font-bold text-slate-600 tracking-tight",
+                        col.align === 'right' && "text-right",
+                        col.variant === 'emerald' && "text-emerald-600",
+                        col.variant === 'rose' && "text-rose-500",
+                        col.variant === 'amber' && "text-amber-500",
+                        col.variant === 'primary' && "text-primary font-black",
+                        col.variant === 'slate' && "text-slate-400"
+                      )}>
+                        {col.variant === 'status' ? (
+                          <div className="flex items-center gap-2">
+                            {row[col.key] === 'Processado' ? (
+                              <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[8px] font-black uppercase tracking-tighter">
+                                <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Processado
+                              </Badge>
+                            ) : row[col.key]?.toLowerCase().includes('não pago') ? (
+                              <Badge variant="outline" className="text-rose-500 border-rose-100 bg-rose-50 text-[8px] font-black uppercase tracking-tighter">
+                                <AlertCircle className="w-2.5 h-2.5 mr-1" /> Não Pago
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-slate-400 border-slate-100 bg-slate-50 text-[8px] font-black uppercase tracking-tighter">
+                                <Clock className="w-2.5 h-2.5 mr-1" /> {row[col.key] || 'Pendente'}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          typeof row[col.key] === 'number' ? Math.abs(row[col.key]).toLocaleString('pt-BR') : row[col.key]
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
@@ -450,3 +464,4 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
     </div>
   );
 }
+
