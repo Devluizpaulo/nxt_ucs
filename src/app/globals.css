@@ -38,10 +38,11 @@
 
 @media print {
   @page {
-    margin: 0;
+    margin: 10mm;
     size: A4 portrait;
   }
 
+  /* Esconde tudo que não for o conteúdo imprimível */
   body > *:not([data-radix-portal]),
   header, aside, main, 
   .print-hidden, 
@@ -53,7 +54,6 @@
   html, body {
     background: white !important;
     width: 210mm !important;
-    height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
@@ -66,9 +66,7 @@
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    height: 100% !important;
     display: block !important;
-    overflow: visible !important;
   }
 
   div[role="dialog"] {
@@ -76,29 +74,58 @@
     transform: none !important;
     width: 100% !important;
     max-width: none !important;
-    height: 100% !important;
-    max-height: none !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
     margin: 0 !important;
     background: white !important;
-    display: block !important;
-    overflow: hidden !important;
   }
 
   .printable-content {
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
     visibility: visible !important;
-    width: 210mm !important;
-    height: 297mm !important;
+    width: 100% !important;
     background: white !important;
-    padding: 10mm 15mm !important;
-    margin: 0 auto !important;
     color: black !important;
-    overflow: hidden !important;
-    position: relative !important;
-    box-sizing: border-box !important;
+  }
+
+  .report-header {
+    border-bottom: 2px solid #1DB489;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+  }
+
+  .report-table th {
+    background-color: #f8fafc;
+    text-align: left;
+    padding: 8px;
+    border: 1px solid #e2e8f0;
+    text-transform: uppercase;
+  }
+
+  .report-table td {
+    padding: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .signature-block {
+    margin-top: 50px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .signature-line {
+    border-top: 1px solid black;
+    width: 200px;
+    text-align: center;
+    padding-top: 5px;
+    font-size: 10px;
+    font-weight: bold;
   }
 }

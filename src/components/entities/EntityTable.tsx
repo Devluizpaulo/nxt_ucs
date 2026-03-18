@@ -31,6 +31,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
     else onSelectionChange([...selectedIds, id]);
   };
 
+  // Formata números com ponto para milhares conforme o print
   const formatUCS = (val: number) => (val || 0).toLocaleString('pt-BR');
 
   return (
@@ -54,8 +55,8 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Aposentado</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Bloqueado</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Aquisição</TableHead>
-                <TableHead className="text-[10px] font-black uppercase tracking-widest text-indigo-500 text-right">Ajuste IMEI</TableHead>
-                <TableHead className="text-[11px] font-black uppercase tracking-widest text-primary text-right bg-emerald-50/30">Saldo Auditado</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-[#734DCC] text-right">Ajuste IMEI</TableHead>
+                <TableHead className="text-[11px] font-black uppercase tracking-widest text-primary text-right">Saldo Auditado</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center pr-8">Ações</TableHead>
               </TableRow>
@@ -83,7 +84,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                     >
                       <div className="flex items-center gap-2">
                         {item.nome}
-                        {item.statusAuditoriaSaldo === 'inconsistente' && (
+                        {(item.statusAuditoriaSaldo === 'inconsistente' || item.saldoFinalAtual < 1000) && (
                           <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
                         )}
                         {item.observacao && (
@@ -91,44 +92,34 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-[10px] text-slate-500">{item.documento}</TableCell>
+                    <TableCell className="font-mono text-[10px] text-slate-400">{item.documento}</TableCell>
                     <TableCell className="text-right font-mono text-[11px] font-bold text-slate-600">{formatUCS(item.originacao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-rose-500">{formatUCS(item.movimentacao)}</TableCell>
+                    <TableCell className="text-right font-mono text-[11px] text-rose-500 font-bold">{item.movimentacao > 0 ? `-${formatUCS(item.movimentacao)}` : formatUCS(item.movimentacao)}</TableCell>
                     <TableCell className="text-right font-mono text-[11px] text-slate-400">{formatUCS(item.aposentado)}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-rose-400">{formatUCS(item.bloqueado)}</TableCell>
+                    <TableCell className="text-right font-mono text-[11px] text-rose-500">{formatUCS(item.bloqueado)}</TableCell>
                     <TableCell className="text-right font-mono text-[11px] text-rose-500">{formatUCS(item.aquisicao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[11px] text-indigo-500">{formatUCS(item.saldoAjustarImei)}</TableCell>
-                    <TableCell className="text-right font-mono font-black text-[14px] text-primary bg-emerald-50/30">
+                    <TableCell className="text-right font-mono text-[11px] text-[#734DCC] font-bold">{formatUCS(item.saldoAjustarImei)}</TableCell>
+                    <TableCell className="text-right font-mono font-black text-[14px] text-primary">
                       <div className="flex items-center justify-end gap-2">
                         {formatUCS(item.saldoFinalAtual)} UCS
                         {item.statusAuditoriaSaldo === 'inconsistente' && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <AlertTriangle className="w-3 h-3 text-rose-500" />
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-rose-500 text-white font-bold text-[10px] uppercase border-none">
-                                Divergência Detectada na Auditoria
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <AlertTriangle className="w-3 h-3 text-rose-500" />
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="text-center py-4">
-                      {item.status === 'disponivel' ? (
-                        <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[9px] font-black uppercase">Válido</Badge>
+                      {item.status === 'disponivel' || item.statusAuditoriaSaldo === 'valido' ? (
+                        <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[9px] font-black uppercase px-3 py-1 rounded-full">Válido</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[9px] font-black uppercase">{item.status}</Badge>
+                        <Badge variant="outline" className="text-[9px] font-black uppercase px-3 py-1 rounded-full">Pendente</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-center pr-8">
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        title="Abrir Auditoria Técnica"
                         onClick={() => setEditingEntity(item)}
-                        className="h-10 w-10 text-slate-400 hover:text-primary hover:bg-emerald-50 rounded-lg transition-all"
+                        className="h-10 w-10 text-slate-300 hover:text-primary transition-all"
                       >
                         <Search className="w-5 h-5" />
                       </Button>

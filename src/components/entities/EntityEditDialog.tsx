@@ -12,11 +12,11 @@ import {
   Save, 
   Layers,
   Plus,
-  Trash2,
   Database,
   AlertTriangle,
   MessageSquare,
-  FileText
+  FileText,
+  BadgeCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useUser } from "@/firebase";
 
 interface EntityEditDialogProps {
   entity: EntidadeSaldo | null;
@@ -36,6 +37,7 @@ interface EntityEditDialogProps {
 export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: EntityEditDialogProps) {
   const [formData, setFormData] = useState<Partial<EntidadeSaldo>>({});
   const [pasteData, setPasteData] = useState<{ section: string; raw: string } | null>(null);
+  const { user } = useUser();
   
   // States for Acquisitions
   const [newAqYear, setNewAqYear] = useState("");
@@ -73,8 +75,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const legRes = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.reservado || 0), 0);
     const legadoTotal = legDisp + legRes;
 
-    // EQUAÇÃO DE AUDITORIA ATUALIZADA:
-    // Saldo Disponível = Originação + Movimentação - Aquisição - Aposentado - Bloqueado
+    // Equação de Auditoria: Originação + Movimentação - Aquisição - Aposentado - Bloqueado
     const final = orig + mov - aq - aposentado - bloqueado;
     
     const movPercentage = orig !== 0 ? ((Math.abs(mov) / Math.abs(orig)) * 100).toFixed(1) : "0.0";
@@ -240,324 +241,190 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[1280px] w-[95vw] h-[95vh] p-0 border-none bg-white overflow-hidden flex flex-col rounded-[2.5rem] shadow-2xl">
-        <DialogHeader className="sr-only">
-          <DialogTitle>Console de Auditoria Técnica - {entity.nome}</DialogTitle>
-          <DialogDescription>Detalhamento de conferência e rastreabilidade Ledger.</DialogDescription>
-        </DialogHeader>
-
-        {/* CABEÇALHO TÉCNICO - TEMA DARK */}
-        <div className="bg-[#0B0F1A] p-10 shrink-0 text-white relative">
-          <div className="flex justify-between items-start mb-12">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
-                  <ShieldCheck className="w-4 h-4 text-white" />
-                </div>
-                <p className="text-[12px] font-black uppercase tracking-[0.2em] text-primary">AUDITORIA TÉCNICA BMV</p>
-              </div>
-              <h1 className="text-[30px] font-black tracking-tight uppercase leading-none">{entity.nome}</h1>
-              <p className="text-[14px] font-bold text-slate-500 font-mono tracking-widest">{entity.documento}</p>
+        
+        {/* CONTEÚDO PARA IMPRESSÃO (RELATÓRIO BUSINESS) */}
+        <div className="printable-content hidden">
+          <div className="report-header">
+            <div className="flex justify-between items-center mb-6">
+               <div>
+                 <h1 className="text-2xl font-black text-primary uppercase">LedgerTrust Auditoria</h1>
+                 <p className="text-xs font-bold text-slate-400">PROTOCOLO DE CONFORMIDADE DE UCS - BLOCKCHAIN NXT</p>
+               </div>
+               <div className="text-right">
+                 <p className="text-[10px] font-bold text-slate-400 uppercase">Documento Gerado em:</p>
+                 <p className="text-xs font-black">{new Date().toLocaleString('pt-BR')}</p>
+               </div>
             </div>
-
-            <div className="bg-[#161B2E] border border-white/5 rounded-[2rem] p-8 min-w-[340px] shadow-2xl flex flex-col items-end relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 blur-3xl -mr-20 -mt-20"></div>
-               <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-3 relative z-10">Saldo Final Auditado</p>
-               <div className="flex items-baseline gap-3 relative z-10">
-                  <span className="text-[42px] font-black text-white tracking-tighter">{totals.final.toLocaleString('pt-BR')}</span>
-                  <span className="text-[12px] font-black text-primary uppercase tracking-widest">UCS</span>
+            <div className="grid grid-cols-2 gap-8 border-t border-b border-slate-100 py-6">
+               <div>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">PRODUTOR / ENTIDADE</p>
+                 <p className="text-base font-black uppercase">{entity.nome}</p>
+                 <p className="text-xs font-mono">{entity.documento}</p>
+               </div>
+               <div>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AUDITOR RESPONSÁVEL</p>
+                 <p className="text-base font-black uppercase">{user?.email?.split('@')[0] || "SISTEMA"}</p>
+                 <p className="text-xs">{user?.email}</p>
                </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-5">
-            <StatBox label="ORIGINAÇÃO" value={totals.orig} />
-            <StatBox label="MOVIMENTAÇÃO" value={totals.mov} isNegative percentage={totals.movPercentage} />
-            <StatBox label="APOSENTADO" value={totals.aposentado} isNegative />
-            <StatBox label="BLOQUEADO" value={totals.bloqueado} isNegative />
-            <StatBox label="AQUISIÇÃO" value={totals.aq} isNegative />
-            <StatBox label="AJUSTE IMEI" value={totals.imeiPending} isPending />
-            <StatBox label="SALDO LEGADO" value={totals.legadoTotal} isReference />
-            <StatBox label="DISPONÍVEL" value={totals.final} isHighlight />
+          <div className="my-8">
+            <h2 className="text-sm font-black uppercase tracking-widest mb-4 text-slate-900 border-l-4 border-primary pl-3">Resumo de Saldo Auditado</h2>
+            <div className="grid grid-cols-4 gap-4">
+              <ReportStat label="ORIGINAÇÃO" value={totals.orig} />
+              <ReportStat label="MOVIMENTAÇÃO" value={totals.mov} />
+              <ReportStat label="BLOQUEADO" value={totals.bloqueado} />
+              <ReportStat label="SALDO DISPONÍVEL" value={totals.final} isHighlight />
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <ReportSection title="Histórico de Movimentações" data={formData.tabelaMovimentacao || []} />
+            <ReportSection title="Transferências IMEI" data={formData.tabelaImei || []} isImei />
+            <ReportSection title="Saldos Legados" data={formData.tabelaLegado || []} isLegado />
+          </div>
+
+          <div className="mt-12 p-6 bg-slate-50 rounded-xl border border-slate-100">
+             <h3 className="text-[10px] font-black uppercase text-slate-400 mb-2">Apontamentos do Auditor</h3>
+             <p className="text-xs leading-relaxed italic text-slate-700">
+               {formData.observacao || "Nenhuma divergência ou apontamento registrado para este período de auditoria."}
+             </p>
+          </div>
+
+          <div className="signature-block">
+             <div className="signature-line">ASSINATURA DO AUDITOR</div>
+             <div className="signature-line">CARIMBO DE CONFORMIDADE</div>
           </div>
         </div>
 
-        <ScrollArea className="flex-1 bg-white">
-          <div className="p-10 space-y-20">
-            {/* MÓDULO DE APONTAMENTOS E DIVERGÊNCIAS */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 bg-slate-50/50 p-10 rounded-[2.5rem] border border-slate-100">
-               <div className="lg:col-span-2 space-y-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <MessageSquare className="w-5 h-5 text-primary" />
-                    <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-900">APONTAMENTOS DE AUDITORIA</h3>
+        {/* CONTEÚDO VISUAL (MODAL) */}
+        <div className="flex-1 flex flex-col overflow-hidden print-hidden">
+          <div className="bg-[#0B0F1A] p-10 shrink-0 text-white relative">
+            <div className="flex justify-between items-start mb-12">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
+                    <ShieldCheck className="w-4 h-4 text-white" />
                   </div>
-                  <Textarea 
-                    value={formData.observacao || ""} 
-                    onChange={e => setFormData({...formData, observacao: e.target.value})}
-                    placeholder="Descreva aqui divergências, inconsistências ou justificativas para o saldo auditado..."
-                    className="min-h-[140px] bg-white border-slate-200 rounded-2xl p-6 text-[13px] font-medium leading-relaxed focus:ring-primary shadow-sm resize-none"
-                  />
-               </div>
-               <div className="space-y-6">
-                  <div className="space-y-4">
-                    <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">STATUS DA CONFORMIDADE</Label>
-                    <Select 
-                      value={formData.statusAuditoriaSaldo || "valido"} 
-                      onValueChange={v => setFormData({...formData, statusAuditoriaSaldo: v as any})}
-                    >
-                      <SelectTrigger className="h-14 rounded-2xl bg-white border-slate-200 font-bold text-[12px] uppercase tracking-widest">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="valido" className="font-bold text-[12px] uppercase">✓ SALDO VALIDADO</SelectItem>
-                        <SelectItem value="inconsistente" className="font-bold text-[12px] uppercase text-rose-500">⚠ DIVERGÊNCIA DETECTADA</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {formData.statusAuditoriaSaldo === 'inconsistente' && (
-                    <div className="p-6 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-4 animate-in fade-in zoom-in duration-300">
-                       <AlertTriangle className="w-6 h-6 text-rose-500 shrink-0" />
-                       <div className="space-y-1">
-                         <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Atenção Auditor</p>
-                         <p className="text-[11px] font-bold text-rose-500/80 leading-tight">Este registro será sinalizado com alerta na listagem principal devido à inconsistência apontada.</p>
-                       </div>
+                  <p className="text-[12px] font-black uppercase tracking-[0.2em] text-primary">AUDITORIA TÉCNICA BMV</p>
+                </div>
+                <h1 className="text-[30px] font-black tracking-tight uppercase leading-none">{entity.nome}</h1>
+                <p className="text-[14px] font-bold text-slate-500 font-mono tracking-widest">{entity.documento}</p>
+              </div>
+
+              <div className="bg-[#161B2E] border border-white/5 rounded-[2rem] p-8 min-w-[340px] shadow-2xl flex flex-col items-end relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 blur-3xl -mr-20 -mt-20"></div>
+                 <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-3 relative z-10">Saldo Final Auditado</p>
+                 <div className="flex items-baseline gap-3 relative z-10">
+                    <span className="text-[42px] font-black text-white tracking-tighter">{totals.final.toLocaleString('pt-BR')}</span>
+                    <span className="text-[12px] font-black text-primary uppercase tracking-widest">UCS</span>
+                 </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-5">
+              <StatBox label="ORIGINAÇÃO" value={totals.orig} />
+              <StatBox label="MOVIMENTAÇÃO" value={totals.mov} isNegative percentage={totals.movPercentage} />
+              <StatBox label="APOSENTADO" value={totals.aposentado} isNegative />
+              <StatBox label="BLOQUEADO" value={totals.bloqueado} isNegative />
+              <StatBox label="AQUISIÇÃO" value={totals.aq} isNegative />
+              <StatBox label="AJUSTE IMEI" value={totals.imeiPending} isPending />
+              <StatBox label="SALDO LEGADO" value={totals.legadoTotal} isReference />
+              <StatBox label="DISPONÍVEL" value={totals.final} isHighlight />
+            </div>
+          </div>
+
+          <ScrollArea className="flex-1 bg-white">
+            <div className="p-10 space-y-20">
+              {/* MÓDULO DE APONTAMENTOS */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 bg-slate-50/50 p-10 rounded-[2.5rem] border border-slate-100">
+                 <div className="lg:col-span-2 space-y-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <MessageSquare className="w-5 h-5 text-primary" />
+                      <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-900">APONTAMENTOS DE AUDITORIA</h3>
                     </div>
-                  )}
-               </div>
-            </div>
-
-            {/* 01. ORIGINAÇÃO */}
-            <div className="space-y-6">
-              <SectionHeader title="01. LANÇAMENTOS DE ORIGINAÇÃO" value={totals.orig} onPaste={() => setPasteData({ section: 'tabelaOriginacao', raw: '' })} />
-              <SectionTable data={formData.tabelaOriginacao || []} type="originacao" />
-            </div>
-
-            {/* 02. MOVIMENTAÇÃO */}
-            <div className="space-y-6">
-              <SectionHeader title="02. MOVIMENTAÇÕES / RETIRADAS" value={totals.mov} isNegative onPaste={() => setPasteData({ section: 'tabelaMovimentacao', raw: '' })} />
-              <div className="rounded-[2.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
-                <Table>
-                  <TableHeader className="bg-slate-50/50">
-                    <TableRow className="border-b border-slate-100">
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Referência</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Data</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Destino/Histórico</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Volume (UCS)</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-center pr-8">Status Auditoria</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(formData.tabelaMovimentacao || []).length === 0 ? (
-                      <EmptyState message="AGUARDANDO INSERÇÃO TÉCNICA DE DADOS..." />
-                    ) : (
-                      formData.tabelaMovimentacao?.map((row, i) => {
-                        const isTransfer = row.destino?.toLowerCase().includes('transferência') || row.destino?.toLowerCase().includes('cliente');
-                        return (
-                          <TableRow key={i} className={cn(
-                            "border-b border-slate-50 last:border-0 group transition-colors",
-                            isTransfer ? "bg-indigo-50/50 hover:bg-indigo-50/80" : "hover:bg-slate-50/50"
-                          )}>
-                            <TableCell className="py-4 text-[12px] font-bold text-slate-600 font-mono">{row.dist || row.id || '-'}</TableCell>
-                            <TableCell className="py-4 text-[12px] text-slate-400">{row.data}</TableCell>
-                            <TableCell className="py-4">
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[12px] font-bold text-slate-700 truncate max-w-[300px]">{row.destino || row.tipo || '-'}</span>
-                                {isTransfer && <Badge className="w-fit bg-indigo-100 text-indigo-600 border-indigo-200 text-[9px] font-black h-4 px-1">TRANSFERÊNCIA ENTRE CLIENTES</Badge>}
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4 text-right font-mono font-black pr-4 text-[12px] text-rose-500">
-                              {row.valor?.toLocaleString('pt-BR')}
-                            </TableCell>
-                            <TableCell className="text-center pr-8">
-                              <Select value={row.statusAuditoria || "pago"}>
-                                <SelectTrigger className="h-9 text-[10px] font-black uppercase rounded-lg border-none shadow-none bg-slate-100">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pago" className="text-[11px] font-bold">PAGO / PROCESSADO</SelectItem>
-                                  <SelectItem value="nao_pago" className="text-[11px] font-bold">NÃO PAGO / ERRO</SelectItem>
-                                  <SelectItem value="a_conferir" className="text-[11px] font-bold">A CONFERIR / PENDENTE</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
+                    <Textarea 
+                      value={formData.observacao || ""} 
+                      onChange={e => setFormData({...formData, observacao: e.target.value})}
+                      placeholder="Descreva aqui divergências, inconsistências ou justificativas..."
+                      className="min-h-[140px] bg-white border-slate-200 rounded-2xl p-6 text-[13px] font-medium focus:ring-primary shadow-sm resize-none"
+                    />
+                 </div>
+                 <div className="space-y-6">
+                    <div className="space-y-4">
+                      <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">STATUS DA CONFORMIDADE</Label>
+                      <Select 
+                        value={formData.statusAuditoriaSaldo || "valido"} 
+                        onValueChange={v => setFormData({...formData, statusAuditoriaSaldo: v as any})}
+                      >
+                        <SelectTrigger className="h-14 rounded-2xl bg-white border-slate-200 font-bold text-[12px] uppercase tracking-widest">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="valido" className="font-bold text-[12px] uppercase">✓ SALDO VALIDADO</SelectItem>
+                          <SelectItem value="inconsistente" className="font-bold text-[12px] uppercase text-rose-500">⚠ DIVERGÊNCIA</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {formData.statusAuditoriaSaldo === 'inconsistente' && (
+                      <div className="p-6 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-4">
+                         <AlertTriangle className="w-6 h-6 text-rose-500 shrink-0" />
+                         <p className="text-[11px] font-bold text-rose-500/80 leading-tight uppercase">Sinalizado como Divergente</p>
+                      </div>
                     )}
-                  </TableBody>
-                </Table>
+                 </div>
+              </div>
+
+              {/* TABELAS TÉCNICAS */}
+              <div className="space-y-6">
+                <SectionHeader title="01. ORIGINAÇÃO" value={totals.orig} onPaste={() => setPasteData({ section: 'tabelaOriginacao', raw: '' })} />
+                <SectionTable data={formData.tabelaOriginacao || []} type="originacao" />
+              </div>
+
+              <div className="space-y-6">
+                <SectionHeader title="02. MOVIMENTAÇÃO" value={totals.mov} isNegative onPaste={() => setPasteData({ section: 'tabelaMovimentacao', raw: '' })} />
+                <SectionTable data={formData.tabelaMovimentacao || []} type="movimentacao" />
+              </div>
+
+              <div className="space-y-6">
+                <SectionHeader title="03. AJUSTE IMEI" value={totals.imeiPending} isImei onPaste={() => setPasteData({ section: 'tabelaImeiDebito', raw: '' })} />
+                <SectionTable data={formData.tabelaImei || []} type="imei" />
               </div>
             </div>
+          </ScrollArea>
 
-            {/* 03. TRANSFERÊNCIAS IMEI */}
-            <div className="space-y-6">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-1.5 h-8 bg-[#10B981] rounded-full" />
-                  <div className="flex flex-col">
-                    <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-900">03. TRANSFERÊNCIAS IMEI</h3>
-                    <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">
-                      PENDÊNCIA LÍQUIDA: <span className="font-black text-indigo-600">
-                        {totals.imeiPending.toLocaleString()} UCS
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Input placeholder="Dist" value={newImeiDist} onChange={e => setNewImeiDist(e.target.value)} className="h-10 w-20 text-[11px] font-bold rounded-xl" />
-                  <Input placeholder="Data" value={newImeiDate} onChange={e => setNewImeiDate(e.target.value)} className="h-10 w-28 text-[11px] font-bold rounded-xl" />
-                  <Input placeholder="Destino" value={newImeiDest} onChange={e => setNewImeiDest(e.target.value)} className="h-10 w-40 text-[11px] font-bold rounded-xl" />
-                  <Input type="number" placeholder="Crédito" value={newImeiCred} onChange={e => setNewImeiCred(e.target.value)} className="h-10 w-24 text-[11px] font-bold rounded-xl text-emerald-600" />
-                  <Input type="number" placeholder="Débito" value={newImeiDeb} onChange={e => setNewImeiDeb(e.target.value)} className="h-10 w-24 text-[11px] font-bold rounded-xl text-rose-500" />
-                  <Button onClick={handleAddImei} className="h-10 px-4 rounded-full bg-primary text-white text-[10px] font-black uppercase gap-2"><Plus className="w-4 h-4"/> Add</Button>
-                  <div className="flex gap-1">
-                    <Button variant="outline" onClick={() => setPasteData({ section: 'tabelaImeiDebito', raw: '' })} className="h-10 px-3 rounded-full border-slate-200 text-[10px] font-black uppercase gap-2 hover:bg-rose-50 hover:text-rose-600">
-                      <Calculator className="w-4 h-4"/> Débito
-                    </Button>
-                    <Button variant="outline" onClick={() => setPasteData({ section: 'tabelaImeiCredito', raw: '' })} className="h-10 px-3 rounded-full border-slate-200 text-[10px] font-black uppercase gap-2 hover:bg-emerald-50 hover:text-emerald-600">
-                      <Calculator className="w-4 h-4"/> Crédito
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-[2.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
-                <Table>
-                  <TableHeader className="bg-slate-50/50">
-                    <TableRow className="border-b border-slate-100">
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Dist.</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Data Inicio</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Usuário Destino</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Crédito (UCS)</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Débito (UCS)</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right pr-8">Ajuste Líquido</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(formData.tabelaImei || []).length === 0 ? (
-                      <EmptyState message="AGUARDANDO INSERÇÃO TÉCNICA DE DADOS..." />
-                    ) : (
-                      formData.tabelaImei?.map((row, i) => (
-                        <TableRow key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
-                          <TableCell className="py-4 text-[12px] font-bold text-slate-600 font-mono">{row.dist || '-'}</TableCell>
-                          <TableCell className="py-4 text-[12px] text-slate-400">{row.data}</TableCell>
-                          <TableCell className="py-4 text-[11px] text-slate-600 font-bold truncate max-w-[350px]">{row.destino}</TableCell>
-                          <TableCell className="text-right font-mono font-bold text-[12px] text-emerald-600">{row.valorCredito?.toLocaleString('pt-BR') || '0'}</TableCell>
-                          <TableCell className="text-right font-mono font-bold text-[12px] text-rose-500">{row.valorDebito?.toLocaleString('pt-BR') || '0'}</TableCell>
-                          <TableCell className={cn(
-                            "text-right font-mono font-black pr-8 text-[12px]",
-                            (row.valor || 0) > 0 ? "text-rose-500" : "text-emerald-600"
-                          )}>
-                            {row.valor?.toLocaleString('pt-BR')}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* 04. AQUISIÇÃO */}
-            <div className="space-y-6">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-1.5 h-8 bg-[#10B981] rounded-full" />
-                  <div className="flex flex-col">
-                    <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-900">04. AQUISIÇÃO DE UCS</h3>
-                    <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">
-                      CONSOLIDADO: <span className="font-black text-emerald-600">
-                        {Math.abs(totals.aq || 0).toLocaleString()} UCS
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Input placeholder="Ano" value={newAqYear} onChange={e => setNewAqYear(e.target.value)} className="h-11 w-24 rounded-xl text-[11px] font-bold" />
-                  <Input type="number" placeholder="Volume UCS" value={newAqValue} onChange={e => setNewAqValue(e.target.value)} className="h-11 w-32 rounded-xl text-[11px] font-bold" />
-                  <Button onClick={handleAddAq} className="h-11 px-6 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest gap-2">
-                    <Plus className="w-4 h-4" /> Adicionar
-                  </Button>
-                </div>
-              </div>
-              <SectionTable data={formData.tabelaAquisicao || []} type="aquisicao" />
-            </div>
-
-            {/* 05. SALDO LEGADO */}
-            <div className="space-y-6">
-              <SectionHeader title="05. SALDO LEGADO CONSOLIDADO" value={totals.legadoTotal} isLegado onPaste={() => setPasteData({ section: 'tabelaLegado', raw: '' })} />
-              <div className="rounded-[2.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
-                <Table>
-                  <TableHeader className="bg-slate-50/50">
-                    <TableRow className="border-b border-slate-100">
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Atualização</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Plataforma</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Disponível</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Reservado</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Bloqueado</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Aposentado</TableHead>
-                      <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right pr-8">Total (REF)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(formData.tabelaLegado || []).length === 0 ? (
-                      <EmptyState message="AGUARDANDO INSERÇÃO TÉCNICA DE DADOS..." />
-                    ) : (
-                      formData.tabelaLegado?.map((row, i) => (
-                        <TableRow key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                          <TableCell className="py-5 text-[12px] font-bold text-slate-600 whitespace-nowrap">{row.data}</TableCell>
-                          <TableCell className="py-5 text-[11px] font-black uppercase text-slate-500">{row.plataforma}</TableCell>
-                          <TableCell className="text-right font-mono font-bold text-[12px] text-emerald-600">{row.disponivel?.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-right font-mono font-bold text-[12px] text-emerald-600">{row.reservado?.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-right font-mono font-bold text-[12px] text-rose-500">{row.bloqueado?.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-right font-mono font-bold text-[12px] text-slate-400">{row.aposentado?.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-right font-mono font-black text-[12px] text-emerald-600 pr-8">
-                            {((row.disponivel || 0) + (row.reservado || 0)).toLocaleString('pt-BR')}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
-
-        <div className="p-8 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[12px] font-black uppercase text-slate-400 tracking-widest hover:text-rose-500 hover:bg-rose-50 px-8 rounded-xl h-14">
-            Sair Sem Salvar
-          </Button>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={handlePrint} className="h-14 px-10 rounded-2xl border-slate-200 bg-slate-50/50 font-black uppercase text-[12px] tracking-widest text-slate-700 hover:bg-white">
-              <Printer className="w-5 h-5 mr-2" /> Gerar Relatório PDF
+          <div className="p-8 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
+            <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[12px] font-black uppercase text-slate-400 tracking-widest hover:text-rose-500 px-8 h-14">
+              Cancelar
             </Button>
-            <Button onClick={handleSave} className="h-14 px-12 rounded-2xl bg-[#734DCC] hover:bg-[#633fb9] text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-indigo-200">
-              <Save className="w-5 h-5 mr-2" /> Salvar no Ledger
-            </Button>
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={handlePrint} className="h-14 px-10 rounded-2xl border-slate-200 bg-slate-50/50 font-black uppercase text-[12px] tracking-widest text-slate-700">
+                <Printer className="w-5 h-5 mr-2" /> Gerar Relatório Executivo
+              </Button>
+              <Button onClick={handleSave} className="h-14 px-12 rounded-2xl bg-[#734DCC] hover:bg-[#633fb9] text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-indigo-200">
+                <Save className="w-5 h-5 mr-2" /> Salvar no Ledger
+              </Button>
+            </div>
           </div>
         </div>
 
+        {/* MODAL DE COLAGEM */}
         {pasteData && (
           <Dialog open={!!pasteData} onOpenChange={() => setPasteData(null)}>
             <DialogContent className="max-w-xl rounded-3xl p-8 space-y-6">
               <DialogHeader>
                 <DialogTitle className="text-xl font-black uppercase text-slate-900 flex items-center gap-3">
-                  <Calculator className="w-6 h-6 text-primary" /> 
-                  COLAGEM DE DADOS: {pasteData.section.replace('tabela', '').toUpperCase()}
+                  <Calculator className="w-6 h-6 text-primary" /> COLAGEM TÉCNICA
                 </DialogTitle>
-                <DialogDescription className="text-sm font-medium text-slate-400">
-                  Copie as colunas do seu Excel e cole no campo abaixo para processamento automático.
-                </DialogDescription>
               </DialogHeader>
               <Textarea 
                 value={pasteData.raw} 
                 onChange={e => setPasteData({ ...pasteData, raw: e.target.value })}
-                placeholder="Cole os dados aqui..."
-                className="min-h-[250px] font-mono text-[11px] bg-slate-50 border-slate-200 rounded-2xl p-6 focus:ring-primary shadow-inner"
+                placeholder="Cole colunas do Excel..."
+                className="min-h-[250px] font-mono text-[11px] bg-slate-50 border-slate-200 rounded-2xl p-6"
               />
-              <div className="flex gap-4">
-                <Button variant="ghost" onClick={() => setPasteData(null)} className="flex-1 rounded-xl font-bold uppercase text-[11px]">Cancelar</Button>
-                <Button onClick={handleProcessPaste} className="flex-1 rounded-xl font-black uppercase text-[11px] bg-primary text-white">Processar e Importar</Button>
-              </div>
+              <Button onClick={handleProcessPaste} className="w-full h-12 rounded-xl font-black uppercase text-[11px] bg-primary text-white">Importar Dados</Button>
             </DialogContent>
           </Dialog>
         )}
@@ -566,29 +433,63 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   );
 }
 
+function ReportStat({ label, value, isHighlight }: any) {
+  return (
+    <div className={cn("p-4 border rounded-lg", isHighlight ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100")}>
+       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+       <p className={cn("text-sm font-black font-mono", isHighlight ? "text-primary" : "text-slate-900")}>
+         {value.toLocaleString('pt-BR')} UCS
+       </p>
+    </div>
+  );
+}
+
+function ReportSection({ title, data, isImei, isLegado }: any) {
+  if (!data || data.length === 0) return null;
+  return (
+    <div>
+       <h3 className="text-[10px] font-black uppercase tracking-widest mb-2 text-slate-400">{title}</h3>
+       <table className="report-table">
+          <thead>
+            <tr>
+              <th>Data/Ref</th>
+              <th>Histórico / Destino</th>
+              <th className="text-right">Volume (UCS)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row: any, i: number) => (
+              <tr key={i}>
+                <td>{row.data || row.dist || '-'}</td>
+                <td>{row.destino || row.plataforma || '-'}</td>
+                <td className="text-right font-mono font-bold">
+                   {isImei ? (row.valorDebito - row.valorCredito).toLocaleString('pt-BR') : 
+                    isLegado ? (row.disponivel + row.reservado).toLocaleString('pt-BR') :
+                    row.valor?.toLocaleString('pt-BR')}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+       </table>
+    </div>
+  );
+}
+
 function StatBox({ label, value, isNegative, isHighlight, isReference, isPending, percentage }: any) {
   return (
     <div className={cn(
-      "border rounded-2xl p-5 flex flex-col justify-between h-[110px] transition-all group relative",
+      "border rounded-2xl p-5 flex flex-col justify-between h-[110px] transition-all",
       isReference ? "bg-amber-500/10 border-amber-500/20" : 
       isPending ? "bg-indigo-500/10 border-indigo-500/20" :
-      "bg-[#161B2E] border-white/5 hover:bg-[#1C2237]"
+      "bg-[#161B2E] border-white/5"
     )}>
       <div className="flex justify-between items-start w-full">
         <p className={cn(
           "text-[12px] font-black uppercase tracking-widest leading-none",
           isReference ? "text-amber-500" : isPending ? "text-indigo-400" : "text-slate-500"
         )}>
-          {label} {isReference && "(REF)"} {isPending && "(PENDÊNCIA)"}
+          {label}
         </p>
-        {percentage !== undefined && (
-          <span className={cn(
-            "text-[10px] font-black px-1.5 py-0.5 rounded-md",
-            value < 0 ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"
-          )}>
-            {percentage}%
-          </span>
-        )}
       </div>
       <p className={cn(
         "text-[30px] font-black font-mono leading-none tracking-tight",
@@ -598,50 +499,28 @@ function StatBox({ label, value, isNegative, isHighlight, isReference, isPending
         isPending ? "text-indigo-400" :
         "text-white"
       )}>
-        {value === 0 ? "0" : value.toLocaleString('pt-BR')}
+        {value.toLocaleString('pt-BR')}
       </p>
     </div>
   );
 }
 
-function SectionHeader({ title, value, isNegative, isLegado, isImei, onPaste }: any) {
+function SectionHeader({ title, value, isNegative, onPaste }: any) {
   return (
     <div className="flex justify-between items-center border-b border-slate-100 pb-5">
       <div className="flex items-center gap-4">
         <div className="w-1.5 h-8 bg-[#10B981] rounded-full" />
-        <div className="flex flex-col">
+        <div>
           <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-900">{title}</h3>
-          <p className={cn(
-            "text-[11px] font-bold uppercase tracking-tighter",
-            isLegado || isImei ? "text-emerald-600" : "text-slate-400"
-          )}>
-            CONSOLIDADO: <span className={cn("font-black", !isLegado && !isImei && "text-primary")}>
-              {Math.abs(value || 0).toLocaleString()} UCS
-            </span>
+          <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">
+            TOTAL: <span className="font-black text-primary">{value.toLocaleString('pt-BR')} UCS</span>
           </p>
         </div>
       </div>
-      <Button 
-        variant="outline" 
-        onClick={onPaste}
-        className="h-11 px-6 rounded-3xl border-slate-200 bg-white text-[11px] font-black uppercase tracking-widest text-slate-500 gap-2.5 hover:bg-slate-50 shadow-sm"
-      >
-        <Calculator className="w-4 h-4 text-slate-400" /> COLAGEM VIA CALCULADORA
+      <Button variant="outline" onClick={onPaste} className="h-10 px-6 rounded-3xl text-[10px] font-black uppercase gap-2 border-slate-200">
+        <Calculator className="w-4 h-4" /> Colar Dados
       </Button>
     </div>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <TableRow>
-      <TableCell colSpan={10} className="py-24 text-center">
-        <div className="flex flex-col items-center gap-4 opacity-10">
-          <Layers className="w-14 h-14 text-slate-300" />
-          <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-500">{message}</p>
-        </div>
-      </TableCell>
-    </TableRow>
   );
 }
 
@@ -650,24 +529,22 @@ function SectionTable({ data, type }: { data: any[], type: string }) {
     <div className="rounded-[2.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm mb-12">
       <Table>
         <TableHeader className="bg-slate-50/50">
-          <TableRow className="border-b border-slate-100">
-            <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Referência</TableHead>
-            <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Data</TableHead>
-            <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400">Destino/Histórico</TableHead>
-            <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-400 text-right pr-8">Volume (UCS)</TableHead>
+          <TableRow>
+            <TableHead className="text-[11px] font-black uppercase tracking-widest">Referência</TableHead>
+            <TableHead className="text-[11px] font-black uppercase tracking-widest">Histórico</TableHead>
+            <TableHead className="text-[11px] font-black uppercase tracking-widest text-right pr-8">Volume (UCS)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
-            <EmptyState message="AGUARDANDO INSERÇÃO TÉCNICA DE DADOS..." />
+            <TableRow><TableCell colSpan={3} className="py-12 text-center text-slate-300 font-bold uppercase text-xs">Aguardando dados...</TableCell></TableRow>
           ) : (
             data.map((row: any, i: number) => (
-              <TableRow key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                <TableCell className="py-4 text-[12px] font-bold text-slate-600 font-mono">{row.dist || row.id || '-'}</TableCell>
-                <TableCell className="py-4 text-[12px] text-slate-400">{row.data}</TableCell>
-                <TableCell className="py-4 text-[12px] text-slate-600 font-bold truncate max-w-[300px]">{row.destino || row.tipo || '-'}</TableCell>
-                <TableCell className="py-4 text-right font-mono font-black pr-8 text-[12px] text-slate-900">
-                  {row.valor?.toLocaleString('pt-BR')}
+              <TableRow key={i}>
+                <TableCell className="font-mono text-xs">{row.dist || row.data || '-'}</TableCell>
+                <TableCell className="font-bold text-xs uppercase">{row.destino || row.plataforma || '-'}</TableCell>
+                <TableCell className="text-right font-mono font-black pr-8">
+                   {type === 'imei' ? (row.valorDebito - row.valorCredito).toLocaleString('pt-BR') : row.valor?.toLocaleString('pt-BR')}
                 </TableCell>
               </TableRow>
             ))
