@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, doc, writeBatch, query, orderBy } from "firebase/firestore";
+import { collection, doc, writeBatch, query, orderBy, updateDoc } from "firebase/firestore";
 import { EntidadeSaldo, EntityStatus } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { EntityTable } from "@/components/entities/EntityTable";
@@ -136,7 +136,7 @@ LAZARO ANTUNES	827.083.398-34	18.985
 LUIS FERNANDO TADEU GRIMAS	363.341.119-49	558.832
 LUIZ ZAPPANI	386.414.700-00	48.323
 LUIZ CARLOS DE OLIVEIRA	156.767.901-30	0
-LUIZ HENRIQUE ANTUNES	822.914.031-68	9.056
+LUIZ HENRIQUE ANTUNES	822.914.031-68	90.235
 LUIZ PAULO BASSO	174.664.900-34	468.567
 Madeireira Medianeira Ltda	150915150001-11	355.908
 Madeireira Menino Cláudio Ltda	374773460001-95	1.035.399
@@ -241,6 +241,13 @@ export default function ProdutoresPage() {
 
     await batch.commit();
     toast({ title: "Ledger Sincronizado", description: `${data.length} registros de produtores atualizados.` });
+  };
+
+  const handleUpdate = async (id: string, updates: Partial<EntidadeSaldo>) => {
+    if (!firestore) return;
+    const docRef = doc(firestore, "produtores", id);
+    await updateDoc(docRef, updates);
+    toast({ title: "Registro Atualizado", description: "As informações de auditoria foram salvas com sucesso." });
   };
 
   const handleSeedData = async () => {
@@ -355,6 +362,7 @@ export default function ProdutoresPage() {
                 data={paginated} 
                 selectedIds={selectedIds} 
                 onSelectionChange={setSelectedIds} 
+                onUpdate={handleUpdate}
               />
 
               {totalPages > 1 && (

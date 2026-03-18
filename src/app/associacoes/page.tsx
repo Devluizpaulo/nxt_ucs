@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, doc, writeBatch, query, orderBy } from "firebase/firestore";
+import { collection, doc, writeBatch, query, orderBy, updateDoc } from "firebase/firestore";
 import { EntidadeSaldo, EntityStatus } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { EntityTable } from "@/components/entities/EntityTable";
@@ -44,6 +44,13 @@ export default function AssociacoesPage() {
 
     await batch.commit();
     toast({ title: "Importação concluída", description: `${data.length} associações sincronizadas.` });
+  };
+
+  const handleUpdate = async (id: string, updates: Partial<EntidadeSaldo>) => {
+    if (!firestore) return;
+    const docRef = doc(firestore, "associacoes", id);
+    await updateDoc(docRef, updates);
+    toast({ title: "Associação Atualizada", description: "As informações foram salvas no Ledger." });
   };
 
   const handleBulkDelete = async () => {
@@ -100,6 +107,7 @@ export default function AssociacoesPage() {
                 data={paginated} 
                 selectedIds={selectedIds} 
                 onSelectionChange={setSelectedIds} 
+                onUpdate={handleUpdate}
               />
 
               {totalPages > 1 && (
