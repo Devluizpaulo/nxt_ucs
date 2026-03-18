@@ -1,7 +1,8 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -80,13 +81,19 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden bg-[#F1F5F9] border-none shadow-2xl rounded-[2rem] p-0 flex flex-col">
+        <DialogDescription className="sr-only">
+          Interface de auditoria detalhada para revisão de saldos e movimentações do produtor.
+        </DialogDescription>
+        
         {/* Header Superior - Identificação */}
         <div className="bg-slate-900 p-8 text-white shrink-0">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Auditoria de LedgerTrust</p>
-              <h2 className="text-2xl font-black uppercase tracking-tight">{entity.nome}</h2>
-              <p className="text-xs font-mono opacity-60">DOCUMENTO: {entity.documento}</p>
+              <DialogTitle className="text-2xl font-black uppercase tracking-tight text-white">
+                {entity.nome}
+              </DialogTitle>
+              <p className="text-xs font-mono opacity-60 uppercase">DOCUMENTO: {entity.documento}</p>
             </div>
             <div className="flex gap-4">
               <div className="text-right">
