@@ -54,14 +54,14 @@ export default function SettingsPage() {
         role: 'auditor',
         status: 'ativo',
         ultimoAcesso: new Date().toISOString(),
-        createdAt: new Date().toISOString(), // Garantir campo para não quebrar queries
+        createdAt: new Date().toISOString(),
       }, { merge: true });
     };
     
     syncUser();
   }, [firestore, user, isUserLoading]);
 
-  // Consulta simplificada para garantir que os dados apareçam mesmo sem índices complexos inicialmente
+  // Consulta robusta para listar todos os usuários da coleção
   const usersQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return collection(firestore, "users");
@@ -82,12 +82,11 @@ export default function SettingsPage() {
     const mockUsers: AppUser[] = [
       { id: "U-001", nome: "ADMIN LEDGERTRUST", email: "admin@bmv.global", role: "admin", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
       { id: "U-002", nome: "AUDITOR DE UCS", email: "auditor@bmv.global", role: "auditor", status: "ativo", ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() },
-      { id: user.uid, nome: user.email?.split('@')[0].toUpperCase() || "AUDITOR ATUAL", email: user.email || "", role: 'auditor', status: 'ativo', ultimoAcesso: new Date().toISOString(), createdAt: new Date().toISOString() }
     ];
     
     mockUsers.forEach(u => batch.set(doc(firestore, "users", u.id), u));
     await batch.commit();
-    toast({ title: "Usuários sincronizados com sucesso" });
+    toast({ title: "Usuários de teste sincronizados" });
   };
 
   if (isUserLoading || !user) {
@@ -189,7 +188,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex gap-4">
                       <Button onClick={handleSeedUsers} variant="outline" className="h-16 px-10 rounded-2xl text-[12px] font-black uppercase border-dashed border-slate-300 flex gap-3">
-                        <RefreshCw className="w-4 h-4" /> Sincronizar Usuários
+                        <RefreshCw className="w-4 h-4" /> Sincronizar
                       </Button>
                       <Button className="h-16 px-12 rounded-2xl bg-[#734DCC] text-white font-black uppercase text-[12px] tracking-[0.2em] shadow-2xl shadow-indigo-100 flex gap-3 transition-all active:scale-95">
                         <UserPlus className="w-6 h-6" /> Novo Auditor
@@ -213,7 +212,7 @@ export default function SettingsPage() {
                             <TableCell colSpan={4} className="h-80 text-center">
                               <div className="flex flex-col items-center gap-6">
                                 <Loader2 className="w-12 h-12 text-[#734DCC] animate-spin" />
-                                <span className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em]">Sincronizando banco de auditores...</span>
+                                <span className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em]">Sincronizando...</span>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -222,8 +221,8 @@ export default function SettingsPage() {
                             <TableCell colSpan={4} className="h-80 text-center">
                               <div className="flex flex-col items-center gap-6 opacity-30">
                                 <Users className="w-16 h-16 text-slate-300" />
-                                <span className="text-[14px] font-black uppercase text-slate-400 tracking-[0.2em]">Nenhum auditor encontrado no Firestore</span>
-                                <Button onClick={handleSeedUsers} variant="link" className="text-[#734DCC] font-bold">Clique para Sincronizar Agora</Button>
+                                <span className="text-[14px] font-black uppercase text-slate-400 tracking-[0.2em]">Nenhum auditor encontrado</span>
+                                <Button onClick={handleSeedUsers} variant="link" className="text-[#734DCC] font-bold">Gerar Dados de Teste</Button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -266,13 +265,15 @@ export default function SettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="seguranca" className="mt-0">
-                  <Card className="rounded-[3rem] border-none shadow-sm p-24 bg-white flex flex-col items-center justify-center text-center space-y-8">
-                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center border-2 border-slate-100">
-                      <ShieldCheck className="w-12 h-12 text-slate-200" />
+                  <Card className="rounded-[3.5rem] border-none shadow-sm p-32 bg-white flex flex-col items-center justify-center text-center space-y-10">
+                    <div className="w-32 h-32 bg-slate-50/50 rounded-full flex items-center justify-center border border-slate-100">
+                      <ShieldCheck className="w-16 h-16 text-slate-200" />
                     </div>
-                    <div>
-                      <h3 className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Logs de Conformidade Técnica</h3>
-                      <p className="text-sm text-slate-400 font-medium max-w-sm mx-auto">As gravações de auditoria estão ativas e sendo sincronizadas em tempo real com o Ledger.</p>
+                    <div className="space-y-4">
+                      <h3 className="text-[13px] font-black text-[#94A3B8] uppercase tracking-[0.25em] leading-none">Logs de Conformidade Técnica</h3>
+                      <p className="text-[15px] text-[#94A3B8] font-medium max-w-sm mx-auto leading-relaxed">
+                        As gravações de auditoria estão ativas e sendo sincronizadas em tempo real com o Ledger.
+                      </p>
                     </div>
                   </Card>
                 </TabsContent>
