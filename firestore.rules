@@ -1,10 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permissão total para qualquer usuário autenticado.
-    // Isso resolve o erro de 'Missing or insufficient permissions' em qualquer coleção ou subcoleção.
+    // Função auxiliar para verificar autenticação
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Regras explícitas por coleção para evitar erros de 'list'
+    match /pedidos/{pedidoId} {
+      allow read, write: if isSignedIn();
+      
+      match /movimentos/{movId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    match /produtores/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /associacoes/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /auditors/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /globalMovementHashes/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Fallback para qualquer outra coleção
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isSignedIn();
     }
   }
 }

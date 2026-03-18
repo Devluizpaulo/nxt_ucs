@@ -25,14 +25,13 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   const [pasteBuffer, setPasteBuffer] = useState("");
   const [previewRows, setPreviewRows] = useState<RegistroTabela[]>([]);
 
-  // Inicializa o formulário quando a entidade muda
   useEffect(() => {
     if (entity) {
       setFormData(entity);
     }
   }, [entity]);
 
-  // Cálculos em tempo real para exibição (sem atualizar o estado continuamente)
+  // Cálculo de estatísticas em tempo real (SEM disparar useEffect de atualização de estado)
   const stats = useMemo(() => {
     const sumTable = (table?: RegistroTabela[]) => (table || []).reduce((acc, row) => acc + (row.valor || 0), 0);
     
@@ -68,7 +67,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     };
   }, [formData]);
 
-  // Handler para processar dados colados
   useEffect(() => {
     if (!pasteBuffer.trim()) {
       setPreviewRows([]);
@@ -144,7 +142,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   };
 
   const handleSaveFinal = () => {
-    // Consolida todos os cálculos no momento do save para evitar loops de render
     const finalData: Partial<EntidadeSaldo> = {
       ...formData,
       originacao: stats.totalOrig,
@@ -166,8 +163,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-[1300px] h-[90vh] flex flex-col p-0 border-none bg-white shadow-2xl overflow-hidden rounded-[2.5rem]"
-        onPointerDownOutside={(e) => { if (activePasteField) e.preventDefault(); }}
-        onInteractOutside={(e) => { if (activePasteField) e.preventDefault(); }}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Auditoria BMV: {entity.nome}</DialogTitle>
@@ -219,35 +214,30 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Auditoria BMV • Console Técnico</span>
           </div>
 
-          <div className="flex justify-between items-start mb-8">
+          <div className="flex justify-between items-end mb-8">
             <div className="space-y-1">
               <h2 className="text-2xl font-black tracking-tight uppercase text-white">
                 {entity.nome}
               </h2>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Documento:</span>
                 <span className="text-sm font-mono text-slate-300">{entity.documento}</span>
               </div>
             </div>
             
-            <div className="bg-primary px-6 py-4 rounded-2xl shadow-xl shadow-primary/20 border border-white/10 min-w-[220px] transition-all">
-              <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-1">Saldo Final Auditado</p>
-              <div className="flex items-baseline gap-1.5 text-2xl font-black tracking-tight text-white">
+            <div className="bg-primary/20 px-6 py-4 rounded-2xl border border-primary/30 min-w-[240px] text-right">
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Saldo Final Auditado</p>
+              <div className="flex items-baseline justify-end gap-1.5 text-2xl font-black tracking-tight text-white">
                 {formatUCS(stats.finalAuditado)}
-                <span className="text-xs font-medium opacity-80">UCS</span>
+                <span className="text-xs font-medium text-primary">UCS</span>
               </div>
             </div>
           </div>
 
           {/* Grade de 8 Colunas de Indicadores Técnicos */}
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-4 pt-6 border-t border-white/10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 pt-6 border-t border-white/10">
             <StatColumn label="Originação" value={formatUCS(stats.totalOrig)} color="white" />
-            <StatColumn 
-              label="Movimentação" 
-              value={formatUCS(stats.totalMov)} 
-              color="rose" 
-              subValue={`${stats.percPago.toFixed(0)}% Pago`}
-            />
+            <StatColumn label="Movimentação" value={formatUCS(stats.totalMov)} color="rose" subValue={`${stats.percPago.toFixed(0)}% Pago`} />
             <StatColumn label="Aposentado" value={formatUCS(stats.totalAposentado)} color="white" />
             <StatColumn label="Bloqueado" value={formatUCS(stats.totalBloqueado)} color="rose" />
             <StatColumn label="Aquisição" value={formatUCS(stats.totalAq)} color="rose" />
@@ -262,7 +252,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           <div className="p-8 space-y-12 pb-20">
             <SectionTechnical 
               title="Originação de Ativos"
-              icon={TrendingUp}
               onImport={() => setActivePasteField('tabelaOriginacao')}
               data={formData.tabelaOriginacao || []}
               columns={[
@@ -274,7 +263,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
             <SectionTechnical 
               title="Movimentações / Retiradas"
-              icon={ArrowRightLeft}
               onImport={() => setActivePasteField('tabelaMovimentacao')}
               data={formData.tabelaMovimentacao || []}
               onUpdateRow={(idx: number, updates: any) => handleUpdateRow('tabelaMovimentacao', idx, updates)}
@@ -290,7 +278,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
             <SectionTechnical 
               title="Aquisições (Deduções)"
-              icon={Database}
               color="rose"
               onImport={() => setActivePasteField('tabelaAquisicao')}
               data={formData.tabelaAquisicao || []}
@@ -302,7 +289,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
             <SectionTechnical 
               title="Transferências IMEI"
-              icon={Calculator}
               color="indigo"
               onImport={() => setActivePasteField('tabelaImei')}
               data={formData.tabelaImei || []}
@@ -318,7 +304,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
             <SectionTechnical 
               title="Saldo Legado"
-              icon={History}
               color="amber"
               onImport={() => setActivePasteField('tabelaLegado')}
               data={formData.tabelaLegado || []}
@@ -358,7 +343,7 @@ function StatColumn({ label, value, color, subValue }: { label: string, value: s
     rose: "text-rose-500",
     amber: "text-amber-500",
     indigo: "text-indigo-400",
-    emerald: "text-primary-foreground bg-primary/20 px-2 py-1 rounded-lg"
+    emerald: "text-primary"
   };
 
   return (
@@ -378,7 +363,7 @@ function StatColumn({ label, value, color, subValue }: { label: string, value: s
   );
 }
 
-function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data, columns, onUpdateRow }: any) {
+function SectionTechnical({ title, color = "emerald", onImport, data, columns, onUpdateRow }: any) {
   const currentTotal = (data || []).reduce((acc: number, r: any) => acc + (r.valor || 0), 0);
 
   return (
