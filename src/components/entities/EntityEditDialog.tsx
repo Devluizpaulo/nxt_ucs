@@ -33,21 +33,30 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   // Cálculo Dinâmico de Saldos
   useEffect(() => {
     const sumTable = (table?: RegistroTabela[]) => (table || []).reduce((acc, row) => acc + (row.valor || 0), 0);
+    const sumField = (table?: RegistroTabela[], field: keyof RegistroTabela) => 
+      (table || []).reduce((acc, row) => acc + (Number(row[field]) || 0), 0);
     
-    // Saldo Final Auditado: Apenas operações ativas
+    // Saldo Final Auditado: Apenas operações ativas (Legado NÃO entra no volume principal)
     const operationsTotal = 
       sumTable(formData.tabelaOriginacao) + 
       sumTable(formData.tabelaMovimentacao) + 
       sumTable(formData.tabelaImei) + 
       sumTable(formData.tabelaAquisicao);
     
-    // Saldo Legado: Valor de Referência (Independente)
+    // Saldo Legado: Valor de Referência (Disponível + Reservado)
     const legadoTotal = sumTable(formData.tabelaLegado);
+    
+    // Bloqueado e Aposentado vêm EXCLUSIVAMENTE da tabela de legado
+    const totalAposentado = sumField(formData.tabelaLegado, 'aposentado');
+    const totalBloqueado = sumField(formData.tabelaLegado, 'bloqueado');
     
     setFormData(prev => ({ 
       ...prev, 
       saldoFinalAtual: operationsTotal,
-      saldoLegadoTotal: legadoTotal 
+      saldoLegadoTotal: legadoTotal,
+      aposentado: totalAposentado,
+      bloqueado: totalBloqueado,
+      movimentacao: sumTable(formData.tabelaMovimentacao)
     }));
   }, [
     formData.tabelaOriginacao, 
@@ -78,15 +87,22 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       };
 
       if (activePasteField === 'tabelaLegado') {
-        const disp = parseBRL(parts[2] || parts[4]); // Suporte a colunas variáveis
-        const res = parseBRL(parts[3] || parts[5]);
+        // Estrutura: Data, Plataforma, Nome, Doc, Disponível, Reservado, Bloqueado, Aposentado
+        const disp = parseBRL(parts[4]);
+        const res = parseBRL(parts[5]);
+        const bloq = parseBRL(parts[6]);
+        const apos = parseBRL(parts[7]);
         
         results.push({
           data: parts[0]?.trim() || "N/A",
           plataforma: parts[1]?.trim() || "N/A",
+          nome: parts[2]?.trim() || "N/A",
+          documento: parts[3]?.trim() || "N/A",
           disponivel: disp,
           reservado: res,
-          valor: disp + res, // Total consolidado por linha
+          bloqueado: bloq,
+          aposentado: apos,
+          valor: disp + res, // Total consolidado por linha (Referência)
         });
       } else if (activePasteField === 'tabelaImei') {
         const cred = parseBRL(parts[parts.length - 2]);
@@ -287,8 +303,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
               columns={[
                 { label: "Atualização", key: "data" },
                 { label: "Plataforma", key: "plataforma" },
-                { label: "Disponível", key: "disponivel", align: "right", variant: "slate" },
-                { label: "Reservado", key: "reservado", align: "right", variant: "slate" },
+                { label: "Disp.", key: "disponivel", align: "right" },
+                { label: "Res.", key: "reservado", align: "right" },
+                { label: "Bloq.", key: "bloqueado", align: "right", variant: "rose" },
+                { label: "Apos.", key: "aposentado", align: "right", variant: "slate" },
                 { label: "Total (D+R)", key: "valor", align: "right", variant: "emerald" }
               ]}
             />

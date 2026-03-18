@@ -35,7 +35,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
     <>
       <div className="rounded-[2.5rem] border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
         <ScrollArea className="w-full">
-          <Table className="min-w-[1500px]">
+          <Table className="min-w-[1600px]">
             <TableHeader>
               <TableRow className="bg-slate-50/50 h-16 border-b border-slate-100">
                 <TableHead className="w-[60px] pl-8">
@@ -50,6 +50,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Originação</TableHead>
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Movimentação</TableHead>
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Aposentado</TableHead>
+                <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Bloqueado</TableHead>
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Aquisição</TableHead>
                 <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Ajuste IMEI</TableHead>
                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-900 text-right bg-slate-50">Saldo Final</TableHead>
@@ -59,7 +60,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="h-48 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                  <TableCell colSpan={11} className="h-48 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">
                     Nenhum registro encontrado nesta categoria
                   </TableCell>
                 </TableRow>
@@ -82,7 +83,8 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                     <TableCell className="font-mono text-[9px] text-slate-500">{item.documento}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] font-bold">{formatUCS(item.originacao)}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] text-rose-500">{formatUCS(item.movimentacao)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px]">{formatUCS(item.aposentado)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-slate-400">{formatUCS(item.aposentado)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-rose-400">{formatUCS(item.bloqueado)}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] text-emerald-600">{formatUCS(item.aquisicao)}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] text-indigo-600">{formatUCS(item.saldoAjustarImei)}</TableCell>
                     <TableCell className="text-right font-mono font-black text-[12px] text-primary bg-slate-50">{formatUCS(item.saldoFinalAtual)} UCS</TableCell>
