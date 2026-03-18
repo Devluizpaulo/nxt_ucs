@@ -32,50 +32,57 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   }, [entity]);
 
   // Cálculos de Auditoria e Consolidados
-  const { percentPago, totalMovimentacao, totalOriginacao, totalAquisicao, saldoFinal } = useMemo(() => {
+  const stats = useMemo(() => {
     const sumTable = (table?: RegistroTabela[]) => (table || []).reduce((acc, row) => acc + (row.valor || 0), 0);
     
     const movTable = formData.tabelaMovimentacao || [];
     const totalMov = sumTable(movTable);
     const pagas = movTable.filter(m => m.statusAuditoria === 'Pago').length;
-    const perc = movTable.length > 0 ? (pagas / movTable.length) * 100 : 0;
+    const percPago = movTable.length > 0 ? (pagas / movTable.length) * 100 : 0;
 
     const totalOrig = sumTable(formData.tabelaOriginacao);
     const totalAq = sumTable(formData.tabelaAquisicao);
-    
-    return {
-      percentPago: perc,
-      totalMovimentacao: totalMov,
-      totalOriginacao: totalOrig,
-      totalAquisicao: totalAq,
-      saldoFinal: totalOrig + totalMov - totalAq
-    };
-  }, [formData.tabelaMovimentacao, formData.tabelaOriginacao, formData.tabelaAquisicao]);
 
-  useEffect(() => {
-    const sumField = (table?: RegistroTabela[], field: keyof RegistroTabela) => 
-      (table || []).reduce((acc, row) => acc + (Number(row[field]) || 0), 0);
-    
-    const totalCreditoImei = sumField(formData.tabelaImei, 'valorCredito');
-    const totalDebitoImei = sumField(formData.tabelaImei, 'valorDebito');
+    // IMEI Balance
+    const totalCreditoImei = (formData.tabelaImei || []).reduce((acc, row) => acc + (row.valorCredito || 0), 0);
+    const totalDebitoImei = (formData.tabelaImei || []).reduce((acc, row) => acc + (row.valorDebito || 0), 0);
     const ajusteImei = Math.max(0, totalDebitoImei - totalCreditoImei);
 
+    // Legado
     const legadoTotal = (formData.tabelaLegado || []).reduce((acc, row) => acc + ((row.disponivel || 0) + (row.reservado || 0)), 0);
-    const totalAposentado = sumField(formData.tabelaLegado, 'aposentado');
-    const totalBloqueado = sumField(formData.tabelaLegado, 'bloqueado');
+    const totalAposentado = (formData.tabelaLegado || []).reduce((acc, row) => acc + (row.aposentado || 0), 0);
+    const totalBloqueado = (formData.tabelaLegado || []).reduce((acc, row) => acc + (row.bloqueado || 0), 0);
     
-    setFormData(prev => ({ 
-      ...prev, 
-      originacao: totalOriginacao,
-      movimentacao: totalMovimentacao,
-      aquisicao: totalAquisicao,
-      aposentado: totalAposentado,
-      bloqueado: totalBloqueado,
-      saldoAjustarImei: ajusteImei,
-      saldoLegadoTotal: legadoTotal,
-      saldoFinalAtual: saldoFinal
+    // O Saldo Auditado é a Originação + Movimentação (que é negativa) - Aquisição
+    const finalAuditado = totalOrig + totalMov - totalAq;
+
+    return {
+      percPago,
+      totalMov,
+      totalOrig,
+      totalAq,
+      ajusteImei,
+      legadoTotal,
+      totalAposentado,
+      totalBloqueado,
+      finalAuditado
+    };
+  }, [formData]);
+
+  // Sincroniza estados derivados no formData para gravação
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      originacao: stats.totalOrig,
+      movimentacao: stats.totalMov,
+      aquisicao: stats.totalAq,
+      aposentado: stats.totalAposentado,
+      bloqueado: stats.totalBloqueado,
+      saldoAjustarImei: stats.ajusteImei,
+      saldoLegadoTotal: stats.legadoTotal,
+      saldoFinalAtual: stats.finalAuditado
     }));
-  }, [totalOriginacao, totalMovimentacao, totalAquisicao, saldoFinal, formData.tabelaImei, formData.tabelaLegado]);
+  }, [stats]);
 
   useEffect(() => {
     if (!pasteBuffer.trim()) {
@@ -99,15 +106,17 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       const isHeader = (line.toLowerCase().includes('data') || line.toLowerCase().includes('dist')) && !/^\d+/.test(line);
       if (isHeader && index === 0) return;
 
-      if (activePasteField === 'tabelaAquisicao') {
-        const match = line.match(/(\d{4})[^\d]+(\d+)/);
-        if (match) {
-          results.push({
-            data: match[1],
-            destino: `Dedução de Aquisição ${match[1]}`,
-            valor: parseInt(match[2]) || 0
-          });
-        }
+      if (activePasteField === 'tabelaImei') {
+        const deb = parseBRL(parts[parts.length - 1]);
+        const cred = parseBRL(parts[parts.length - 2]);
+        results.push({ 
+          dist: parts[0], 
+          data: parts[1], 
+          destino: parts[2], 
+          valor: cred - deb, 
+          valorCredito: cred, 
+          valorDebito: deb 
+        });
       } else if (activePasteField === 'tabelaLegado') {
         if (parts.length < 8) return;
         const disp = parseBRL(parts[4]);
@@ -123,21 +132,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           aposentado: parseBRL(parts[7]),
           valor: disp + res,
         });
-      } else if (activePasteField === 'tabelaImei') {
-        const deb = parseBRL(parts[parts.length - 1]);
-        const cred = parseBRL(parts[parts.length - 2]);
-        results.push({ 
-          dist: parts[0], 
-          data: parts[1], 
-          destino: parts[2], 
-          valor: cred - deb, 
-          valorCredito: cred, 
-          valorDebito: deb 
-        });
       } else {
         const lastPart = parts[parts.length - 1];
         const valor = parseBRL(lastPart);
-        const isNegative = activePasteField === 'tabelaMovimentacao';
+        const isNegative = activePasteField === 'tabelaMovimentacao' || activePasteField === 'tabelaAquisicao';
         results.push({ 
           dist: parts[0], 
           data: parts[1], 
@@ -156,7 +154,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
   const handleUpdateRow = (field: keyof EntidadeSaldo, index: number, updates: Partial<RegistroTabela>) => {
     setFormData(prev => {
-      const currentTable = [...(prev[field] as any[])];
+      const currentTable = [...((prev[field] as any[]) || [])];
       currentTable[index] = { ...currentTable[index], ...updates };
       return { ...prev, [field]: currentTable };
     });
@@ -180,6 +178,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           <DialogDescription>Console de conformidade técnica LedgerTrust.</DialogDescription>
         </DialogHeader>
 
+        {/* Modal de Colagem */}
         {activePasteField && (
           <div className="absolute inset-0 z-[100] bg-white/95 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in zoom-in duration-200">
             <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
@@ -210,43 +209,51 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         )}
 
-        <div className="bg-[#0F172A] p-10 shrink-0 text-white relative">
+        {/* CABEÇALHO BMV PREMIUM (Idêntico à Imagem) */}
+        <div className="bg-[#0F172A] p-12 shrink-0 text-white relative">
           <div className="flex items-center gap-2 mb-8">
             <ShieldCheck className="w-4 h-4 text-primary" />
             <span className="text-[10px] font-black uppercase tracking-widest text-primary">AUDITORIA BMV</span>
           </div>
 
-          <div className="space-y-8">
-            <div className="flex justify-between items-start border-b border-slate-800/50 pb-4">
-              <h2 className="text-3xl font-black leading-none tracking-tighter uppercase max-w-[70%]">
-                {entity.nome}
-              </h2>
-              <div className="text-right flex flex-col items-end gap-1">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">DOCUMENTO</span>
-                <span className="text-sm font-bold tracking-tight text-slate-200 font-mono">{entity.documento}</span>
-              </div>
+          <div className="flex justify-between items-start mb-10">
+            <h2 className="text-5xl font-black leading-none tracking-tighter uppercase">
+              {entity.nome}
+            </h2>
+            <div className="text-right flex flex-col items-end">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DOCUMENTO</span>
+              <span className="text-lg font-bold tracking-tight text-slate-200 font-mono">{entity.documento}</span>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6 items-center">
-              <StatColumn label="ORIGINAÇÃO" value={formatUCS(formData.originacao)} color="slate" />
-              <StatColumn 
-                label="MOVIMENTAÇÃO" 
-                value={formatUCS(formData.movimentacao)} 
-                color="rose" 
-                subValue={`${percentPago.toFixed(0)}% PAGO`}
-              />
-              <StatColumn label="APOSENTADO" value={formatUCS(formData.aposentado)} color="slate" />
-              <StatColumn label="BLOQUEADO" value={formatUCS(formData.bloqueado)} color="rose" />
-              <StatColumn label="AQUISIÇÃO" value={formatUCS(formData.aquisicao)} color="rose" />
-              <StatColumn label="AJUSTE IMEI" value={formatUCS(formData.saldoAjustarImei)} color="indigo" />
-              <StatColumn label="SALDO LEGADO" value={formatUCS(formData.saldoLegadoTotal)} color="amber" />
-              <StatColumn label="SALDO AUDITADO" value={formatUCS(formData.saldoFinalAtual)} color="emerald" highlight />
+          {/* Grade de 8 Consolidados */}
+          <div className="grid grid-cols-8 gap-8 items-end px-1">
+            <StatColumn label="ORIGINAÇÃO" value={formatUCS(stats.totalOrig)} color="white" />
+            <StatColumn 
+              label="MOVIMENTAÇÃO" 
+              value={formatUCS(stats.totalMov)} 
+              color="rose" 
+              subValue={`${stats.percPago.toFixed(0)}% PAGO`}
+            />
+            <StatColumn label="APOSENTADO" value={formatUCS(stats.totalAposentado)} color="white" />
+            <StatColumn label="BLOQUEADO" value={formatUCS(stats.totalBloqueado)} color="rose" />
+            <StatColumn label="AQUISIÇÃO" value={formatUCS(stats.totalAq)} color="rose" />
+            <StatColumn label="AJUSTE IMEI" value={formatUCS(stats.ajusteImei)} color="indigo" />
+            <StatColumn label="SALDO LEGADO" value={formatUCS(stats.legadoTotal)} color="amber" />
+            
+            <div className="bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 min-w-[220px]">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">SALDO AUDITADO</p>
+              <div className="flex items-baseline gap-1 text-4xl font-black tracking-tighter text-primary">
+                {formatUCS(stats.finalAuditado)}
+                <span className="text-sm font-black opacity-60 ml-1">UCS</span>
+              </div>
             </div>
           </div>
         </div>
 
+        {/* ÁREA DE TRABALHO TÉCNICA */}
         <ScrollArea className="flex-1 bg-white">
-          <div className="p-10 space-y-12 pb-24">
+          <div className="p-12 space-y-12 pb-24">
             <SectionTechnical 
               title="Originação de Ativos"
               icon={TrendingUp}
@@ -288,6 +295,22 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             />
 
             <SectionTechnical 
+              title="Transferências IMEI (Balanceamento)"
+              icon={Calculator}
+              color="indigo"
+              onImport={() => setActivePasteField('tabelaImei')}
+              data={formData.tabelaImei || []}
+              columns={[
+                { label: "Ref. Dist.", key: "dist" },
+                { label: "Data", key: "data" },
+                { label: "Usuário Destino", key: "destino" },
+                { label: "Crédito (UCS)", key: "valorCredito", align: "right" },
+                { label: "Débito (UCS)", key: "valorDebito", align: "right" },
+                { label: "Líquido", key: "valor", align: "right", variant: "indigo" }
+              ]}
+            />
+
+            <SectionTechnical 
               title="Saldo Legado (Referência)"
               icon={History}
               color="amber"
@@ -304,16 +327,17 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </ScrollArea>
 
-        <div className="p-8 border-t bg-white flex justify-between items-center shrink-0">
+        {/* RODAPÉ BMV (Idêntico à Imagem) */}
+        <div className="p-10 border-t bg-white flex justify-between items-center shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400 tracking-widest hover:bg-transparent hover:text-rose-500">
-            Descartar Alterações
+            DESCARTAR ALTERAÇÕES
           </Button>
           <div className="flex gap-4">
-            <Button onClick={handlePrint} variant="outline" className="h-12 px-6 rounded-xl border-slate-200 font-black uppercase text-[10px] tracking-widest gap-2 hover:bg-slate-50 transition-all">
-              <Printer className="w-4 h-4" /> Imprimir Relatório Auditado
+            <Button onClick={handlePrint} variant="outline" className="h-14 px-10 rounded-2xl border-slate-200 font-black uppercase text-[10px] tracking-widest gap-3 hover:bg-slate-50 transition-all border-2">
+              <Printer className="w-4 h-4" /> IMPRIMIR RELATÓRIO AUDITADO
             </Button>
-            <Button onClick={() => { onUpdate(entity.id, formData); onOpenChange(false); }} className="h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 gap-2 transition-all active:scale-95">
-              <Save className="w-4 h-4" /> Gravar no Ledger Permanente
+            <Button onClick={() => { onUpdate(entity.id, formData); onOpenChange(false); }} className="h-14 px-12 rounded-2xl bg-[#00B894] hover:bg-[#00A381] text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-[#00B894]/20 gap-3 transition-all active:scale-95">
+              <Save className="w-4 h-4" /> GRAVAR NO LEDGER PERMANENTE
             </Button>
           </div>
         </div>
@@ -322,9 +346,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   );
 }
 
-function StatColumn({ label, value, color, highlight, subValue }: { label: string, value: string, color: string, highlight?: boolean, subValue?: string }) {
+function StatColumn({ label, value, color, subValue }: { label: string, value: string, color: string, subValue?: string }) {
   const colorClasses = {
-    slate: "text-slate-400",
+    white: "text-white",
     rose: "text-rose-500",
     amber: "text-amber-500",
     indigo: "text-indigo-400",
@@ -332,32 +356,15 @@ function StatColumn({ label, value, color, highlight, subValue }: { label: strin
   };
 
   return (
-    <div className={cn(
-      "flex flex-col gap-1 transition-all",
-      highlight && "bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 min-w-[180px]"
-    )}>
-      <p className={cn(
-        "font-black uppercase tracking-widest",
-        highlight ? "text-[10px] text-slate-400" : "text-[8px] text-slate-500"
-      )}>
-        {label}
-      </p>
-      <div className={cn(
-        "flex items-baseline gap-1 font-black tracking-tighter",
-        highlight ? "text-3xl" : "text-xl",
-        colorClasses[color as keyof typeof colorClasses]
-      )}>
+    <div className="flex flex-col gap-1.5 min-w-[120px]">
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
+      <div className={cn("flex items-baseline gap-1 text-2xl font-black tracking-tighter", colorClasses[color as keyof typeof colorClasses])}>
         {value}
-        <span className={cn(
-          "uppercase tracking-tighter",
-          highlight ? "text-xs opacity-60" : "text-[8px] opacity-40"
-        )}>
-          UCS
-        </span>
+        <span className="text-[9px] font-black opacity-40 ml-0.5">UCS</span>
       </div>
       {subValue && (
-        <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
-          {subValue.includes('PAGO') ? <CheckCircle2 className="w-2.5 h-2.5 text-primary" /> : <Clock className="w-2.5 h-2.5" />}
+        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+          {subValue.includes('PAGO') ? <CheckCircle2 className="w-3 h-3 text-primary" /> : <Clock className="w-3 h-3" />}
           {subValue}
         </span>
       )}
@@ -370,37 +377,43 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between border-b border-slate-100 pb-4">
+      <div className="flex items-end justify-between border-b border-slate-100 pb-5">
         <div className="flex items-center gap-4">
-          <div className={cn("w-1 h-8 rounded-full", 
+          <div className={cn("w-1 h-10 rounded-full", 
             color === "amber" ? "bg-amber-500" : 
-            color === "rose" ? "bg-rose-500" : "bg-primary"
+            color === "rose" ? "bg-rose-500" : 
+            color === "indigo" ? "bg-indigo-500" : "bg-primary"
           )} />
           <div>
-            <h3 className="text-base font-black uppercase tracking-widest text-slate-900 leading-none">{title}</h3>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">
-              CONSOLIDADO DA SEÇÃO: <span className={cn("font-black", color === 'rose' ? "text-rose-500" : (color === 'amber' ? "text-amber-600" : "text-emerald-600"))}>
+            <h3 className="text-lg font-black uppercase tracking-widest text-slate-900 leading-none">{title}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+              CONSOLIDADO DA SEÇÃO: <span className={cn("font-black", 
+                color === 'rose' ? "text-rose-500" : 
+                (color === 'amber' ? "text-amber-600" : 
+                (color === 'indigo' ? "text-indigo-600" : "text-emerald-600"))
+              )}>
                 {Math.abs(currentTotal).toLocaleString('pt-BR')} UCS
               </span>
             </p>
           </div>
         </div>
-        <Button onClick={onImport} variant="outline" className="h-10 px-4 rounded-xl border-primary text-primary font-black uppercase text-[9px] tracking-widest gap-2 hover:bg-emerald-50 transition-all">
-          <Calculator className="w-3.5 h-3.5" /> Colagem Técnica
+        <Button onClick={onImport} variant="outline" className="h-11 px-5 rounded-2xl border-primary text-primary font-black uppercase text-[10px] tracking-widest gap-2 hover:bg-emerald-50 transition-all border-2">
+          <Calculator className="w-4 h-4" /> COLAGEM TÉCNICA
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-slate-100 overflow-hidden bg-white shadow-sm">
+      <div className="rounded-[1.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
         {data.length === 0 ? (
-          <div className="py-8 text-center opacity-30">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Sem registros processados</p>
+          <div className="py-12 text-center opacity-30 flex flex-col items-center gap-2">
+            <AlertCircle className="w-6 h-6 text-slate-300" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sem registros processados nesta seção</p>
           </div>
         ) : (
           <Table>
             <TableHeader className="bg-slate-50/50">
-              <TableRow className="h-10">
+              <TableRow className="h-12">
                 {columns.map((col: any) => (
-                  <TableHead key={col.label} className={cn("text-[8px] font-black uppercase tracking-widest text-slate-400 px-6", col.align === 'right' && "text-right")}>
+                  <TableHead key={col.label} className={cn("text-[9px] font-black uppercase tracking-widest text-slate-400 px-8", col.align === 'right' && "text-right")}>
                     {col.label}
                   </TableHead>
                 ))}
@@ -408,43 +421,44 @@ function SectionTechnical({ title, icon: Icon, color = "emerald", onImport, data
             </TableHeader>
             <TableBody>
               {data.map((row: any, i: number) => (
-                <TableRow key={i} className="h-10 hover:bg-slate-50/30 transition-colors border-b border-slate-50 last:border-0">
+                <TableRow key={i} className="h-12 hover:bg-slate-50/40 transition-colors border-b border-slate-50 last:border-0">
                   {columns.map((col: any) => (
                     <TableCell key={col.label} className={cn(
-                      "px-6 text-[10px] font-bold text-slate-600",
+                      "px-8 text-[11px] font-bold text-slate-600",
                       col.align === 'right' && "text-right",
                       col.variant === 'emerald' && "text-emerald-600",
                       col.variant === 'rose' && "text-rose-500",
-                      col.variant === 'amber' && "text-amber-600 font-black"
+                      col.variant === 'amber' && "text-amber-600 font-black",
+                      col.variant === 'indigo' && "text-indigo-600"
                     )}>
                       {col.type === 'status' ? (
                         <Select 
                           value={row[col.key] || 'Pendente'} 
                           onValueChange={(v) => onUpdateRow?.(i, { [col.key]: v as AuditoriaStatus })}
                         >
-                          <SelectTrigger className="h-7 w-28 text-[9px] font-bold uppercase tracking-widest rounded-lg border-slate-200">
+                          <SelectTrigger className="h-9 w-32 text-[10px] font-black uppercase tracking-widest rounded-xl border-slate-200">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Pendente" className="text-[9px] font-bold uppercase">Pendente</SelectItem>
-                            <SelectItem value="Pago" className="text-[9px] font-bold uppercase text-emerald-600">Pago</SelectItem>
-                            <SelectItem value="Não Pago" className="text-[9px] font-bold uppercase text-rose-500">Não Pago</SelectItem>
+                            <SelectItem value="Pendente" className="text-[10px] font-black uppercase">PENDENTE</SelectItem>
+                            <SelectItem value="Pago" className="text-[10px] font-black uppercase text-emerald-600">PAGO</SelectItem>
+                            <SelectItem value="Não Pago" className="text-[10px] font-black uppercase text-rose-500">NÃO PAGO</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : col.type === 'link' ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           <Input 
                             value={row[col.key] || ''} 
                             placeholder="Link do comprovante..."
                             onChange={(e) => onUpdateRow?.(i, { [col.key]: e.target.value })}
-                            className="h-7 w-40 text-[9px] font-mono border-slate-200 rounded-lg"
+                            className="h-9 w-48 text-[10px] font-mono border-slate-200 rounded-xl"
                           />
-                          {row[col.key] && (
+                          {row[col.key] ? (
                             <a href={row[col.key]} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
-                              <LinkIcon className="w-3.5 h-3.5" />
+                              <LinkIcon className="w-4 h-4" />
                             </a>
-                          ) || (
-                            <AlertCircle className="w-3.5 h-3.5 text-slate-300" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-slate-200" />
                           )}
                         </div>
                       ) : (
