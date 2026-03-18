@@ -78,6 +78,10 @@ export interface EntidadeSaldo {
   tabelaAquisicao?: RegistroTabela[];
   tabelaLegado?: RegistroTabela[];
 
+  // Auditoria e Apontamentos
+  observacao?: string;
+  statusAuditoriaSaldo?: 'valido' | 'inconsistente';
+
   status: EntityStatus;
   createdAt: string;
 }

@@ -13,7 +13,10 @@ import {
   Layers,
   Plus,
   Trash2,
-  Database
+  Database,
+  AlertTriangle,
+  MessageSquare,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface EntityEditDialogProps {
   entity: EntidadeSaldo | null;
@@ -59,18 +63,15 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const mov = sumVal(formData.tabelaMovimentacao);
     const aq = (formData.tabelaAquisicao || []).reduce((acc, curr) => acc + (curr.valor || 0), 0);
     
-    // IMEI Balance: Debits - Credits (Pending status) - Neutral to final balance
     const imeiCredits = sumCredits(formData.tabelaImei);
     const imeiDebits = sumDebits(formData.tabelaImei);
     const imeiPending = imeiDebits - imeiCredits;
 
-    // Legado: Disponivel + Reservado (Reference only)
+    const aposentado = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.aposentado || 0), 0);
+    const bloqueado = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.bloqueado || 0), 0);
     const legDisp = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.disponivel || 0), 0);
     const legRes = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.reservado || 0), 0);
     const legadoTotal = legDisp + legRes;
-
-    const aposentado = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.aposentado || 0), 0);
-    const bloqueado = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.bloqueado || 0), 0);
 
     // EQUAÇÃO DE AUDITORIA ATUALIZADA:
     // Saldo Disponível = Originação + Movimentação - Aquisição - Aposentado - Bloqueado
@@ -143,13 +144,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     setNewImeiDest("");
     setNewImeiCred("");
     setNewImeiDeb("");
-  };
-
-  const handleDeleteItem = (section: keyof EntidadeSaldo, id: string) => {
-    setFormData({
-      ...formData,
-      [section]: (formData[section] as any[] || []).filter(item => (item.id !== id && item.dist !== id))
-    });
   };
 
   const handleProcessPaste = () => {
@@ -251,6 +245,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           <DialogDescription>Detalhamento de conferência e rastreabilidade Ledger.</DialogDescription>
         </DialogHeader>
 
+        {/* CABEÇALHO TÉCNICO - TEMA DARK */}
         <div className="bg-[#0B0F1A] p-10 shrink-0 text-white relative">
           <div className="flex justify-between items-start mb-12">
             <div className="space-y-1.5">
@@ -288,24 +283,57 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
         <ScrollArea className="flex-1 bg-white">
           <div className="p-10 space-y-20">
+            {/* MÓDULO DE APONTAMENTOS E DIVERGÊNCIAS */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 bg-slate-50/50 p-10 rounded-[2.5rem] border border-slate-100">
+               <div className="lg:col-span-2 space-y-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-900">APONTAMENTOS DE AUDITORIA</h3>
+                  </div>
+                  <Textarea 
+                    value={formData.observacao || ""} 
+                    onChange={e => setFormData({...formData, observacao: e.target.value})}
+                    placeholder="Descreva aqui divergências, inconsistências ou justificativas para o saldo auditado..."
+                    className="min-h-[140px] bg-white border-slate-200 rounded-2xl p-6 text-[13px] font-medium leading-relaxed focus:ring-primary shadow-sm resize-none"
+                  />
+               </div>
+               <div className="space-y-6">
+                  <div className="space-y-4">
+                    <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">STATUS DA CONFORMIDADE</Label>
+                    <Select 
+                      value={formData.statusAuditoriaSaldo || "valido"} 
+                      onValueChange={v => setFormData({...formData, statusAuditoriaSaldo: v as any})}
+                    >
+                      <SelectTrigger className="h-14 rounded-2xl bg-white border-slate-200 font-bold text-[12px] uppercase tracking-widest">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="valido" className="font-bold text-[12px] uppercase">✓ SALDO VALIDADO</SelectItem>
+                        <SelectItem value="inconsistente" className="font-bold text-[12px] uppercase text-rose-500">⚠ DIVERGÊNCIA DETECTADA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.statusAuditoriaSaldo === 'inconsistente' && (
+                    <div className="p-6 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-4 animate-in fade-in zoom-in duration-300">
+                       <AlertTriangle className="w-6 h-6 text-rose-500 shrink-0" />
+                       <div className="space-y-1">
+                         <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Atenção Auditor</p>
+                         <p className="text-[11px] font-bold text-rose-500/80 leading-tight">Este registro será sinalizado com alerta na listagem principal devido à inconsistência apontada.</p>
+                       </div>
+                    </div>
+                  )}
+               </div>
+            </div>
+
             {/* 01. ORIGINAÇÃO */}
             <div className="space-y-6">
-              <SectionHeader 
-                title="01. LANÇAMENTOS DE ORIGINAÇÃO" 
-                value={totals.orig} 
-                onPaste={() => setPasteData({ section: 'tabelaOriginacao', raw: '' })}
-              />
+              <SectionHeader title="01. LANÇAMENTOS DE ORIGINAÇÃO" value={totals.orig} onPaste={() => setPasteData({ section: 'tabelaOriginacao', raw: '' })} />
               <SectionTable data={formData.tabelaOriginacao || []} type="originacao" />
             </div>
 
             {/* 02. MOVIMENTAÇÃO */}
             <div className="space-y-6">
-              <SectionHeader 
-                title="02. MOVIMENTAÇÕES / RETIRADAS" 
-                value={totals.mov} 
-                isNegative 
-                onPaste={() => setPasteData({ section: 'tabelaMovimentacao', raw: '' })}
-              />
+              <SectionHeader title="02. MOVIMENTAÇÕES / RETIRADAS" value={totals.mov} isNegative onPaste={() => setPasteData({ section: 'tabelaMovimentacao', raw: '' })} />
               <div className="rounded-[2.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
                 <Table>
                   <TableHeader className="bg-slate-50/50">
@@ -455,12 +483,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
             {/* 05. SALDO LEGADO */}
             <div className="space-y-6">
-              <SectionHeader 
-                title="05. SALDO LEGADO CONSOLIDADO" 
-                value={totals.legadoTotal} 
-                isLegado 
-                onPaste={() => setPasteData({ section: 'tabelaLegado', raw: '' })}
-              />
+              <SectionHeader title="05. SALDO LEGADO CONSOLIDADO" value={totals.legadoTotal} isLegado onPaste={() => setPasteData({ section: 'tabelaLegado', raw: '' })} />
               <div className="rounded-[2.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
                 <Table>
                   <TableHeader className="bg-slate-50/50">

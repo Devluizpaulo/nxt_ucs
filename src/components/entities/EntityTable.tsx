@@ -5,10 +5,11 @@ import { EntidadeSaldo } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, AlertTriangle, MessageSquare } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { EntityEditDialog } from "./EntityEditDialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface EntityTableProps {
   data: EntidadeSaldo[];
@@ -80,7 +81,15 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                       className="font-black text-[11px] uppercase text-slate-900 max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors"
                       onClick={() => setEditingEntity(item)}
                     >
-                      {item.nome}
+                      <div className="flex items-center gap-2">
+                        {item.nome}
+                        {item.statusAuditoriaSaldo === 'inconsistente' && (
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                        )}
+                        {item.observacao && (
+                          <MessageSquare className="w-3 h-3 text-slate-300" />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-mono text-[10px] text-slate-500">{item.documento}</TableCell>
                     <TableCell className="text-right font-mono text-[11px] font-bold text-slate-600">{formatUCS(item.originacao)}</TableCell>
@@ -89,7 +98,23 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                     <TableCell className="text-right font-mono text-[11px] text-rose-400">{formatUCS(item.bloqueado)}</TableCell>
                     <TableCell className="text-right font-mono text-[11px] text-rose-500">{formatUCS(item.aquisicao)}</TableCell>
                     <TableCell className="text-right font-mono text-[11px] text-indigo-500">{formatUCS(item.saldoAjustarImei)}</TableCell>
-                    <TableCell className="text-right font-mono font-black text-[14px] text-primary bg-emerald-50/30">{formatUCS(item.saldoFinalAtual)} UCS</TableCell>
+                    <TableCell className="text-right font-mono font-black text-[14px] text-primary bg-emerald-50/30">
+                      <div className="flex items-center justify-end gap-2">
+                        {formatUCS(item.saldoFinalAtual)} UCS
+                        {item.statusAuditoriaSaldo === 'inconsistente' && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertTriangle className="w-3 h-3 text-rose-500" />
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-rose-500 text-white font-bold text-[10px] uppercase border-none">
+                                Divergência Detectada na Auditoria
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center py-4">
                       {item.status === 'disponivel' ? (
                         <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[9px] font-black uppercase">Válido</Badge>
