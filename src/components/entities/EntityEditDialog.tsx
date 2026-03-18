@@ -35,21 +35,27 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [entity]);
 
-  // Cálculo automático do Saldo Final Auditado
+  // Cálculo automático do Saldo Final Auditado baseado em todas as tabelas
   useEffect(() => {
+    const sumTable = (table?: RegistroTabela[]) => (table || []).reduce((acc, row) => acc + (row.valor || 0), 0);
+    
     const final = 
-      (formData.originacao || 0) + 
-      (formData.movimentacao || 0) + 
-      (formData.aposentado || 0) + 
-      (formData.bloqueado || 0) + 
-      (formData.aquisicao || 0) +
-      (formData.saldoAjustarImei || 0) +
-      (formData.saldoLegadoTotal || 0);
+      sumTable(formData.tabelaOriginacao) + 
+      sumTable(formData.tabelaMovimentacao) + 
+      sumTable(formData.tabelaImei) + 
+      sumTable(formData.tabelaAquisicao) +
+      sumTable(formData.tabelaLegado);
     
     if (final !== formData.saldoFinalAtual) {
       setFormData(prev => ({ ...prev, saldoFinalAtual: final }));
     }
-  }, [formData.originacao, formData.movimentacao, formData.aposentado, formData.bloqueado, formData.aquisicao, formData.saldoAjustarImei, formData.saldoLegadoTotal]);
+  }, [
+    formData.tabelaOriginacao, 
+    formData.tabelaMovimentacao, 
+    formData.tabelaImei, 
+    formData.tabelaAquisicao, 
+    formData.tabelaLegado
+  ]);
 
   useEffect(() => {
     if (!pasteBuffer.trim()) {
@@ -64,10 +70,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       const parts = line.split('\t');
       if (parts.length < 2) return;
 
+      // Ignorar cabeçalhos
       const headerKeywords = ['dist', 'data', 'usuário', 'disponível', 'total', 'nome', 'documento', 'plataforma', 'originação'];
       if (headerKeywords.some(key => line.toLowerCase().includes(key))) return;
 
-      if (activePasteField === 'saldoLegadoTotal') {
+      if (activePasteField === 'tabelaLegado') {
         if (parts.length >= 8) {
           const disp = parseFloat(parts[4]?.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
           const res = parseFloat(parts[5]?.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
@@ -83,18 +90,19 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             valor: disp + res,
           });
         }
-      } else if (activePasteField === 'originacao') {
-        const valor = parseFloat(parts[parts.length - 2]?.replace(/[R$\s.]/g, '').replace(',', '.') || parts[parts.length - 1]?.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+      } else if (activePasteField === 'tabelaOriginacao') {
+        const valor = parseFloat(parts[parts.length - 1]?.replace(/[R$\s.]/g, '').replace(',', '.') || parts[parts.length - 2]?.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
         results.push({ dist: parts[0]?.trim(), data: parts[1]?.trim(), destino: parts[2]?.trim(), valor });
-      } else if (activePasteField === 'saldoAjustarImei') {
+      } else if (activePasteField === 'tabelaImei') {
         const cred = parseFloat(parts[parts.length - 2]?.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
         const deb = parseFloat(parts[parts.length - 1]?.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
         results.push({ dist: parts[0]?.trim(), data: parts[1]?.trim(), destino: parts[2]?.trim(), valor: cred - deb, valorCredito: cred, valorDebito: deb });
-      } else if (activePasteField === 'aquisicao') {
+      } else if (activePasteField === 'tabelaAquisicao') {
         const val = parseFloat(parts[parts.length - 1]?.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
         results.push({ nome: parts[0]?.trim() || "Aquisição", ano: parts[parts.length - 3] || "N/A", valor: -val });
       } else {
-        const val = parseFloat(parts[parts.length - 2]?.replace(/[R$\s.]/g, '').replace(',', '.') || "0") || 0;
+        // Movimentação/Retiradas (Débitos)
+        const val = parseFloat(parts[parts.length - 2]?.replace(/[R$\s.]/g, '').replace(',', '.') || parts[parts.length - 1]?.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
         results.push({ dist: parts[0]?.trim(), data: parts[1]?.trim(), destino: parts[2]?.trim(), valor: -val, situacao: parts[parts.length - 1]?.trim() });
       }
     });
@@ -105,27 +113,15 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   const consolidateField = () => {
     if (!activePasteField || previewRows.length === 0) return;
 
-    const total = previewRows.reduce((acc, row) => acc + (row.valor || 0), 0);
-    const tableMap: Record<string, keyof EntidadeSaldo> = {
-      originacao: 'tabelaOriginacao',
-      movimentacao: 'tabelaMovimentacao',
-      aposentado: 'tabelaMovimentacao',
-      bloqueado: 'tabelaMovimentacao',
-      aquisicao: 'tabelaAquisicao',
-      saldoAjustarImei: 'tabelaImei',
-      saldoLegadoTotal: 'tabelaLegado'
-    };
-
     setFormData(prev => ({ 
       ...prev, 
-      [activePasteField]: total,
-      [tableMap[activePasteField as string]]: previewRows
+      [activePasteField]: previewRows
     }));
     
     setPasteBuffer("");
     setPreviewRows([]);
     setActivePasteField(null);
-    toast({ title: "Auditado", description: "O Ledger foi atualizado com o histórico importado." });
+    toast({ title: "Ledger Atualizado", description: "O histórico foi consolidado no registro permanente." });
   };
 
   if (!entity) return null;
@@ -172,33 +168,31 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
         <ScrollArea className="flex-1 bg-slate-50/20">
           <div className="p-12 space-y-16">
             <TechnicalSection 
-              title="Sessão de Originação"
-              activeField="originacao"
+              title="Originação de Ativos"
+              activeField="tabelaOriginacao"
               setActiveField={setActivePasteField}
               pasteBuffer={pasteBuffer}
               setPasteBuffer={setPasteBuffer}
               previewRows={previewRows}
               onImport={consolidateField}
               data={formData.tabelaOriginacao || []}
-              currentValue={formData.originacao || 0}
               columns={[
                 { label: "Dist.", key: "dist" },
                 { label: "Data Inicio", key: "data" },
                 { label: "Usuário Destino", key: "destino" },
-                { label: "Crédito (UCS)", key: "valor", align: "right", color: "text-emerald-600 font-bold" }
+                { label: "Volume (UCS)", key: "valor", align: "right", color: "text-emerald-600 font-bold" }
               ]}
             />
 
             <TechnicalSection 
-              title="Sessão de Movimentações"
-              activeField="movimentacao"
+              title="Movimentações / Retiradas"
+              activeField="tabelaMovimentacao"
               setActiveField={setActivePasteField}
               pasteBuffer={pasteBuffer}
               setPasteBuffer={setPasteBuffer}
               previewRows={previewRows}
               onImport={consolidateField}
               data={formData.tabelaMovimentacao || []}
-              currentValue={formData.movimentacao || 0}
               columns={[
                 { label: "Dist.", key: "dist" },
                 { label: "Data Inicio", key: "data" },
@@ -208,15 +202,14 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             />
 
             <TechnicalSection 
-              title="Transferências IMEI (Ajuste)"
-              activeField="saldoAjustarImei"
+              title="Transferências IMEI (Ajuste Técnico)"
+              activeField="tabelaImei"
               setActiveField={setActivePasteField}
               pasteBuffer={pasteBuffer}
               setPasteBuffer={setPasteBuffer}
               previewRows={previewRows}
               onImport={consolidateField}
               data={formData.tabelaImei || []}
-              currentValue={formData.saldoAjustarImei || 0}
               columns={[
                 { label: "Dist.", key: "dist" },
                 { label: "Crédito", key: "valorCredito", color: "text-emerald-600" },
@@ -226,39 +219,37 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             />
 
             <TechnicalSection 
-              title="Aquisição de UCs (Empresa)"
-              activeField="aquisicao"
+              title="Aquisições Antecipadas (BMTCA)"
+              activeField="tabelaAquisicao"
               setActiveField={setActivePasteField}
               pasteBuffer={pasteBuffer}
               setPasteBuffer={setPasteBuffer}
               previewRows={previewRows}
               onImport={consolidateField}
               data={formData.tabelaAquisicao || []}
-              currentValue={formData.aquisicao || 0}
               columns={[
                 { label: "Usuário", key: "nome" },
-                { label: "Ano", key: "ano", align: "center" },
+                { label: "Ano/Ref", key: "ano", align: "center" },
                 { label: "Volume (UCS)", key: "valor", align: "right", color: "text-rose-500 font-bold" }
               ]}
             />
 
             <TechnicalSection 
-              title="Saldo Legado Auditado"
-              activeField="saldoLegadoTotal"
+              title="Saldo Legado Consolidado"
+              activeField="tabelaLegado"
               setActiveField={setActivePasteField}
               pasteBuffer={pasteBuffer}
               setPasteBuffer={setPasteBuffer}
               previewRows={previewRows}
               onImport={consolidateField}
               data={formData.tabelaLegado || []}
-              currentValue={formData.saldoLegadoTotal || 0}
               variant="amber"
               columns={[
-                { label: "Data Atualização", key: "data" },
+                { label: "Atualização", key: "data" },
                 { label: "Plataforma", key: "plataforma" },
                 { label: "Disponível", key: "disponivel", align: "right" },
                 { label: "Reservado", key: "reservado", align: "right" },
-                { label: "Total Linha (UCS)", key: "valor", align: "right", color: "text-primary font-bold" }
+                { label: "Total (UCS)", key: "valor", align: "right", color: "text-primary font-bold" }
               ]}
             />
           </div>
@@ -283,8 +274,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   );
 }
 
-function TechnicalSection({ title, activeField, setActiveField, pasteBuffer, setPasteBuffer, previewRows, onImport, data, columns, variant, currentValue }: any) {
+function TechnicalSection({ title, activeField, setActiveField, pasteBuffer, setPasteBuffer, previewRows, onImport, data, columns, variant }: any) {
   const saldoASerAplicado = previewRows.reduce((acc: number, r: any) => acc + (r.valor || 0), 0);
+  const totalAtual = (data || []).reduce((acc: number, r: any) => acc + (r.valor || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -297,7 +289,7 @@ function TechnicalSection({ title, activeField, setActiveField, pasteBuffer, set
           <div>
             <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-900 leading-none mb-2">{title}</h3>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Total Acumulado: <span className={cn("font-black", currentValue < 0 ? "text-rose-500" : "text-emerald-600")}>{currentValue.toLocaleString('pt-BR')} UCS</span>
+              Volume Consolidado: <span className={cn("font-black", totalAtual < 0 ? "text-rose-500" : "text-emerald-600")}>{totalAtual.toLocaleString('pt-BR')} UCS</span>
             </p>
           </div>
         </div>
@@ -342,8 +334,10 @@ function TechnicalSection({ title, activeField, setActiveField, pasteBuffer, set
                   <div className="space-y-1">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Saldo a ser aplicado</p>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-black text-emerald-500 tracking-tighter">{saldoASerAplicado.toLocaleString('pt-BR')}</span>
-                      <span className="text-[11px] font-black text-emerald-500 opacity-40 uppercase">UCS</span>
+                      <span className={cn("text-4xl font-black tracking-tighter", saldoASerAplicado < 0 ? "text-rose-500" : "text-emerald-500")}>
+                        {saldoASerAplicado.toLocaleString('pt-BR')}
+                      </span>
+                      <span className="text-[11px] font-black opacity-40 uppercase">UCS</span>
                     </div>
                   </div>
                   <Button 
