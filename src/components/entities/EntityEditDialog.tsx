@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { EntidadeSaldo, RegistroTabela } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Printer, X, Calculator, ShieldCheck, Database, Save, ArrowRightLeft, FileText, Link as LinkIcon, AlertCircle } from "lucide-react";
+import { Printer, X, Calculator, ShieldCheck, Database, Save, ArrowRightLeft, FileText, Link as LinkIcon, AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -65,9 +65,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       return {
         id: parts[0] || Math.random().toString(36).substr(2, 5).toUpperCase(),
         data: parts[1] || new Date().toLocaleString(),
-        tipo: parts[2] || 'TRADING',
+        tipo: parts[2] || 'ATIVO',
         valor: val,
-        prioridade: 1
+        statusAuditoria: 'Pago'
       };
     });
 
@@ -98,57 +98,61 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[1280px] w-[95vw] h-[95vh] p-0 border-none bg-white overflow-hidden flex flex-col rounded-[2.5rem] shadow-2xl">
         <DialogHeader className="p-8 pb-0 sr-only">
-          <DialogTitle>Auditoria Técnica - {entity.nome}</DialogTitle>
-          <DialogDescription>Detalhamento de saldos e conciliação do Ledger BMV.</DialogDescription>
+          <DialogTitle>Auditoria Técnica BMV - {entity.nome}</DialogTitle>
+          <DialogDescription>Console de auditoria técnica e conciliação de saldos.</DialogDescription>
         </DialogHeader>
 
         {activePasteField && (
-          <div className="absolute inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden">
-              <div className="p-6 border-b flex justify-between items-center bg-slate-50">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900">Mapeamento de Planilha</h3>
+          <div className="absolute inset-0 z-[100] bg-[#0B0F1A]/95 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100">
+              <div className="p-6 border-b flex justify-between items-center bg-slate-50/50">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-900">Importação de Dados Ledger</h3>
                 <Button variant="ghost" size="icon" onClick={() => setActivePasteField(null)}><X className="w-4 h-4" /></Button>
               </div>
-              <div className="p-8 space-y-4">
+              <div className="p-8 space-y-6">
+                <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                  <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Dica de Importação:</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Copie os dados diretamente do Excel ou Sheets. O sistema irá mapear automaticamente a coluna de volume.</p>
+                </div>
                 <Textarea 
                   autoFocus 
                   value={pasteBuffer} 
                   onChange={e => setPasteBuffer(e.target.value)}
-                  placeholder="Cole aqui os dados copiados do Excel/Sheets..."
-                  className="min-h-[300px] font-mono text-xs bg-slate-50 border-slate-200 rounded-2xl p-6"
+                  placeholder="Cole aqui os dados copiados..."
+                  className="min-h-[250px] font-mono text-[11px] bg-slate-50 border-slate-200 rounded-2xl p-6 focus:ring-primary shadow-inner"
                 />
-                <Button onClick={() => handleImport(activePasteField)} className="w-full h-14 rounded-2xl font-black uppercase text-xs">
-                  Sincronizar Dados na Sessão
+                <Button onClick={() => handleImport(activePasteField)} className="w-full h-14 rounded-2xl bg-[#734DCC] text-white font-black uppercase text-[11px] tracking-widest hover:bg-[#633fb9] shadow-xl shadow-indigo-100 transition-all active:scale-[0.98]">
+                  Sincronizar no Ledger
                 </Button>
               </div>
             </div>
           </div>
         )}
 
-        <div className="bg-[#0B0F1A] p-8 shrink-0 text-white relative">
-          <div className="flex justify-between items-start mb-10">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
+        <div className="bg-[#0B0F1A] p-10 shrink-0 text-white relative">
+          <div className="flex justify-between items-start mb-12">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 bg-[#734DCC] rounded-lg flex items-center justify-center">
                   <ShieldCheck className="w-4 h-4 text-white" />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AUDITORIA TÉCNICA BMV</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#734DCC]">AUDITORIA TÉCNICA BMV</p>
               </div>
-              <h1 className="text-2xl font-black tracking-tight uppercase">{entity.nome}</h1>
-              <p className="text-xs font-bold text-slate-500 font-mono">{entity.documento}</p>
+              <h1 className="text-[28px] font-black tracking-tight uppercase leading-none">{entity.nome}</h1>
+              <p className="text-xs font-bold text-slate-500 font-mono tracking-widest">{entity.documento}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 rounded-3xl p-6 min-w-[320px] shadow-2xl relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -mr-16 -mt-16"></div>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Saldo Final Auditado</p>
-               <div className="flex items-baseline gap-2 relative z-10">
-                  <span className="text-4xl font-black text-white">{totals.final.toLocaleString('pt-BR')}</span>
-                  <span className="text-xs font-black text-primary uppercase">UCS</span>
+            <div className="bg-[#161B2E] border border-white/5 rounded-[2rem] p-8 min-w-[340px] shadow-2xl flex flex-col items-end relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-40 h-40 bg-[#734DCC]/10 blur-3xl -mr-20 -mt-20"></div>
+               <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 relative z-10">Saldo Final Auditado</p>
+               <div className="flex items-baseline gap-3 relative z-10">
+                  <span className="text-5xl font-black text-white tracking-tighter">{totals.final.toLocaleString('pt-BR')}</span>
+                  <span className="text-[11px] font-black text-[#734DCC] uppercase tracking-widest">UCS</span>
                </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-5">
             <StatBox label="ORIGINAÇÃO" value={totals.orig} />
             <StatBox label="MOVIMENTAÇÃO" value={totals.mov} isNegative percentage={totals.movPercentage} />
             <StatBox label="APOSENTADO" value={totals.aposentado} isHighlight />
@@ -161,7 +165,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
         </div>
 
         <ScrollArea className="flex-1 bg-white">
-          <div className="p-8 space-y-12">
+          <div className="p-10 space-y-14">
             <Section 
               title="Sessão 01: Lançamentos de Originação" 
               data={formData.tabelaOriginacao || []} 
@@ -195,16 +199,16 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </ScrollArea>
 
-        <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between shrink-0">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase text-slate-400 tracking-widest hover:text-rose-500">
+        <div className="p-8 border-t border-slate-100 bg-white flex items-center justify-between shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[11px] font-black uppercase text-slate-400 tracking-[0.15em] hover:text-rose-500 hover:bg-rose-50 px-8 rounded-xl h-14">
             Descartar Alterações
           </Button>
           
           <div className="flex gap-4">
-            <Button variant="outline" onClick={handlePrint} className="h-14 px-8 rounded-2xl border-slate-200 bg-white font-black uppercase text-[10px] tracking-widest text-slate-600">
+            <Button variant="outline" onClick={handlePrint} className="h-14 px-10 rounded-2xl border-slate-200 bg-slate-50/50 font-black uppercase text-[11px] tracking-widest text-slate-700 hover:bg-white transition-all">
               <Printer className="w-4 h-4 mr-2" /> Gerar Relatório PDF
             </Button>
-            <Button onClick={handleSave} className="h-14 px-10 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20">
+            <Button onClick={handleSave} className="h-14 px-12 rounded-2xl bg-[#734DCC] hover:bg-[#633fb9] text-white font-black uppercase text-[11px] tracking-widest shadow-xl shadow-indigo-100 transition-all active:scale-[0.98]">
               <Save className="w-4 h-4 mr-2" /> Sincronizar no Ledger
             </Button>
           </div>
@@ -216,9 +220,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
 function StatBox({ label, value, isNegative, isHighlight, isAccent, percentage }: any) {
   return (
-    <div className="bg-[#161B2E] border border-white/5 rounded-2xl p-4 flex flex-col justify-between h-20 hover:bg-[#1C2237] transition-colors relative">
+    <div className="bg-[#161B2E] border border-white/5 rounded-2xl p-5 flex flex-col justify-between h-[100px] hover:bg-[#1C2237] transition-all group relative">
       <div className="flex justify-between items-start w-full">
-        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">{label}</p>
         {percentage !== undefined && (
           <span className={cn(
             "text-[8px] font-black px-1.5 py-0.5 rounded-md",
@@ -229,10 +233,10 @@ function StatBox({ label, value, isNegative, isHighlight, isAccent, percentage }
         )}
       </div>
       <p className={cn(
-        "text-lg font-black font-mono",
-        isNegative ? "text-rose-500" : isHighlight ? "text-emerald-400" : isAccent ? "text-primary" : "text-white"
+        "text-[22px] font-black font-mono leading-none tracking-tight",
+        isNegative ? "text-rose-500" : isHighlight ? "text-emerald-400" : isAccent ? "text-[#734DCC]" : "text-white"
       )}>
-        {value.toLocaleString('pt-BR')}
+        {value === 0 ? "0" : value.toLocaleString('pt-BR')}
       </p>
     </div>
   );
@@ -240,52 +244,55 @@ function StatBox({ label, value, isNegative, isHighlight, isAccent, percentage }
 
 function Section({ title, data, onImport, icon: Icon }: any) {
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-100 rounded-lg">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center border-b border-slate-100 pb-5">
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 bg-slate-100 rounded-xl">
             <Icon className="w-4 h-4 text-slate-400" />
           </div>
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900">{title}</h3>
+          <h3 className="text-[12px] font-black uppercase tracking-[0.15em] text-slate-900">{title}</h3>
         </div>
-        <Button onClick={onImport} variant="outline" size="sm" className="h-8 rounded-full text-[9px] font-black uppercase px-4 border-dashed border-primary/40 text-primary hover:bg-primary/5">
+        <Button onClick={onImport} variant="outline" size="sm" className="h-10 rounded-xl text-[10px] font-black uppercase px-6 border-dashed border-[#734DCC]/30 text-[#734DCC] hover:bg-[#734DCC]/5 transition-all">
           <Calculator className="w-3.5 h-3.5 mr-2" /> Importar Planilha
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-slate-100 overflow-hidden bg-white shadow-sm">
+      <div className="rounded-[1.5rem] border border-slate-100 overflow-hidden bg-white shadow-sm">
         <Table>
           <TableHeader className="bg-slate-50/50">
-            <TableRow>
-              <TableHead className="text-[9px] font-black uppercase h-10">Referência</TableHead>
-              <TableHead className="text-[9px] font-black uppercase h-10">Data</TableHead>
-              <TableHead className="text-[9px] font-black uppercase h-10">Categoria/Tipo</TableHead>
-              <TableHead className="text-[9px] font-black uppercase h-10">Status Auditoria</TableHead>
-              <TableHead className="text-[9px] font-black uppercase h-10 text-right">Volume (UCS)</TableHead>
+            <TableRow className="border-b border-slate-100 hover:bg-transparent">
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-12">Referência</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-12">Data</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-12">Categoria/Tipo</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-12">Status Auditoria</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-12 text-right pr-8">Volume (UCS)</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 opacity-30">
-                  <div className="flex flex-col items-center gap-2">
-                    <AlertCircle className="w-6 h-6" />
-                    <p className="text-[9px] font-bold uppercase tracking-tighter">Nenhum registro vinculado nesta sessão</p>
+              <TableRow className="hover:bg-transparent border-0">
+                <TableCell colSpan={5} className="text-center py-16 opacity-30">
+                  <div className="flex flex-col items-center gap-3">
+                    <AlertCircle className="w-8 h-8" />
+                    <p className="text-[11px] font-bold uppercase tracking-widest">Nenhum registro vinculado nesta sessão</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
               data.map((row: any, i: number) => (
-                <TableRow key={i} className="border-b border-slate-50 last:border-0">
-                  <TableCell className="py-3 text-[10px] font-bold text-slate-600 font-mono">{row.id}</TableCell>
-                  <TableCell className="py-3 text-[10px] text-slate-400">{row.data}</TableCell>
-                  <TableCell className="py-3">
-                    <span className="text-[9px] font-black uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-600">{row.tipo || 'ATIVO'}</span>
+                <TableRow key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/30 transition-colors">
+                  <TableCell className="py-4 text-[11px] font-bold text-slate-600 font-mono tracking-tighter">{row.id}</TableCell>
+                  <TableCell className="py-4 text-[11px] text-slate-400">{row.data}</TableCell>
+                  <TableCell className="py-4">
+                    <span className="text-[10px] font-black uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-600">{row.tipo || 'ATIVO'}</span>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-4">
                     <Select defaultValue="valido">
-                       <SelectTrigger className="h-8 w-32 rounded-lg bg-emerald-50 border-none text-[9px] font-black text-emerald-600 uppercase">
-                          <SelectValue />
+                       <SelectTrigger className="h-8 w-36 rounded-lg bg-emerald-50 border-none text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <SelectValue />
+                          </div>
                        </SelectTrigger>
                        <SelectContent>
                           <SelectItem value="valido">VALIDADO</SelectItem>
@@ -293,7 +300,7 @@ function Section({ title, data, onImport, icon: Icon }: any) {
                        </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell className="py-3 text-right font-mono font-black text-slate-900">
+                  <TableCell className="py-4 text-right font-mono font-black text-slate-900 pr-8">
                     {row.valor?.toLocaleString('pt-BR') || row.disponivel?.toLocaleString('pt-BR')}
                   </TableCell>
                 </TableRow>

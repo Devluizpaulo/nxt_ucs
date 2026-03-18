@@ -1,9 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regra de segurança global para o sistema de auditoria BMV
-    // Permite acesso total (leitura e escrita) para qualquer auditor autenticado no sistema.
-    // Isso garante que listagens de pedidos, produtores e associações funcionem corretamente.
+    // Regras de segurança globais para o sistema de auditoria BMV
+    // Permite acesso total para qualquer usuário autenticado.
+    // Garante que operações de listagem, leitura e escrita funcionem sem interrupções.
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
