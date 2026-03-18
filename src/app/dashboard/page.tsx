@@ -22,7 +22,7 @@ import { collection, doc, updateDoc, deleteDoc, setDoc, writeBatch, query, order
 import { Pedido, OrderCategory } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
+import { FirestorePermissionError, isPermissionDeniedError } from "@/firebase/errors";
 import { Sidebar } from "@/components/layout/Sidebar";
 
 export default function Dashboard() {
@@ -65,10 +65,16 @@ export default function Dashboard() {
     };
 
     setDoc(docRef, data).catch(async (err) => {
+      if (!isPermissionDeniedError(err)) {
+        console.error(`[Firestore:create] ${docRef.path}`, err);
+        return;
+      }
+
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: docRef.path,
         operation: 'create',
-        requestResourceData: data
+        requestResourceData: data,
+        sourceError: err
       }));
     });
 

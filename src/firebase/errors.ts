@@ -5,6 +5,7 @@ type SecurityRuleContext = {
   path: string;
   operation: 'get' | 'list' | 'create' | 'update' | 'delete' | 'write';
   requestResourceData?: any;
+  sourceError?: unknown;
 };
 
 interface FirebaseAuthToken {
@@ -32,6 +33,24 @@ interface SecurityRuleRequest {
   resource?: {
     data: any;
   };
+  client?: {
+    authProjectId: string | null;
+    sdkErrorCode: string | null;
+    sdkErrorMessage: string | null;
+  };
+}
+
+interface FirestoreLikeError {
+  code?: string;
+  message?: string;
+}
+
+function isFirestoreLikeError(error: unknown): error is FirestoreLikeError {
+  return typeof error === 'object' && error !== null;
+}
+
+export function isPermissionDeniedError(error: unknown): boolean {
+  return isFirestoreLikeError(error) && error.code === 'permission-denied';
 }
 
 /**
@@ -76,9 +95,11 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
  */
 function buildRequestObject(context: SecurityRuleContext): SecurityRuleRequest {
   let authObject: FirebaseAuthObject | null = null;
+  let authProjectId: string | null = null;
   try {
     // Safely attempt to get the current user.
     const firebaseAuth = getAuth();
+    authProjectId = firebaseAuth.app.options.projectId ?? null;
     const currentUser = firebaseAuth.currentUser;
     if (currentUser) {
       authObject = buildAuthObject(currentUser);
@@ -93,6 +114,11 @@ function buildRequestObject(context: SecurityRuleContext): SecurityRuleRequest {
     method: context.operation,
     path: `/databases/(default)/documents/${context.path}`,
     resource: context.requestResourceData ? { data: context.requestResourceData } : undefined,
+    client: {
+      authProjectId,
+      sdkErrorCode: isFirestoreLikeError(context.sourceError) ? context.sourceError.code ?? null : null,
+      sdkErrorMessage: isFirestoreLikeError(context.sourceError) ? context.sourceError.message ?? null : null,
+    },
   };
 }
 
