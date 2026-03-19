@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Pedido, Movimento } from "@/lib/types";
@@ -85,7 +86,7 @@ export function OrderTable({
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-14">Data</TableHead>
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 h-14">Origem</TableHead>
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center h-14">UF</TableHead>
-            <TableHead className="text-[10px) font-black uppercase tracking-widest text-slate-400 text-right h-14">Qtd</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right h-14">Qtd</TableHead>
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right h-14">Total</TableHead>
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center h-14">Status</TableHead>
             <TableHead className="w-[100px] pr-8 h-14"></TableHead>
@@ -371,7 +372,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
                         <Input 
                           value={link} 
                           onChange={(e) => setLink(e.target.value)}
-                          placeholder="https://app.tesouroverde.global/#/explorer/..."
+                          placeholder="https://nxtportal.org/transactions/..."
                           className="font-mono text-[13px] bg-white border-slate-200 rounded-[1.25rem] h-14 px-8 focus:ring-primary shadow-sm"
                         />
                       </div>
