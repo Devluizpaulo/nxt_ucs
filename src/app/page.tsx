@@ -4,13 +4,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, useUser, useFirestore } from "@/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Lock, ArrowRight, Loader2, Moon } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2, Moon, KeyRound } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -21,6 +22,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -58,6 +62,27 @@ export default function LoginPage() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!resetEmail) return;
+    setIsResetting(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({ 
+        title: "Link Enviado", 
+        description: "Verifique seu e-mail para definir uma nova senha." 
+      });
+      setIsResetDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao enviar e-mail",
+        description: "Verifique se o endereço está correto."
+      });
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -99,7 +124,42 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2.5">
-            <Label className="text-[13px] font-medium text-slate-500 ml-1">Senha</Label>
+            <div className="flex justify-between items-center ml-1">
+              <Label className="text-[13px] font-medium text-slate-500">Senha</Label>
+              <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                <DialogTrigger asChild>
+                  <button type="button" className="text-[11px] font-bold text-primary hover:underline uppercase tracking-tight">Esqueci a senha</button>
+                </DialogTrigger>
+                <DialogContent className="rounded-3xl p-10 border-none bg-white max-w-sm">
+                  <DialogHeader>
+                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                      <KeyRound className="w-6 h-6 text-primary" />
+                    </div>
+                    <DialogTitle className="text-xl font-black uppercase text-slate-900">Definir Nova Senha</DialogTitle>
+                    <DialogDescription className="text-slate-500">
+                      Insira seu e-mail corporativo. Enviaremos um link seguro para você criar ou redefinir sua senha.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <Input 
+                      placeholder="seu-email@bmv.global" 
+                      value={resetEmail}
+                      onChange={e => setResetEmail(e.target.value)}
+                      className="h-14 rounded-xl"
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button 
+                      onClick={handleForgotPassword} 
+                      disabled={isResetting || !resetEmail}
+                      className="w-full h-14 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-emerald-100"
+                    >
+                      {isResetting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enviar Link de Acesso"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input 

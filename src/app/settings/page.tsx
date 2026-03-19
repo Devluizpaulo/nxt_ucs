@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -17,7 +18,8 @@ import {
   Share2,
   MessageCircle,
   Mail,
-  CheckCircle2
+  CheckCircle2,
+  KeyRound
 } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -91,7 +93,6 @@ export default function SettingsPage() {
     const newId = `U-${Date.now()}`;
     const userRef = doc(firestore, "users", newId);
     
-    // 1. Criar registro no Firestore
     await setDoc(userRef, {
       id: newId,
       nome: newUserData.nome.toUpperCase(),
@@ -102,24 +103,25 @@ export default function SettingsPage() {
       createdAt: new Date().toISOString()
     });
 
-    // 2. Disparar e-mail de recuperação de senha (para o usuário definir a primeira senha)
-    try {
-      await sendPasswordResetEmail(auth, newUserData.email);
-    } catch (e) {
-      console.warn("Não foi possível disparar e-mail automático, mas o registro foi criado.");
-    }
-
-    // 3. Gerar link de convite (URL do sistema)
     const baseUrl = window.location.origin;
     setGeneratedLink(baseUrl);
     
     setIsAddingUser(false);
     setShowInviteResult(true);
-    toast({ title: "Registro Criado", description: "O auditor foi pré-cadastrado no sistema." });
+    toast({ title: "Registro Criado", description: "O auditor foi pré-cadastrado. Ele deve usar o fluxo 'Esqueci a Senha' ou se registrar." });
+  };
+
+  const handleSendResetLink = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({ title: "Link Enviado", description: "O auditor recebeu as instruções por e-mail." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Erro ao enviar link", description: "O usuário pode ainda não ter uma conta no Auth." });
+    }
   };
 
   const handleShareWhatsApp = () => {
-    const message = `Olá ${newUserData.nome}! Você foi convidado para o ecossistema LedgerTrust Auditoria. \n\nPara acessar, utilize seu e-mail corporativo: ${newUserData.email} \n\nDefina sua senha através do link enviado ao seu e-mail ou acesse o portal: ${generatedLink}`;
+    const message = `Olá ${newUserData.nome}! Você foi convidado para o ecossistema LedgerTrust Auditoria. \n\nPara acessar, utilize seu e-mail corporativo: ${newUserData.email} \n\nDefina sua senha no portal bmv acessando: ${generatedLink} e clicando em 'Esqueci minha senha'.`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -295,7 +297,6 @@ export default function SettingsPage() {
                         </DialogContent>
                       </Dialog>
 
-                      {/* Modal de Sucesso e Compartilhamento */}
                       <Dialog open={showInviteResult} onOpenChange={setShowInviteResult}>
                         <DialogContent className="max-w-md bg-white rounded-[2.5rem] p-10 border-none shadow-2xl">
                           <DialogHeader className="sr-only">
@@ -403,9 +404,20 @@ export default function SettingsPage() {
                                 </div>
                               </TableCell>
                               <TableCell className="text-right pr-12">
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(item.id)} className="text-slate-200 hover:text-rose-500 transition-colors h-12 w-12 rounded-xl">
-                                  <Trash2 className="w-5 h-5" />
-                                </Button>
+                                <div className="flex justify-end gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    onClick={() => handleSendResetLink(item.email)} 
+                                    className="text-slate-400 hover:text-primary transition-colors h-12 w-12 rounded-xl"
+                                    title="Enviar Link para Definir Senha"
+                                  >
+                                    <KeyRound className="w-5 h-5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(item.id)} className="text-slate-200 hover:text-rose-500 transition-colors h-12 w-12 rounded-xl">
+                                    <Trash2 className="w-5 h-5" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))
