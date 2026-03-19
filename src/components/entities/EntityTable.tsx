@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, AlertTriangle, MessageSquare, Clock, CheckCircle2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { EntityEditDialog } from "./EntityEditDialog";
+import { EntityViewDialog } from "./EntityViewDialog";
 import { Button } from "@/components/ui/button";
 
 interface EntityTableProps {
@@ -19,6 +20,7 @@ interface EntityTableProps {
 
 export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: EntityTableProps) {
   const [editingEntity, setEditingEntity] = useState<EntidadeSaldo | null>(null);
+  const [viewingEntity, setViewingEntity] = useState<EntidadeSaldo | null>(null);
 
   const toggleAll = () => {
     if (selectedIds.length === data.length) onSelectionChange([]);
@@ -104,7 +106,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                     </TableCell>
                     <TableCell 
                       className="font-black text-[10px] uppercase text-slate-900 max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors py-5"
-                      onClick={() => setEditingEntity(item)}
+                      onClick={() => setViewingEntity(item)}
                     >
                       <div className="flex items-center gap-2">
                         {item.nome}
@@ -138,7 +140,7 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        onClick={() => setEditingEntity(item)}
+                        onClick={() => setViewingEntity(item)}
                         className="h-10 w-10 text-slate-200 hover:text-primary transition-all"
                       >
                         <Search className="w-5 h-5" />
@@ -153,6 +155,18 @@ export function EntityTable({ data, selectedIds, onSelectionChange, onUpdate }: 
         </ScrollArea>
       </div>
 
+      {/* DIALOG DE VISUALIZAÇÃO (MODO LEITURA) */}
+      <EntityViewDialog 
+        entity={viewingEntity}
+        open={!!viewingEntity}
+        onOpenChange={(open) => !open && setViewingEntity(null)}
+        onEdit={() => {
+          setEditingEntity(viewingEntity);
+          setViewingEntity(null);
+        }}
+      />
+
+      {/* DIALOG DE EDIÇÃO (CONTRÔLE TOTAL) */}
       <EntityEditDialog 
         entity={editingEntity}
         open={!!editingEntity}
