@@ -359,7 +359,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
                     </h4>
                     <div className="space-y-6">
                       <div className="space-y-3">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Hash do Pedido</label>
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Número do Selo</label>
                         <Input 
                           value={hash} 
                           onChange={(e) => setHash(e.target.value)}
@@ -388,7 +388,7 @@ function OrderDetailsDialog({ order, onUpdateOrder, onDeleteOrder, onAddMovement
                         />
                       </div>
                       <Button onClick={handleSaveAudit} className="w-full h-16 rounded-[1.25rem] bg-[#10B981] hover:bg-[#0D9488] text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-emerald-100 transition-all active:scale-[0.98]">
-                        Sincronizar Hash de Auditoria
+                        Sincronizar Auditoria
                       </Button>
                     </div>
                   </div>
