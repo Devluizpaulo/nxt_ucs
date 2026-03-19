@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Trash2, ChevronLeft, ChevronRight, Loader2, ShieldCheck, Database } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,11 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, doc, writeBatch, query, orderBy, updateDoc, where } from "firebase/firestore";
+import { collection, doc, writeBatch, query, orderBy, updateDoc } from "firebase/firestore";
 import { EntidadeSaldo, EntityStatus } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { EntityTable } from "@/components/entities/EntityTable";
 import { EntityBulkImport } from "@/components/entities/EntityBulkImport";
+import { cn } from "@/lib/utils";
 
 export default function AssociacoesPage() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function AssociacoesPage() {
   const [activeTab, setActiveTab] = useState<EntityStatus>("disponivel");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const itemsPerPage = 15;
 
   useEffect(() => {
@@ -29,24 +32,44 @@ export default function AssociacoesPage() {
     }
   }, [user, isUserLoading, router]);
 
-  const associacoesQuery = useMemoFirebase(() => {
+  const allAssociacoesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
       collection(firestore, "associacoes"), 
-      where("status", "==", activeTab),
       orderBy("nome", "asc")
     );
-  }, [firestore, user, activeTab]);
+  }, [firestore, user]);
 
-  const { data: associacoes, isLoading } = useCollection<EntidadeSaldo>(associacoesQuery);
+  const { data: allAssociacoes, isLoading } = useCollection<EntidadeSaldo>(allAssociacoesQuery);
+
+  // Cálculos de Contadores
+  const counts = useMemo(() => {
+    const items = allAssociacoes || [];
+    return {
+      disponivel: items.filter(i => i.status === 'disponivel').length,
+      bloqueado: items.filter(i => i.status === 'bloqueado').length,
+      inapto: items.filter(i => i.status === 'inapto').length,
+    };
+  }, [allAssociacoes]);
+
+  // Filtragem Dinâmica
+  const filteredAssociacoes = useMemo(() => {
+    return (allAssociacoes || []).filter(a => {
+      const matchesStatus = a.status === activeTab;
+      const matchesSearch = searchQuery === "" || 
+        a.nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        a.documento.includes(searchQuery);
+      return matchesStatus && matchesSearch;
+    });
+  }, [allAssociacoes, activeTab, searchQuery]);
 
   useEffect(() => {
     setCurrentPage(1);
     setSelectedIds([]);
-  }, [activeTab]);
+  }, [activeTab, searchQuery]);
 
-  const totalPages = Math.ceil((associacoes || []).length / itemsPerPage);
-  const paginated = (associacoes || []).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredAssociacoes.length / itemsPerPage);
+  const paginated = filteredAssociacoes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleSeedAssociacoes = async () => {
     if (!firestore) return;
@@ -98,7 +121,12 @@ export default function AssociacoesPage() {
           <div className="flex items-center gap-6">
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input placeholder="Buscar por nome ou CNPJ..." className="pl-10 bg-slate-100 border-none rounded-full h-10 text-sm" />
+              <Input 
+                placeholder="Buscar por nome ou CNPJ..." 
+                className="pl-10 bg-slate-100 border-none rounded-full h-10 text-sm"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
             </div>
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md uppercase">{user.email?.substring(0,2)}</div>
           </div>
@@ -110,15 +138,17 @@ export default function AssociacoesPage() {
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : (
-            <Tabs value={activeTab} onValueChange={v => setActiveTab(v as EntityStatus)} className="w-full">
-              <div className="flex items-center justify-between mb-6">
-                <TabsList className="bg-slate-100/50 p-1 border rounded-full h-12">
-                  <TabsTrigger value="disponivel" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Disponíveis</TabsTrigger>
-                  <TabsTrigger value="bloqueado" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Bloqueados</TabsTrigger>
-                  <TabsTrigger value="inapto" className="data-[state=active]:bg-white px-8 rounded-full text-[10px] font-bold uppercase tracking-widest">Inaptos</TabsTrigger>
-                </TabsList>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <Tabs value={activeTab} onValueChange={v => setActiveTab(v as EntityStatus)} className="w-auto">
+                  <TabsList className="bg-slate-100/50 p-1 border rounded-full h-12 gap-1">
+                    <TabWithCount label="Disponíveis" value="disponivel" count={counts.disponivel} isActive={activeTab === 'disponivel'} />
+                    <TabWithCount label="Bloqueados" value="bloqueado" count={counts.bloqueado} isActive={activeTab === 'bloqueado'} />
+                    <TabWithCount label="Inaptos" value="inapto" count={counts.inapto} isActive={activeTab === 'inapto'} />
+                  </TabsList>
+                </Tabs>
                 <div className="flex gap-3">
-                  {(associacoes?.length === 0) && (
+                  {(allAssociacoes?.length === 0) && (
                     <Button onClick={handleSeedAssociacoes} variant="outline" className="h-12 px-6 rounded-full text-[10px] font-bold uppercase tracking-widest border-dashed">
                       <Database className="w-3.5 h-3.5 mr-2" /> Gerar Teste
                     </Button>
@@ -154,10 +184,27 @@ export default function AssociacoesPage() {
                   </div>
                 </div>
               )}
-            </Tabs>
+            </div>
           )}
         </div>
       </main>
     </div>
+  );
+}
+
+function TabWithCount({ label, value, count, isActive }: { label: string, value: string, count: number, isActive: boolean }) {
+  return (
+    <TabsTrigger 
+      value={value} 
+      className="data-[state=active]:bg-white px-6 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 h-10 transition-all"
+    >
+      {label}
+      <span className={cn(
+        "px-2 py-0.5 rounded-full text-[9px] font-black min-w-[20px] text-center",
+        isActive ? "bg-primary/10 text-primary" : "bg-slate-200 text-slate-500"
+      )}>
+        {count}
+      </span>
+    </TabsTrigger>
   );
 }
