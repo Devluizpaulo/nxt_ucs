@@ -13,13 +13,15 @@ import {
   Save, 
   MessageSquare,
   QrCode,
-  Database
+  Plus,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUser } from "@/firebase";
 import Image from "next/image";
@@ -34,6 +36,9 @@ interface EntityEditDialogProps {
 export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: EntityEditDialogProps) {
   const [formData, setFormData] = useState<Partial<EntidadeSaldo>>({});
   const [pasteData, setPasteData] = useState<{ section: string; raw: string } | null>(null);
+  const [isAddingAq, setIsAddingAq] = useState(false);
+  const [newAq, setNewAq] = useState({ data: new Date().getFullYear().toString(), valor: "" });
+  
   const { user } = useUser();
   
   useEffect(() => {
@@ -89,6 +94,27 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     onOpenChange(false);
   };
 
+  const handleAddAquisicao = () => {
+    if (!newAq.data || !newAq.valor) return;
+    const item = {
+      id: `AQ-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+      data: newAq.data,
+      destino: "AQUISIÇÃO MANUAL",
+      valor: parseInt(newAq.valor) || 0
+    };
+    setFormData({
+      ...formData,
+      tabelaAquisicao: [...(formData.tabelaAquisicao || []), item]
+    });
+    setNewAq({ data: new Date().getFullYear().toString(), valor: "" });
+    setIsAddingAq(false);
+  };
+
+  const handleRemoveItem = (section: string, id: string) => {
+    const list = (formData[section as keyof EntidadeSaldo] as any[] || []).filter(i => i.id !== id);
+    setFormData({ ...formData, [section]: list });
+  };
+
   const handleProcessPaste = () => {
     if (!pasteData) return;
     const lines = pasteData.raw.split('\n').filter(l => l.trim());
@@ -124,14 +150,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             valorCredito: cred, 
             valorDebito: deb, 
             valor: deb - cred
-          };
-        case 'tabelaAquisicao':
-          return { 
-            id: `AQ-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, 
-            dist: parts[0]?.trim() || '', 
-            data: parts[1]?.trim() || '', 
-            destino: parts[2]?.trim() || '', 
-            valor: parseVal(parts[parts.length - 1]) 
           };
         case 'tabelaOriginacao':
           return { 
@@ -220,21 +238,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
 
           <div className="space-y-4">
-            {formData.tabelaOriginacao && formData.tabelaOriginacao.length > 0 && (
-              <ReportTable title="01. DEMONSTRATIVO DE ORIGINAÇÃO" data={formData.tabelaOriginacao} type="originacao" />
-            )}
-            {formData.tabelaMovimentacao && formData.tabelaMovimentacao.length > 0 && (
-              <ReportTable title="02. DEMONSTRATIVO DE MOVIMENTAÇÃO" data={formData.tabelaMovimentacao} isNegative type="movimentacao" />
-            )}
-            {formData.tabelaLegado && formData.tabelaLegado.length > 0 && (
-              <ReportTable title="03. DEMONSTRATIVO DE SALDO LEGADO" data={formData.tabelaLegado} isLegado type="legado" />
-            )}
-            {formData.tabelaImei && formData.tabelaImei.length > 0 && (
-              <ReportTable title="04. AJUSTE IMEI" data={formData.tabelaImei} isImei type="imei" />
-            )}
-            {formData.tabelaAquisicao && formData.tabelaAquisicao.length > 0 && (
-              <ReportTable title="05. AQUISIÇÃO" data={formData.tabelaAquisicao} isNegative type="aquisicao" />
-            )}
+            <ReportTable title="01. DEMONSTRATIVO DE ORIGINAÇÃO" data={formData.tabelaOriginacao} type="originacao" />
+            <ReportTable title="02. DEMONSTRATIVO DE MOVIMENTAÇÃO" data={formData.tabelaMovimentacao} isNegative type="movimentacao" />
+            <ReportTable title="03. DEMONSTRATIVO DE SALDO LEGADO" data={formData.tabelaLegado} isLegado type="legado" />
+            <ReportTable title="04. AJUSTE IMEI" data={formData.tabelaImei} isImei type="imei" />
+            <ReportTable title="05. AQUISIÇÃO" data={formData.tabelaAquisicao} isNegative type="aquisicao" />
           </div>
 
           <div className="mt-8 flex justify-between items-end">
@@ -321,27 +329,27 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
               <div className="space-y-6">
                 <SectionHeader title="01. ORIGINAÇÃO" value={totals.orig} onPaste={() => setPasteData({ section: 'tabelaOriginacao', raw: '' })} />
-                <SectionTable data={formData.tabelaOriginacao || []} type="originacao" />
+                <SectionTable data={formData.tabelaOriginacao || []} type="originacao" onRemove={(id) => handleRemoveItem('tabelaOriginacao', id)} />
               </div>
 
               <div className="space-y-6">
                 <SectionHeader title="02. MOVIMENTAÇÃO" value={totals.mov} isNegative onPaste={() => setPasteData({ section: 'tabelaMovimentacao', raw: '' })} />
-                <SectionTable data={formData.tabelaMovimentacao || []} type="movimentacao" />
+                <SectionTable data={formData.tabelaMovimentacao || []} type="movimentacao" onRemove={(id) => handleRemoveItem('tabelaMovimentacao', id)} />
               </div>
 
               <div className="space-y-6">
                 <SectionHeader title="03. SALDO LEGADO" value={totals.legadoTotal} isAmber onPaste={() => setPasteData({ section: 'tabelaLegado', raw: '' })} />
-                <SectionTable data={formData.tabelaLegado || []} type="legado" />
+                <SectionTable data={formData.tabelaLegado || []} type="legado" onRemove={(id) => handleRemoveItem('tabelaLegado', id)} />
               </div>
 
               <div className="space-y-6">
                 <SectionHeader title="04. AJUSTE IMEI" value={totals.imeiPending} isImei onPaste={() => setPasteData({ section: 'tabelaImei', raw: '' })} />
-                <SectionTable data={formData.tabelaImei || []} type="imei" />
+                <SectionTable data={formData.tabelaImei || []} type="imei" onRemove={(id) => handleRemoveItem('tabelaImei', id)} />
               </div>
 
               <div className="space-y-6">
-                <SectionHeader title="05. AQUISIÇÃO" value={totals.aq} isNegative onPaste={() => setPasteData({ section: 'tabelaAquisicao', raw: '' })} />
-                <SectionTable data={formData.tabelaAquisicao || []} type="aquisicao" />
+                <SectionHeader title="05. AQUISIÇÃO" value={totals.aq} isNegative onAdd={() => setIsAddingAq(true)} />
+                <SectionTable data={formData.tabelaAquisicao || []} type="aquisicao" onRemove={(id) => handleRemoveItem('tabelaAquisicao', id)} />
               </div>
             </div>
           </ScrollArea>
@@ -360,6 +368,42 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             </div>
           </div>
         </div>
+
+        {/* DIALOG DE AQUISIÇÃO MANUAL */}
+        <Dialog open={isAddingAq} onOpenChange={setIsAddingAq}>
+          <DialogContent className="max-w-md rounded-3xl p-10 space-y-8">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black uppercase text-slate-900 flex items-center gap-3">
+                <Plus className="w-6 h-6 text-primary" /> Nova Aquisição
+              </DialogTitle>
+              <DialogDescription>Insira o ano e o volume de UCS adquiridas para este registro.</DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Referência (Ano)</Label>
+                <Input 
+                  value={newAq.data} 
+                  onChange={e => setNewAq({...newAq, data: e.target.value})}
+                  placeholder="EX: 2018"
+                  className="h-14 rounded-xl border-slate-100 bg-slate-50 font-black text-center text-lg"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Volume (UCS)</Label>
+                <Input 
+                  type="number"
+                  value={newAq.valor} 
+                  onChange={e => setNewAq({...newAq, valor: e.target.value})}
+                  placeholder="0"
+                  className="h-14 rounded-xl border-slate-100 bg-slate-50 font-black text-center text-lg text-primary"
+                />
+              </div>
+            </div>
+            <Button onClick={handleAddAquisicao} className="w-full h-14 rounded-xl font-black uppercase text-[12px] tracking-widest bg-primary text-white shadow-xl shadow-emerald-100">
+              Registrar Aquisição
+            </Button>
+          </DialogContent>
+        </Dialog>
 
         {/* MODAL DE COLAGEM TÉCNICA */}
         {pasteData && (
@@ -387,6 +431,8 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 }
 
 function ReportTable({ title, data, isNegative, isLegado, isImei, type }: any) {
+  if (!data || data.length === 0) return null;
+
   return (
     <div className="space-y-1.5">
        <h4 className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 pb-1">{title}</h4>
@@ -473,7 +519,7 @@ function StatBox({ label, value, isNegative, isHighlight, isAmber, isImei }: any
   );
 }
 
-function SectionHeader({ title, value, onPaste, isNegative, isAmber, isImei }: any) {
+function SectionHeader({ title, value, onPaste, onAdd, isNegative, isAmber, isImei }: any) {
   return (
     <div className="flex justify-between items-center border-b border-slate-100 pb-3">
       <div className="flex items-center gap-3">
@@ -489,14 +535,20 @@ function SectionHeader({ title, value, onPaste, isNegative, isAmber, isImei }: a
           {(value || 0).toLocaleString('pt-BR')} UCS
         </Badge>
       </div>
-      <Button variant="outline" size="sm" onClick={onPaste} className="h-8 px-3 rounded-lg text-[8px] font-black uppercase gap-2 border-slate-200 hover:bg-slate-50">
-        <Calculator className="w-3 h-3" /> COLAR DADOS
-      </Button>
+      {onAdd ? (
+        <Button variant="outline" size="sm" onClick={onAdd} className="h-8 px-4 rounded-lg text-[8px] font-black uppercase gap-2 border-slate-200 hover:bg-slate-50">
+          <Plus className="w-3 h-3" /> ADICIONAR REGISTRO
+        </Button>
+      ) : (
+        <Button variant="outline" size="sm" onClick={onPaste} className="h-8 px-3 rounded-lg text-[8px] font-black uppercase gap-2 border-slate-200 hover:bg-slate-50">
+          <Calculator className="w-3 h-3" /> COLAR DADOS
+        </Button>
+      )}
     </div>
   );
 }
 
-function SectionTable({ data, type }: { data: any[], type: string }) {
+function SectionTable({ data, type, onRemove }: { data: any[], type: string, onRemove?: (id: string) => void }) {
   const isLegado = type === 'legado';
   const isImei = type === 'imei';
 
@@ -523,12 +575,13 @@ function SectionTable({ data, type }: { data: any[], type: string }) {
             ) : (
               <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-right pr-6">VOLUME (UCS)</TableHead>
             )}
+            <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={isLegado ? 6 : isImei ? 5 : 3} className="py-8 text-center text-slate-300 font-bold uppercase text-[9px] tracking-widest">
+              <TableCell colSpan={isLegado ? 7 : isImei ? 6 : 4} className="py-8 text-center text-slate-300 font-bold uppercase text-[9px] tracking-widest">
                 Nenhum registro auditado nesta sessão
               </TableCell>
             </TableRow>
@@ -557,6 +610,13 @@ function SectionTable({ data, type }: { data: any[], type: string }) {
                     {(row.valor || 0).toLocaleString('pt-BR')}
                   </TableCell>
                 )}
+                <TableCell>
+                  {onRemove && (
+                    <Button variant="ghost" size="icon" onClick={() => onRemove(row.id)} className="h-8 w-8 text-slate-200 hover:text-rose-500">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             ))
           )}
