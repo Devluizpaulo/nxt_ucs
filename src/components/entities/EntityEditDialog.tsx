@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -81,14 +80,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const legRes = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.reservado || 0), 0);
     const legadoTotal = legDisp + legRes;
 
-    // Fórmula exata: Saldo = Orig - Mov - Apos - Bloq - Aq
     const finalCalculated = orig - mov - aposentado - bloqueado - aq;
-
-    // Se houver ajuste manual, o saldo final passa a ser o valor do ajuste
     const final = formData.ajusteRealizado ? (formData.valorAjusteManual || 0) : finalCalculated;
 
     return { 
-      orig, mov, aq, imeiPending, legadoTotal, aposentado, bloqueado, final, imeiCredits, imeiDebits
+      orig, mov, aq, imeiPending, legadoTotal, aposentado, bloqueado, final
     };
   }, [formData]);
 
@@ -418,14 +414,14 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                  </div>
                  <div className="space-y-6">
                     <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">CONTROLE DE GOVERNANÇA</Label>
-                    <div className="space-y-4">
+                    <div className="space-y-4 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100">
                       <div className="space-y-2">
                         <Label className="text-[9px] font-black uppercase text-slate-400 ml-1">Status do Produtor</Label>
                         <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v as EntityStatus})}>
-                          <SelectTrigger className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-black text-[11px] uppercase tracking-widest">
+                          <SelectTrigger className="h-14 rounded-2xl bg-white border-slate-100 font-black text-[11px] uppercase tracking-widest shadow-sm">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white border-slate-200 shadow-xl">
                             <SelectItem value="disponivel" className="font-bold text-[10px] uppercase">
                               <div className="flex items-center gap-2"><UserCheck2 className="w-3 h-3 text-emerald-500" /> APTO / DISPONÍVEL</div>
                             </SelectItem>
@@ -442,7 +438,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                       <Button 
                         onClick={() => setIsAjustando(true)} 
                         variant="outline" 
-                        className="w-full h-14 rounded-2xl border-[#734DCC]/20 bg-[#734DCC]/5 text-[#734DCC] font-black uppercase text-[11px] tracking-widest gap-3"
+                        className="w-full h-14 rounded-2xl border-[#734DCC]/20 bg-[#734DCC]/5 text-[#734DCC] font-black uppercase text-[11px] tracking-widest gap-3 hover:bg-[#734DCC]/10"
                       >
                         <Lock className="w-4 h-4" /> AJUSTE GERAL (AUTORIZAÇÃO)
                       </Button>
@@ -453,10 +449,10 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                           value={formData.statusAuditoriaSaldo || "valido"} 
                           onValueChange={v => setFormData({...formData, statusAuditoriaSaldo: v as any})}
                         >
-                          <SelectTrigger className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-black text-[11px] uppercase tracking-widest">
+                          <SelectTrigger className="h-14 rounded-2xl bg-white border-slate-100 font-black text-[11px] uppercase tracking-widest shadow-sm">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white border-slate-200 shadow-xl">
                             <SelectItem value="valido" className="font-bold text-[10px] uppercase">✓ SALDO VALIDADO</SelectItem>
                             <SelectItem value="inconsistente" className="font-bold text-[10px] uppercase text-rose-500">⚠ DIVERGÊNCIA</SelectItem>
                           </SelectContent>
@@ -515,7 +511,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
         {/* DIALOG DE AJUSTE GERAL (AUTORIZAÇÃO DUPLA) */}
         <Dialog open={isAjustando} onOpenChange={setIsAjustando}>
-          <DialogContent className="max-w-lg rounded-[2.5rem] p-10 space-y-8 border-none shadow-2xl">
+          <DialogContent className="max-w-lg rounded-[2.5rem] p-10 space-y-8 border-none shadow-2xl bg-white">
             <DialogHeader>
               <div className="w-16 h-16 bg-[#734DCC]/10 rounded-2xl flex items-center justify-center mb-6">
                 <Lock className="w-8 h-8 text-[#734DCC]" />
@@ -563,7 +559,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
         {/* DIALOG DE AQUISIÇÃO MANUAL */}
         <Dialog open={isAddingAq} onOpenChange={setIsAddingAq}>
-          <DialogContent className="max-w-md rounded-3xl p-10 space-y-8 border-none">
+          <DialogContent className="max-w-md rounded-3xl p-10 space-y-8 border-none bg-white">
             <DialogHeader>
               <DialogTitle className="text-xl font-black uppercase text-slate-900 flex items-center gap-3">
                 <Plus className="w-6 h-6 text-primary" /> Nova Aquisição
@@ -600,7 +596,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
         {/* MODAL DE COLAGEM TÉCNICA */}
         {pasteData && (
           <Dialog open={!!pasteData} onOpenChange={() => setPasteData(null)}>
-            <DialogContent className="max-w-xl rounded-3xl p-8 space-y-4 border-none">
+            <DialogContent className="max-w-xl rounded-3xl p-8 space-y-4 border-none bg-white">
               <DialogHeader>
                 <DialogTitle className="text-lg font-black uppercase text-slate-900 flex items-center gap-2">
                   <Calculator className="w-5 h-5 text-primary" /> COLAGEM TÉCNICA
@@ -687,8 +683,8 @@ function ReportTable({ title, data, isNegative, isLegado, isImei, type }: any) {
                       </td>
                     )}
                     <td className={cn("px-2 py-1 text-right font-black", isNegative ? "text-rose-600" : "text-slate-900")}>
-                      {isLegado ? (row.disponivel + row.reservado).toLocaleString('pt-BR') : 
-                       type === 'imei' ? (row.valorDebito - row.valorCredito).toLocaleString('pt-BR') :
+                      {isLegado ? ((row.disponivel || 0) + (row.reservado || 0)).toLocaleString('pt-BR') : 
+                       type === 'imei' ? ((row.valorDebito || 0) - (row.valorCredito || 0)).toLocaleString('pt-BR') :
                        row.valor?.toLocaleString('pt-BR')}
                     </td>
                   </>
@@ -819,7 +815,7 @@ function SectionTable({ data, type, onRemove, onUpdateItem }: { data: any[], typ
                         <SelectTrigger className="h-10 rounded-xl bg-slate-50 text-[9px] font-black uppercase border-slate-100 min-w-[120px]">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white border-slate-200 shadow-xl">
                           <SelectItem value="Pago" className="text-[9px] font-black uppercase text-emerald-600">✓ PAGO (OK)</SelectItem>
                           <SelectItem value="Pendente" className="text-[9px] font-black uppercase text-amber-500">⚠ AUSENTE</SelectItem>
                           <SelectItem value="Não Pago" className="text-[9px] font-black uppercase text-rose-500">✗ NÃO PAGO</SelectItem>
