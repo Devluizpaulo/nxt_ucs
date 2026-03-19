@@ -91,6 +91,13 @@ export interface EntidadeSaldo {
   tabelaAquisicao?: RegistroTabela[];
   tabelaLegado?: RegistroTabela[];
 
+  // Ajuste Manual (Governança)
+  ajusteRealizado?: boolean;
+  valorAjusteManual?: number;
+  justificativaAjuste?: string;
+  usuarioAjuste?: string;
+  dataAjuste?: string;
+
   // Auditoria e Apontamentos
   observacao?: string;
   statusAuditoriaSaldo?: 'valido' | 'inconsistente';

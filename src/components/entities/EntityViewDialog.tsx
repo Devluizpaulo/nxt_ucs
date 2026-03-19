@@ -14,7 +14,8 @@ import {
   QrCode,
   ExternalLink,
   CheckCircle2,
-  Clock
+  Clock,
+  UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -51,7 +52,8 @@ export function EntityViewDialog({ entity, open, onOpenChange, onEdit }: EntityV
     const legRes = (entity.tabelaLegado || []).reduce((acc, c) => acc + (c.reservado || 0), 0);
     const legadoTotal = legDisp + legRes;
 
-    const final = orig - mov - aposentado - bloqueado - aq;
+    const finalCalculated = orig - mov - aposentado - bloqueado - aq;
+    const final = entity.ajusteRealizado ? entity.valorAjusteManual || 0 : finalCalculated;
 
     return { 
       orig, mov, aq, imeiPending, legadoTotal, aposentado, bloqueado, final
@@ -112,7 +114,28 @@ export function EntityViewDialog({ entity, open, onOpenChange, onEdit }: EntityV
 
         <ScrollArea className="flex-1 bg-white">
           <div className="p-10 space-y-14">
-            {/* APONTAMENTOS MODO LEITURA */}
+            {entity.ajusteRealizado && (
+              <div className="bg-emerald-50/50 border border-emerald-100 rounded-[2rem] p-8 flex items-start gap-5">
+                <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center shrink-0">
+                  <UserCheck className="w-7 h-7 text-emerald-600" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <h4 className="text-[12px] font-black uppercase text-emerald-700 tracking-widest">SALDO AJUSTADO POR GOVERNANÇA</h4>
+                    <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black uppercase">Consolidado ✓</Badge>
+                  </div>
+                  <p className="text-[14px] font-black text-slate-900">Volume Validado: {entity.valorAjusteManual?.toLocaleString('pt-BR')} UCS</p>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tight flex gap-4">
+                    <span>Autorizador: {entity.usuarioAjuste}</span>
+                    <span>Data: {new Date(entity.dataAjuste!).toLocaleString('pt-BR')}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 bg-white/50 p-3 rounded-lg border border-emerald-50 italic">
+                    "{entity.justificativaAjuste}"
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                <div className="lg:col-span-2 space-y-4">
                   <div className="flex items-center gap-2 mb-2">

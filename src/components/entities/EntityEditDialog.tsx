@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { EntidadeSaldo, RegistroTabela, AuditoriaStatus } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,8 +15,10 @@ import {
   Plus,
   Trash2,
   ExternalLink,
-  Link as LinkIcon,
-  AlertTriangle
+  AlertTriangle,
+  History,
+  Lock,
+  UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -39,7 +41,9 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
   const [formData, setFormData] = useState<Partial<EntidadeSaldo>>({});
   const [pasteData, setPasteData] = useState<{ section: string; raw: string } | null>(null);
   const [isAddingAq, setIsAddingAq] = useState(false);
+  const [isAjustando, setIsAjustando] = useState(false);
   const [newAq, setNewAq] = useState({ data: new Date().getFullYear().toString(), valor: "" });
+  const [ajusteData, setAjusteData] = useState({ valor: "", justificativa: "" });
   
   const { user } = useUser();
   
@@ -49,7 +53,6 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     }
   }, [entity]);
 
-  // Monitora status de pagamento das movimentações para auto-setar divergência
   useEffect(() => {
     const hasUnpaid = (formData.tabelaMovimentacao || []).some(m => m.statusAuditoria === 'Não Pago');
     if (hasUnpaid && formData.statusAuditoriaSaldo !== 'inconsistente') {
@@ -74,7 +77,11 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
     const legRes = (formData.tabelaLegado || []).reduce((acc, c) => acc + (c.reservado || 0), 0);
     const legadoTotal = legDisp + legRes;
 
-    const final = orig - mov - aposentado - bloqueado - aq;
+    // Fórmula exata: Saldo = Orig - Mov - Apos - Bloq - Aq
+    const finalCalculated = orig - mov - aposentado - bloqueado - aq;
+
+    // Se houver ajuste manual, o saldo final passa a ser o valor do ajuste
+    const final = formData.ajusteRealizado ? (formData.valorAjusteManual || 0) : finalCalculated;
 
     return { 
       orig, mov, aq, imeiPending, legadoTotal, aposentado, bloqueado, final, imeiCredits, imeiDebits
@@ -101,6 +108,34 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
       saldoFinalAtual: totals.final
     });
     onOpenChange(false);
+  };
+
+  const handleConfirmAjuste = () => {
+    if (!ajusteData.valor || !ajusteData.justificativa || !user) return;
+    
+    setFormData({
+      ...formData,
+      ajusteRealizado: true,
+      valorAjusteManual: parseInt(ajusteData.valor),
+      justificativaAjuste: ajusteData.justificativa,
+      usuarioAjuste: user.email || "AUDITOR",
+      dataAjuste: new Date().toISOString(),
+      statusAuditoriaSaldo: 'valido'
+    });
+    
+    setIsAjustando(false);
+    setAjusteData({ valor: "", justificativa: "" });
+  };
+
+  const handleRemoveAjuste = () => {
+    setFormData({
+      ...formData,
+      ajusteRealizado: false,
+      valorAjusteManual: undefined,
+      justificativaAjuste: undefined,
+      usuarioAjuste: undefined,
+      dataAjuste: undefined
+    });
   };
 
   const handleAddAquisicao = () => {
@@ -254,6 +289,20 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
             </div>
           </div>
 
+          {formData.ajusteRealizado && (
+             <div className="mb-6 bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+               <h3 className="text-[8px] font-black text-emerald-600 uppercase mb-2 tracking-widest flex items-center gap-2">
+                 <ShieldCheck className="w-3 h-3" /> AJUSTE DE GOVERNANÇA APLICADO
+               </h3>
+               <div className="grid grid-cols-2 gap-4 text-[8px] font-bold uppercase">
+                 <p><span className="text-slate-400">SALDO AJUSTADO:</span> {formData.valorAjusteManual?.toLocaleString('pt-BR')} UCS</p>
+                 <p><span className="text-slate-400">DATA DO AJUSTE:</span> {new Date(formData.dataAjuste!).toLocaleString('pt-BR')}</p>
+                 <p className="col-span-2"><span className="text-slate-400">JUSTIFICATIVA:</span> {formData.justificativaAjuste}</p>
+                 <p className="col-span-2"><span className="text-slate-400">RESPONSÁVEL:</span> {formData.usuarioAjuste}</p>
+               </div>
+             </div>
+          )}
+
           <div className="space-y-4">
             <ReportTable title="01. DEMONSTRATIVO DE ORIGINAÇÃO" data={formData.tabelaOriginacao} type="originacao" />
             <ReportTable title="02. DEMONSTRATIVO DE MOVIMENTAÇÃO" data={formData.tabelaMovimentacao} isNegative type="movimentacao" />
@@ -314,6 +363,33 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
 
           <ScrollArea className="flex-1 bg-white">
             <div className="p-8 space-y-12">
+              {formData.ajusteRealizado && (
+                <div className="bg-emerald-50/50 border border-emerald-100 rounded-[2rem] p-8 flex items-start justify-between">
+                  <div className="flex gap-5">
+                    <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center shrink-0">
+                      <UserCheck className="w-7 h-7 text-emerald-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <h4 className="text-[12px] font-black uppercase text-emerald-700 tracking-widest">AJUSTE DE GOVERNANÇA ATIVO</h4>
+                        <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black uppercase">Fidedigno ✓</Badge>
+                      </div>
+                      <p className="text-[14px] font-black text-slate-900">Novo Saldo Consolidado: {formData.valorAjusteManual?.toLocaleString('pt-BR')} UCS</p>
+                      <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tight flex gap-4">
+                        <span>Autor: {formData.usuarioAjuste}</span>
+                        <span>Data: {new Date(formData.dataAjuste!).toLocaleString('pt-BR')}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 bg-white/50 p-3 rounded-lg border border-emerald-50 italic">
+                        "{formData.justificativaAjuste}"
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" onClick={handleRemoveAjuste} className="text-rose-500 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest h-10 px-4">
+                    <Trash2 className="w-4 h-4 mr-2" /> Revogar Ajuste
+                  </Button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                  <div className="lg:col-span-2 space-y-3">
                     <div className="flex items-center gap-2 mb-1">
@@ -327,20 +403,29 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
                       className="min-h-[100px] bg-slate-50 border-slate-100 rounded-xl p-5 text-[11px] font-medium focus:ring-primary shadow-inner resize-none"
                     />
                  </div>
-                 <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">STATUS DA CONFORMIDADE</Label>
-                    <Select 
-                      value={formData.statusAuditoriaSaldo || "valido"} 
-                      onValueChange={v => setFormData({...formData, statusAuditoriaSaldo: v as any})}
-                    >
-                      <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold text-[10px] uppercase tracking-widest">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="valido" className="font-bold text-[10px] uppercase">✓ SALDO VALIDADO</SelectItem>
-                        <SelectItem value="inconsistente" className="font-bold text-[10px] uppercase text-rose-500">⚠ DIVERGÊNCIA</SelectItem>
-                      </SelectContent>
-                    </Select>
+                 <div className="space-y-4">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">GOVERNANÇA DE SALDO</Label>
+                    <div className="space-y-3">
+                      <Button 
+                        onClick={() => setIsAjustando(true)} 
+                        variant="outline" 
+                        className="w-full h-14 rounded-xl border-[#734DCC]/20 bg-[#734DCC]/5 text-[#734DCC] font-black uppercase text-[10px] tracking-widest gap-3"
+                      >
+                        <Lock className="w-4 h-4" /> AJUSTE GERAL (AUTORIZAÇÃO)
+                      </Button>
+                      <Select 
+                        value={formData.statusAuditoriaSaldo || "valido"} 
+                        onValueChange={v => setFormData({...formData, statusAuditoriaSaldo: v as any})}
+                      >
+                        <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold text-[10px] uppercase tracking-widest">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="valido" className="font-bold text-[10px] uppercase">✓ SALDO VALIDADO</SelectItem>
+                          <SelectItem value="inconsistente" className="font-bold text-[10px] uppercase text-rose-500">⚠ DIVERGÊNCIA</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                  </div>
               </div>
 
@@ -391,9 +476,57 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
           </div>
         </div>
 
+        {/* DIALOG DE AJUSTE GERAL (AUTORIZAÇÃO DUPLA) */}
+        <Dialog open={isAjustando} onOpenChange={setIsAjustando}>
+          <DialogContent className="max-w-lg rounded-[2.5rem] p-10 space-y-8 border-none shadow-2xl">
+            <DialogHeader>
+              <div className="w-16 h-16 bg-[#734DCC]/10 rounded-2xl flex items-center justify-center mb-6">
+                <Lock className="w-8 h-8 text-[#734DCC]" />
+              </div>
+              <DialogTitle className="text-2xl font-black uppercase text-slate-900 tracking-tight">Autorização de Ajuste</DialogTitle>
+              <DialogDescription className="text-slate-500 font-medium">Esta ação irá sobrepor o saldo calculado por um valor arbitrário de governança.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Novo Saldo Final (UCS)</Label>
+                <Input 
+                  type="number"
+                  value={ajusteData.valor} 
+                  onChange={e => setAjusteData({...ajusteData, valor: e.target.value})}
+                  placeholder="EX: 493262"
+                  className="h-16 rounded-2xl border-slate-100 bg-slate-50 font-black text-center text-2xl text-[#734DCC]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Justificativa da Auditoria</Label>
+                <Textarea 
+                  value={ajusteData.justificativa} 
+                  onChange={e => setAjusteData({...ajusteData, justificativa: e.target.value})}
+                  placeholder="Descreva o motivo técnico para o ajuste manual deste saldo..."
+                  className="min-h-[120px] rounded-2xl border-slate-100 bg-slate-50 p-5 font-medium"
+                />
+              </div>
+              <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 flex gap-4">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                <p className="text-[11px] font-bold text-amber-700 leading-tight uppercase">
+                  Atenção: Seu usuário ({user?.email}) será registrado como o autorizador deste ajuste permanente.
+                </p>
+              </div>
+            </div>
+            <DialogFooter className="flex-col gap-3">
+              <Button onClick={handleConfirmAjuste} className="w-full h-14 rounded-2xl font-black uppercase text-[12px] tracking-widest bg-[#734DCC] text-white shadow-xl shadow-indigo-100">
+                Confirmar e Ajustar Saldo
+              </Button>
+              <Button variant="ghost" onClick={() => setIsAjustando(false)} className="w-full h-12 text-[10px] font-black uppercase text-slate-400">
+                Cancelar Operação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* DIALOG DE AQUISIÇÃO MANUAL */}
         <Dialog open={isAddingAq} onOpenChange={setIsAddingAq}>
-          <DialogContent className="max-w-md rounded-3xl p-10 space-y-8">
+          <DialogContent className="max-w-md rounded-3xl p-10 space-y-8 border-none">
             <DialogHeader>
               <DialogTitle className="text-xl font-black uppercase text-slate-900 flex items-center gap-3">
                 <Plus className="w-6 h-6 text-primary" /> Nova Aquisição
@@ -430,7 +563,7 @@ export function EntityEditDialog({ entity, open, onOpenChange, onUpdate }: Entit
         {/* MODAL DE COLAGEM TÉCNICA */}
         {pasteData && (
           <Dialog open={!!pasteData} onOpenChange={() => setPasteData(null)}>
-            <DialogContent className="max-w-xl rounded-3xl p-8 space-y-4">
+            <DialogContent className="max-w-xl rounded-3xl p-8 space-y-4 border-none">
               <DialogHeader>
                 <DialogTitle className="text-lg font-black uppercase text-slate-900 flex items-center gap-2">
                   <Calculator className="w-5 h-5 text-primary" /> COLAGEM TÉCNICA
